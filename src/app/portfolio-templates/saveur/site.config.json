@@ -1,0 +1,167 @@
+{
+  "templateId": "saveur",
+  "plan": "otameshi",
+  "orderId": "demo",
+  "siteUrl": "https://shikumiya-demo.vercel.app",
+  "company": {
+    "name": "旬菜ダイニング 和ごころ",
+    "tagline": "旬を味わう、ひとときの贅沢",
+    "description": "吉祥寺の住宅街にひっそり佇む和食ダイニング。三鷹市場で毎朝仕入れる旬の魚介と、契約農家の有機野菜を使った季節のコース料理をお楽しみください。",
+    "phone": "0422-00-0000",
+    "email": "info@wagokoro-dining.jp",
+    "address": "東京都武蔵野市吉祥寺本町2-00-0",
+    "hours": "ランチ 11:30〜14:00（L.O. 13:30）\nディナー 17:30〜22:00（L.O. 21:00）",
+    "since": "2018",
+    "ceo": "佐藤 健一",
+    "ceoTitle": "オーナーシェフ",
+    "bio": "和食の老舗で12年修業を積んだ後、2018年に独立。「素材に手をかけすぎない」をモットーに、旬の食材が持つ力を引き出す料理を心がけています。\n\nカウンター8席、テーブル12席の小さなお店です。一皿一皿、お客様の顔を見ながら仕上げるのが好きで、この規模がちょうどいい。\n\n三鷹市場の仲買さんとは開業前からの付き合い。「今日いちばん良い魚」を任せて仕入れるので、メニューは毎日少しずつ変わります。",
+    "domain": "wagokoro-dining.jp",
+    "mapEmbedUrl": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3240.!2d139.579!3d35.703!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1"
+  },
+  "menu": [
+    {
+      "id": 1,
+      "name": "本日の前菜盛り合わせ",
+      "price": "¥1,200",
+      "description": "季節の野菜と魚介を使った5種盛り。内容は日替わりです",
+      "category": "前菜",
+      "isRecommended": true
+    },
+    {
+      "id": 2,
+      "name": "鮮魚の刺身三種盛り",
+      "price": "¥1,800",
+      "description": "三鷹市場から朝仕入れた旬の魚を三種お造りで",
+      "category": "前菜"
+    },
+    {
+      "id": 3,
+      "name": "季節野菜の天ぷら",
+      "price": "¥1,100",
+      "description": "契約農家の有機野菜を薄衣でさっくりと",
+      "category": "前菜"
+    },
+    {
+      "id": 4,
+      "name": "黒毛和牛のたたき 薬味添え",
+      "price": "¥2,400",
+      "description": "A4ランクの黒毛和牛をレアに仕上げ、たっぷりの薬味で",
+      "category": "メイン",
+      "isRecommended": true
+    },
+    {
+      "id": 5,
+      "name": "本日の焼き魚定食",
+      "price": "¥1,500",
+      "description": "ご飯・味噌汁・小鉢2品・漬物付き（ランチ限定）",
+      "category": "メイン"
+    },
+    {
+      "id": 6,
+      "name": "鯛めし（二合）",
+      "price": "¥2,200",
+      "description": "丸ごと一尾の鯛を土鍋で炊き上げます。要予約",
+      "category": "メイン"
+    },
+    {
+      "id": 7,
+      "name": "季節の土鍋ごはん",
+      "price": "¥1,600",
+      "description": "春は筍、夏は鮎、秋は栗、冬は牡蠣。土鍋で炊きたてを",
+      "category": "メイン",
+      "isRecommended": true
+    },
+    {
+      "id": 8,
+      "name": "自家製わらび餅",
+      "price": "¥600",
+      "description": "本わらび粉を使った手作りわらび餅。黒蜜ときな粉で",
+      "category": "甘味"
+    },
+    {
+      "id": 9,
+      "name": "季節のフルーツ",
+      "price": "¥500",
+      "description": "旬の果物を食べ頃でお出しします",
+      "category": "甘味"
+    },
+    {
+      "id": 10,
+      "name": "日本酒（グラス）",
+      "price": "¥700〜",
+      "description": "全国の蔵元から厳選した地酒を常時8種。料理に合わせてご提案します",
+      "category": "お飲み物",
+      "isRecommended": true
+    },
+    {
+      "id": 11,
+      "name": "ワイン（グラス）",
+      "price": "¥800〜",
+      "description": "和食に合う国産ワインを中心にセレクト",
+      "category": "お飲み物"
+    },
+    {
+      "id": 12,
+      "name": "ソフトドリンク各種",
+      "price": "¥400〜",
+      "description": "自家製ジンジャーエール、柚子サイダー、烏龍茶、ジュース",
+      "category": "お飲み物"
+    }
+  ],
+  "galleryItems": [
+    { "id": 1, "caption": "本日の前菜盛り合わせ", "category": "料理" },
+    { "id": 2, "caption": "カウンター席からの眺め", "category": "店内" },
+    { "id": 3, "caption": "季節の土鍋ごはん", "category": "料理" },
+    { "id": 4, "caption": "テーブル席（4名様まで）", "category": "店内" },
+    { "id": 5, "caption": "入口のアプローチ", "category": "外観" },
+    { "id": 6, "caption": "鮮魚のお造り", "category": "料理" }
+  ],
+  "strengths": [
+    {
+      "title": "三鷹市場 毎朝直送",
+      "description": "開業以来7年、毎朝5時に三鷹市場へ。馴染みの仲買さんが「今日いちばん良い魚」を選んでくれます。だからメニューは毎日少し違います。",
+      "icon": "Fish"
+    },
+    {
+      "title": "契約農家の有機野菜",
+      "description": "武蔵野市内の3軒の農家さんから、朝採れの有機野菜を直接仕入れ。農薬を使わず育てた野菜は、味が濃くて力強い。",
+      "icon": "Leaf"
+    },
+    {
+      "title": "カウンター8席の距離感",
+      "description": "大きなお店では出せない料理があります。お客様の食べるスピードを見ながら、一皿ずつ仕上げる。この距離感が、うちの味です。",
+      "icon": "ChefHat"
+    }
+  ],
+  "projects": [],
+  "sections": [
+    { "type": "hero", "visible": true, "label": "メインビジュアル" },
+    { "type": "menu", "visible": true, "label": "メニュー" },
+    { "type": "about", "visible": true, "label": "お店について" },
+    { "type": "gallery", "visible": true, "label": "ギャラリー" },
+    { "type": "info", "visible": true, "label": "店舗情報" },
+    { "type": "contact", "visible": true, "label": "ご予約・お問い合わせ" }
+  ],
+  "style": {
+    "colors": {
+      "primary": "#8B4513",
+      "accent": "#D4A574",
+      "background": "#FBF8F4",
+      "text": "#2C1810",
+      "textMuted": "#7A6B5E",
+      "border": "#E8DFD3"
+    },
+    "fonts": {
+      "heading": "'Noto Serif JP', serif",
+      "body": "'Noto Sans JP', sans-serif"
+    },
+    "sizes": {
+      "heading": "lg",
+      "body": "md"
+    },
+    "weights": {
+      "heading": "bold",
+      "body": "normal"
+    }
+  }
+}

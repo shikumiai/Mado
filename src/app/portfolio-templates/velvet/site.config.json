@@ -1,0 +1,297 @@
+{
+  "templateId": "velvet",
+  "plan": "otameshi",
+  "orderId": "demo",
+  "siteUrl": "https://shikumiya-demo.vercel.app",
+  "company": {
+    "name": "hair salon Lierre",
+    "tagline": "あなたらしさを、もっと自由に",
+    "description": "自由が丘の路地裏にある、半個室3席だけのプライベートサロン。表参道で10年のキャリアを積んだオーナーが、一人ひとりの髪質と向き合いながら、似合うスタイルを一緒に見つけます。",
+    "phone": "03-0000-0000",
+    "email": "info@lierre-salon.jp",
+    "address": "東京都目黒区自由が丘1-00-0 メゾン自由が丘2F",
+    "hours": "10:00〜19:00（最終受付 カット18:00 / カラー・パーマ17:00）\n火曜定休",
+    "since": "2020",
+    "ceo": "中村 沙織",
+    "ceoTitle": "オーナースタイリスト",
+    "bio": "表参道の有名サロンで10年間、延べ8,000人以上のお客様を担当してきました。30代後半から気になり始める髪のハリ・ツヤの変化、白髪との付き合い方——年齢を重ねるほど、髪の悩みは増えていきます。\n\n「いつものサロンでは言いにくい悩みも、ここでなら話せる」。そんな場所を作りたくて、2020年に独立しました。半個室3席の小さなサロンですが、隣のお客様の視線が気にならない空間で、じっくりカウンセリングの時間を取れるのが強みです。\n\nオーガニックカラー専門店として、頭皮と髪への負担が少ないヴィラロドラ・ナプラ等の認証オーガニックカラー剤のみを使用しています。肌が弱い方、妊娠中の方にも安心してお選びいただけます。",
+    "domain": "lierre-salon.jp",
+    "mapEmbedUrl": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3242.!2d139.668!3d35.607!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1"
+  },
+  "menu": [
+    {
+      "id": 1,
+      "name": "カット",
+      "price": "¥6,600",
+      "description": "カウンセリング・シャンプー・ブロー込み。骨格と髪質に合わせたカットで、乾かすだけでまとまるスタイルに",
+      "category": "カット",
+      "isRecommended": true
+    },
+    {
+      "id": 2,
+      "name": "前髪カット",
+      "price": "¥1,100",
+      "description": "前髪だけ気になるときに。他メニューとの同時施術も可",
+      "category": "カット"
+    },
+    {
+      "id": 3,
+      "name": "オーガニックカラー",
+      "price": "¥7,700",
+      "description": "認証オーガニックカラー剤（ヴィラロドラ / ナプラ）使用。頭皮への刺激が少なく、ツヤのある仕上がりに",
+      "category": "カラー",
+      "isRecommended": true
+    },
+    {
+      "id": 4,
+      "name": "リタッチカラー（根元3cm以内）",
+      "price": "¥5,500",
+      "description": "伸びた根元だけを染め直し。前回から3〜4週間でのご来店におすすめ",
+      "category": "カラー"
+    },
+    {
+      "id": 5,
+      "name": "ハイライト",
+      "price": "¥4,400〜",
+      "description": "細かく入れるハイライトで立体感を。白髪ぼかしハイライトも人気です",
+      "category": "カラー"
+    },
+    {
+      "id": 6,
+      "name": "デジタルパーマ",
+      "price": "¥11,000",
+      "description": "低温デジタルパーマでダメージを抑えながら、持ちのいいカールに仕上げます",
+      "category": "パーマ"
+    },
+    {
+      "id": 7,
+      "name": "コスメパーマ",
+      "price": "¥8,800",
+      "description": "化粧品登録のやさしい薬剤で、ナチュラルなウェーブ。パーマが初めての方にも",
+      "category": "パーマ"
+    },
+    {
+      "id": 8,
+      "name": "髪質改善トリートメント",
+      "price": "¥8,800",
+      "description": "酸熱トリートメントで内部補修。繰り返すほど髪が扱いやすくなります。施術時間 約40分",
+      "category": "トリートメント",
+      "isRecommended": true
+    },
+    {
+      "id": 9,
+      "name": "システムトリートメント",
+      "price": "¥3,300",
+      "description": "3ステップの集中補修。カラーやパーマ後の仕上げにおすすめ",
+      "category": "トリートメント"
+    },
+    {
+      "id": 10,
+      "name": "ヘッドスパ（30分）",
+      "price": "¥4,400",
+      "description": "頭皮のクレンジング+アロママッサージ。眼精疲労や肩こりが気になる方にも",
+      "category": "ヘッドスパ"
+    },
+    {
+      "id": 11,
+      "name": "ヘッドスパ（60分）",
+      "price": "¥7,700",
+      "description": "頭皮診断+ディープクレンジング+ロングマッサージのフルコース。月1回のご褒美に",
+      "category": "ヘッドスパ",
+      "isRecommended": true
+    },
+    {
+      "id": 12,
+      "name": "カット + カラー セット",
+      "price": "¥12,100",
+      "description": "いちばん人気の組み合わせ。セット価格で¥2,200おトクです",
+      "category": "セットメニュー",
+      "isRecommended": true
+    },
+    {
+      "id": 13,
+      "name": "カット + パーマ セット",
+      "price": "¥15,400",
+      "description": "カットとデジタルパーマのセット。スタイルチェンジしたい方に",
+      "category": "セットメニュー"
+    },
+    {
+      "id": 14,
+      "name": "カラー + トリートメント セット",
+      "price": "¥9,900",
+      "description": "カラー後のダメージケアまでセットで。仕上がりのツヤが違います",
+      "category": "セットメニュー"
+    }
+  ],
+  "galleryItems": [
+    {
+      "id": 1,
+      "slug": "short-bob-natural",
+      "caption": "ナチュラルショートボブ",
+      "category": "ショート",
+      "stylist": "中村 沙織",
+      "description": "顔周りを柔らかく仕上げたショートボブ。朝のスタイリングが5分で決まる時短ヘア。",
+      "treatment": "カット + カラー",
+      "duration": "約2時間",
+      "price": "¥12,100"
+    },
+    {
+      "id": 2,
+      "slug": "highlight-gray-blend",
+      "caption": "白髪ぼかしハイライト",
+      "category": "カラー",
+      "stylist": "林 美月",
+      "description": "細かいハイライトで白髪を自然にぼかす人気のカラーテクニック。伸びてきても境目が目立ちにくく、次回来店までの期間を延ばせます。",
+      "treatment": "ハイライト + カラー + トリートメント",
+      "duration": "約3時間",
+      "price": "¥16,500"
+    },
+    {
+      "id": 3,
+      "slug": "digital-perm-loose",
+      "caption": "ゆるふわデジタルパーマ",
+      "category": "ミディアム",
+      "stylist": "中村 沙織",
+      "description": "低温デジタルパーマで作る、ナチュラルな大きめカール。乾かすだけで再現できるスタイルに仕上げました。",
+      "treatment": "カット + デジタルパーマ",
+      "duration": "約2時間30分",
+      "price": "¥15,400"
+    },
+    {
+      "id": 4,
+      "slug": "long-layer-organic",
+      "caption": "オーガニックカラーのロングレイヤー",
+      "category": "ロング",
+      "stylist": "林 美月",
+      "description": "認証オーガニックカラー剤で染めた、透明感のあるアッシュベージュ。レイヤーで動きを出し、軽やかな印象に。",
+      "treatment": "カット + オーガニックカラー + トリートメント",
+      "duration": "約2時間30分",
+      "price": "¥18,700"
+    },
+    {
+      "id": 5,
+      "slug": "mature-short-elegant",
+      "caption": "大人のエレガントショート",
+      "category": "ショート",
+      "stylist": "中村 沙織",
+      "description": "50代のお客様に人気のショートスタイル。トップにボリュームを出しつつ、襟足はすっきりと。品のある大人の印象に。",
+      "treatment": "カット + カラー + 髪質改善トリートメント",
+      "duration": "約2時間30分",
+      "price": "¥20,900"
+    },
+    {
+      "id": 6,
+      "slug": "medium-bob-inner-color",
+      "caption": "ミディアムボブ×インナーカラー",
+      "category": "ミディアム",
+      "stylist": "林 美月",
+      "description": "耳にかけたときにちらっと見えるインナーカラーがポイント。普段はナチュラル、アレンジで遊べる2wayスタイル。",
+      "treatment": "カット + カラー + インナーカラー",
+      "duration": "約3時間",
+      "price": "¥17,600"
+    },
+    {
+      "id": 7,
+      "slug": "cosme-perm-bob",
+      "caption": "コスメパーマのふんわりボブ",
+      "category": "ミディアム",
+      "stylist": "中村 沙織",
+      "description": "化粧品登録のやさしい薬剤で作る、柔らかなワンカールボブ。パーマが初めての方にもおすすめです。",
+      "treatment": "カット + コスメパーマ",
+      "duration": "約2時間",
+      "price": "¥13,200"
+    },
+    {
+      "id": 8,
+      "slug": "long-wave-treatment",
+      "caption": "髪質改善ロングウェーブ",
+      "category": "ロング",
+      "stylist": "林 美月",
+      "description": "酸熱トリートメントでうねりを整えてからのカラーリング。まとまりのある艶髪に。繰り返すほど髪質が改善します。",
+      "treatment": "髪質改善トリートメント + カラー",
+      "duration": "約3時間",
+      "price": "¥16,500"
+    }
+  ],
+  "staff": [
+    {
+      "id": 1,
+      "slug": "nakamura-saori",
+      "name": "中村 沙織",
+      "role": "オーナースタイリスト",
+      "bio": "スタイリスト歴18年。表参道の有名サロンで10年修業後、2020年に独立。得意スタイルはボブ〜ミディアムの大人カジュアル。年間約1,200名を担当。「似合う」を見つけるカウンセリングに自信があります。",
+      "specialty": "ショートヘア、ボブ、大人世代のヘアデザイン",
+      "experience": "スタイリスト歴18年",
+      "schedule": "月・水〜土"
+    },
+    {
+      "id": 2,
+      "slug": "hayashi-mizuki",
+      "name": "林 美月",
+      "role": "スタイリスト",
+      "bio": "スタイリスト歴8年。前職は恵比寿のオーガニックサロン。カラーリングが得意で、ダメージレスな透明感カラーを追求しています。骨格診断アドバイザー資格保持。",
+      "specialty": "カラーリング、ハイライト、透明感カラー",
+      "experience": "スタイリスト歴8年",
+      "schedule": "水〜日"
+    },
+    {
+      "id": 3,
+      "slug": "sasaki-yui",
+      "name": "佐々木 結",
+      "role": "アシスタント",
+      "bio": "入社2年目。シャンプーとヘッドスパを担当。お客様から「気持ちよくて眠ってしまう」と言っていただけるのが嬉しいです。来年のスタイリストデビューに向けて練習中。",
+      "specialty": "シャンプー、ヘッドスパ",
+      "experience": "アシスタント歴2年",
+      "schedule": "月・水〜土"
+    }
+  ],
+  "strengths": [
+    {
+      "title": "半個室3席のプライベート空間",
+      "description": "隣の席が気にならない半個室設計。周りの視線を気にせず、髪の悩みをゆっくり相談できます。お子様連れの方も気兼ねなくお越しいただけます。",
+      "icon": "Heart"
+    },
+    {
+      "title": "オーガニックカラー専門",
+      "description": "頭皮への刺激が気になる方、妊娠中の方にも安心の認証オーガニックカラー剤のみを使用。ヴィラロドラ、ナプラなど厳選した薬剤で、やさしい施術と美しい発色を両立します。",
+      "icon": "Sparkles"
+    },
+    {
+      "title": "担当制で「いつもの人」に",
+      "description": "毎回同じスタイリストが最初から最後まで担当。髪質の変化や前回のスタイルを踏まえた提案ができるので、通うほどに「わたしの髪をわかってくれている」安心感が生まれます。",
+      "icon": "User"
+    }
+  ],
+  "projects": [],
+  "sections": [
+    { "type": "hero", "visible": true, "label": "メインビジュアル" },
+    { "type": "gallery", "visible": true, "label": "スタイルギャラリー" },
+    { "type": "menu", "visible": true, "label": "メニュー・料金" },
+    { "type": "staff", "visible": true, "label": "スタイリスト紹介" },
+    { "type": "about", "visible": true, "label": "サロンについて" },
+    { "type": "info", "visible": true, "label": "サロン情報" },
+    { "type": "contact", "visible": true, "label": "ご予約" }
+  ],
+  "style": {
+    "colors": {
+      "primary": "#9B6B6B",
+      "accent": "#C4956A",
+      "background": "#FAF6F5",
+      "text": "#3A2828",
+      "textMuted": "#8A7070",
+      "border": "#E8DEDD"
+    },
+    "fonts": {
+      "heading": "'Noto Sans JP', sans-serif",
+      "body": "'Noto Sans JP', sans-serif"
+    },
+    "sizes": {
+      "heading": "lg",
+      "body": "md"
+    },
+    "weights": {
+      "heading": "bold",
+      "body": "normal"
+    }
+  }
+}

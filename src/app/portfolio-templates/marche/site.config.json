@@ -1,0 +1,99 @@
+{
+  "templateId": "marche",
+  "plan": "otameshi",
+  "orderId": "demo-marche",
+  "siteUrl": "https://shikumiya-cotori.vercel.app",
+  "company": {
+    "name": "cotori（コトリ）",
+    "tagline": "作り手の想いが伝わる、日常に寄り添う服と雑貨",
+    "description": "国内外の作り手から直接買い付けた、一点ものの服や雑貨を取り揃えています。自由が丘の路地裏にある小さなセレクトショップです。",
+    "phone": "03-0000-0000",
+    "email": "info@cotori-shop.jp",
+    "address": "東京都目黒区自由が丘2-0-0 コトリビル1F",
+    "hours": "11:00〜19:00（水曜定休）",
+    "since": "2020",
+    "ceo": "小林 ゆかり",
+    "ceoTitle": "オーナー・バイヤー",
+    "bio": "アパレルバイヤーとして10年間、国内外の展示会やアトリエを訪ね歩いてきました。大きなブランドの服も扱いましたが、いつも心に残るのは小さな工房で丁寧に作られた一着でした。\n\n2020年、自由が丘の路地裏に自分のお店を開きました。ここに並ぶのは、私が実際に作り手の話を聞き、ものづくりの現場を見て「これは届けたい」と思ったものだけです。\n\n服も雑貨も、手に取ったときに少し気持ちが明るくなるような、そんなものを選んでいます。お気軽に遊びに来てください。",
+    "domain": "cotori-shop.jp"
+  },
+  "projects": [],
+  "strengths": [
+    {
+      "title": "国内外の作家から直接仕入れ",
+      "description": "展示会やアトリエを直接訪問し、作り手の想いを確かめてから仕入れています。大量生産では出会えない一着をお届けします。",
+      "icon": "ShoppingBag"
+    },
+    {
+      "title": "一点ものが多数",
+      "description": "手仕事ならではの個体差や、少量生産ゆえの希少さ。同じものがないからこそ、自分だけの出会いがあります。",
+      "icon": "Heart"
+    },
+    {
+      "title": "ラッピング無料",
+      "description": "贈り物にもぴったり。ナチュラルな素材のラッピングを無料でご用意しています。お気軽にお申し付けください。",
+      "icon": "Gift"
+    }
+  ],
+  "galleryItems": [
+    {
+      "id": 1,
+      "caption": "リネンのワンピース（作家: atelier mano）",
+      "category": "服"
+    },
+    {
+      "id": 2,
+      "caption": "手織りのストール（岡山・倉敷の工房より）",
+      "category": "服"
+    },
+    {
+      "id": 3,
+      "caption": "陶器のマグカップ（信楽焼・作家もの）",
+      "category": "雑貨"
+    },
+    {
+      "id": 4,
+      "caption": "真鍮のブローチ（東京・蔵前のアトリエ）",
+      "category": "アクセサリー"
+    },
+    {
+      "id": 5,
+      "caption": "草木染めのリネンシャツ",
+      "category": "服"
+    },
+    {
+      "id": 6,
+      "caption": "手編みのかごバッグ（ベトナムの職人）",
+      "category": "雑貨"
+    }
+  ],
+  "sections": [
+    { "type": "hero", "visible": true, "label": "メインビジュアル" },
+    { "type": "gallery", "visible": true, "label": "商品ギャラリー" },
+    { "type": "about", "visible": true, "label": "ブランドについて" },
+    { "type": "info", "visible": true, "label": "店舗情報" },
+    { "type": "contact", "visible": true, "label": "お問い合わせ" }
+  ],
+  "style": {
+    "colors": {
+      "primary": "#C45B28",
+      "accent": "#2E6B4A",
+      "background": "#FDF8F4",
+      "text": "#2A1F14",
+      "textMuted": "#7A6B5E",
+      "border": "#E8DFD3"
+    },
+    "fonts": {
+      "heading": "'Noto Serif JP', serif",
+      "body": "'Noto Sans JP', sans-serif"
+    },
+    "sizes": {
+      "heading": "lg",
+      "body": "md"
+    },
+    "weights": {
+      "heading": "bold",
+      "body": "normal"
+    }
+  }
+}

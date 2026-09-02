@@ -1,0 +1,662 @@
+<title>Mado 公開セットアップ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+
+<style>
+  /* ── 明るい側のトークン一式（既定） ───────────────── */
+  :root {
+    --paper:      #F2F4F3;
+    --pane:       #FBFCFB;
+    --pane-sunk:  #E8EDEA;
+    --ink:        #1B2422;
+    --ink-soft:   #4A5854;
+    --ink-faint:  #78867F;
+    --rule:       #D2DAD6;
+    --rule-soft:  #E3E9E6;
+    --glass:      #2E7A6F;
+    --glass-wash: #E2F0EC;
+    --brick:      #B4472E;
+    --brick-wash: #F7E6E1;
+    --sun:        #A8792B;
+    --sun-wash:   #F6EEDD;
+
+    --display: "Zen Old Mincho", "Yu Mincho", serif;
+    --body: "Zen Kaku Gothic New", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:      #141A18;
+      --pane:       #1C2422;
+      --pane-sunk:  #101614;
+      --ink:        #E4EAE7;
+      --ink-soft:   #AAB8B3;
+      --ink-faint:  #7B8A85;
+      --rule:       #2C3835;
+      --rule-soft:  #232D2B;
+      --glass:      #5FB3A5;
+      --glass-wash: #16302C;
+      --brick:      #E0765A;
+      --brick-wash: #33201B;
+      --sun:        #D6A657;
+      --sun-wash:   #2E2617;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper:      #141A18;
+    --pane:       #1C2422;
+    --pane-sunk:  #101614;
+    --ink:        #E4EAE7;
+    --ink-soft:   #AAB8B3;
+    --ink-faint:  #7B8A85;
+    --rule:       #2C3835;
+    --rule-soft:  #232D2B;
+    --glass:      #5FB3A5;
+    --glass-wash: #16302C;
+    --brick:      #E0765A;
+    --brick-wash: #33201B;
+    --sun:        #D6A657;
+    --sun-wash:   #2E2617;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 15px;
+    line-height: 1.85;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .sheet {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 0 20px 96px;
+  }
+
+  /* ── 見出し：窓の桟をモチーフにした薄い格子 ───────── */
+  .masthead {
+    padding: 44px 0 30px;
+    border-bottom: 1px solid var(--rule);
+    display: grid;
+    gap: 14px;
+  }
+  .sash {
+    width: 46px; height: 46px;
+    border: 1.5px solid var(--glass);
+    border-radius: 2px;
+    position: relative;
+    opacity: .85;
+  }
+  .sash::before, .sash::after {
+    content: ""; position: absolute; background: var(--glass);
+  }
+  .sash::before { left: 50%; top: 0; bottom: 0; width: 1.5px; transform: translateX(-50%); }
+  .sash::after  { top: 50%; left: 0; right: 0; height: 1.5px; transform: translateY(-50%); }
+
+  h1 {
+    font-family: var(--display);
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: .02em;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .standfirst {
+    color: var(--ink-soft);
+    font-size: 14px;
+    margin: 0;
+    max-width: 60ch;
+  }
+
+  /* ── なぜこの順番か ─────────────────────────────── */
+  .why {
+    margin: 26px 0 0;
+    padding: 18px 20px;
+    background: var(--glass-wash);
+    border-left: 3px solid var(--glass);
+    border-radius: 0 6px 6px 0;
+    display: grid;
+    gap: 8px;
+  }
+  .why h2 {
+    font-family: var(--body);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--glass);
+    margin: 0;
+  }
+  .why p { margin: 0; font-size: 14px; color: var(--ink-soft); }
+  .why strong { color: var(--ink); }
+
+  .accounts { margin: 26px 0 0; display: grid; gap: 10px; }
+  .accounts h2 {
+    font-family: var(--body); font-size: 13px; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase;
+    color: var(--ink-faint); margin: 0;
+  }
+  .accounts td.ok   { color: var(--glass); }
+  .accounts td.move { color: var(--brick); font-weight: 500; }
+  .accounts .note { margin: 2px 0 0; font-size: 13px; color: var(--ink-soft); }
+  .accounts .note b { color: var(--ink); }
+
+  /* ── 進み具合 ───────────────────────────────────── */
+  .progress {
+    position: sticky; top: 0; z-index: 5;
+    background: var(--paper);
+    padding: 14px 0 12px;
+    border-bottom: 1px solid var(--rule-soft);
+    display: flex; align-items: center; gap: 12px;
+    font-size: 12.5px; color: var(--ink-faint);
+    letter-spacing: .04em;
+  }
+  .bar { flex: 1; height: 3px; background: var(--pane-sunk); border-radius: 2px; overflow: hidden; }
+  .bar span { display: block; height: 100%; width: 0%; background: var(--glass); transition: width .3s ease; }
+  .count { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--ink-soft); }
+  .reset {
+    font: inherit; font-size: 12px; color: var(--ink-faint);
+    background: none; border: none; cursor: pointer; padding: 2px 4px;
+    text-decoration: underline; text-underline-offset: 3px;
+  }
+  .reset:hover { color: var(--ink); }
+
+  /* ── 各段 ───────────────────────────────────────── */
+  .phase { padding: 34px 0 6px; border-bottom: 1px solid var(--rule-soft); }
+  .phase:last-of-type { border-bottom: none; }
+
+  .phase-head { display: flex; gap: 16px; align-items: baseline; }
+  .step-no {
+    font-family: var(--mono);
+    font-size: 12px; font-weight: 600;
+    color: var(--glass);
+    letter-spacing: .1em;
+    padding-top: 6px;
+    min-width: 26px;
+  }
+  .phase h2 {
+    font-family: var(--display);
+    font-size: 21px; font-weight: 700;
+    margin: 0 0 2px;
+    letter-spacing: .01em;
+  }
+  .when {
+    font-size: 13px; color: var(--ink-faint); margin: 0 0 4px;
+  }
+  .phase-body { padding-left: 42px; }
+
+  .flag {
+    display: inline-block;
+    font-size: 11px; font-weight: 700; letter-spacing: .06em;
+    padding: 2px 8px; border-radius: 3px;
+    vertical-align: 2px; margin-left: 8px;
+  }
+  .flag.block { background: var(--brick-wash); color: var(--brick); }
+  .flag.note  { background: var(--sun-wash);   color: var(--sun); }
+
+  ol.steps { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 2px; }
+  ol.steps > li { display: flex; gap: 11px; align-items: flex-start; padding: 5px 0; }
+  ol.steps input[type="checkbox"] {
+    margin: 6px 0 0; width: 15px; height: 15px; flex: none;
+    accent-color: var(--glass); cursor: pointer;
+  }
+  ol.steps label { cursor: pointer; flex: 1; }
+  ol.steps input:checked + label { color: var(--ink-faint); text-decoration: line-through; text-decoration-thickness: 1px; }
+
+  code {
+    font-family: var(--mono); font-size: 12.5px;
+    background: var(--pane-sunk); border: 1px solid var(--rule-soft);
+    border-radius: 3px; padding: 1px 5px;
+    word-break: break-all;
+  }
+
+  .copy {
+    margin: 10px 0 4px;
+    background: var(--pane); border: 1px solid var(--rule);
+    border-radius: 6px; overflow: hidden;
+  }
+  .copy-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 7px 12px; background: var(--pane-sunk);
+    border-bottom: 1px solid var(--rule-soft);
+    font-size: 11px; letter-spacing: .07em; text-transform: uppercase;
+    color: var(--ink-faint); font-weight: 700;
+  }
+  .copy-btn {
+    font: inherit; font-size: 11px; letter-spacing: .05em;
+    background: none; border: 1px solid var(--rule); border-radius: 3px;
+    color: var(--ink-soft); padding: 2px 9px; cursor: pointer;
+    text-transform: none; font-weight: 500;
+  }
+  .copy-btn:hover { border-color: var(--glass); color: var(--glass); }
+  .copy-btn[data-done="1"] { border-color: var(--glass); color: var(--glass); }
+  .copy pre {
+    margin: 0; padding: 11px 12px; overflow-x: auto;
+    font-family: var(--mono); font-size: 12.5px; line-height: 1.7;
+    color: var(--ink);
+  }
+
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 4px; font-size: 13.5px; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+  th { font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-faint); font-weight: 700; }
+  td code { font-size: 12px; }
+  .scroll-x { overflow-x: auto; }
+
+  .aside {
+    margin: 14px 0 2px; padding: 12px 15px;
+    background: var(--sun-wash); border-radius: 5px;
+    font-size: 13.5px; color: var(--ink-soft);
+  }
+  .aside.stop { background: var(--brick-wash); }
+  .aside b { color: var(--ink); }
+
+  footer {
+    margin-top: 46px; padding-top: 22px;
+    border-top: 1px solid var(--rule);
+    font-size: 13px; color: var(--ink-faint);
+  }
+  footer h2 { font-family: var(--display); font-size: 17px; color: var(--ink); margin: 0 0 8px; }
+  footer ul { margin: 0; padding-left: 20px; display: grid; gap: 5px; }
+
+  a { color: var(--glass); text-underline-offset: 3px; }
+  :focus-visible { outline: 2px solid var(--glass); outline-offset: 2px; border-radius: 2px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+  @media (max-width: 560px) {
+    .phase-body { padding-left: 0; }
+    h1 { font-size: 25px; }
+  }
+  @media print {
+    .progress, .copy-btn, .reset { display: none; }
+    body { background: #fff; color: #000; }
+    .phase { break-inside: avoid; }
+  }
+</style>
+
+<div class="sheet">
+
+  <header class="masthead">
+    <div class="sash" aria-hidden="true"></div>
+    <h1>Mado 公開セットアップ</h1>
+    <p class="standfirst">
+      GitHub・Vercel・エックスサーバー・Google Cloud・Supabase の5つを、
+      依存関係の順につないで <code>mado.shikumiai.com</code> を公開状態にするまで。
+    </p>
+  </header>
+
+  <div class="why">
+    <h2>順番を守る理由</h2>
+    <p>
+      <strong>ドメインが繋がる前に OAuth 同意画面を公開しようとすると、URL の登録で弾かれます。</strong>
+      Google は「承認済みドメイン」に実在するドメインを求めるためです。
+      同じ理由で、Vercel のプロジェクトはドメインを足す前に用意しておく必要があります。
+      下の 1 → 7 は、その依存関係の順に並べてあります。飛ばすと手戻りします。
+    </p>
+  </div>
+
+  <div class="accounts">
+    <h2>どのアカウントに何を置くか</h2>
+    <div class="scroll-x">
+      <table>
+        <thead><tr><th>もの</th><th>いま</th><th>これから</th></tr></thead>
+        <tbody>
+          <tr><td>Supabase</td><td>Shikumiai</td><td class="ok">そのまま</td></tr>
+          <tr><td>Stripe</td><td>新アカウント <code>acct_1UBIUD…</code></td><td class="ok">そのまま</td></tr>
+          <tr><td>ドメイン <code>shikumiai.com</code></td><td>エックスサーバー</td><td class="ok">そのまま</td></tr>
+          <tr><td>GitHub リポジトリ</td><td>AndoLyo/shikumiya</td><td class="move">Shikumiai に新規作成して push</td></tr>
+          <tr><td>Vercel プロジェクト</td><td>AndoLyo 側</td><td class="move">Shikumiai で新規作成</td></tr>
+          <tr><td>Google Cloud「Mado」</td><td>要確認</td><td class="move">できれば Shikumiai に寄せる</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">
+      <b>Vercel のアカウントとドメインは無関係です。</b>
+      <code>shikumiai.com</code> の DNS はエックスサーバーにあるので、CNAME はどの Vercel アカウントにも向けられます。
+      つまりアカウントの選び方に制約はありません。
+    </p>
+  </div>
+
+  <div class="progress">
+    <span>進み具合</span>
+    <div class="bar"><span id="fill"></span></div>
+    <span class="count" id="count">0 / 0</span>
+    <button class="reset" id="reset" type="button">全部外す</button>
+  </div>
+
+  <!-- ══════════════ 1 ══════════════ -->
+  <section class="phase">
+    <div class="phase-head">
+      <div class="step-no">01</div>
+      <div>
+        <h2>GitHub を Shikumiai アカウントに移す</h2>
+        <p class="when">116 コミットは全部ローカルにあります。新しいリポジトリへ push すれば丸ごと移ります。</p>
+      </div>
+    </div>
+    <div class="phase-body">
+      <div class="aside stop">
+        <b>先に今日の変更をコミットしてください。</b>
+        未コミットが 140 件あります。この状態でリネームしても消えはしませんが、
+        区切りを作っておくと後で戻せます。
+      </div>
+
+      <ol class="steps">
+        <li><input type="checkbox" id="c101"><label for="c101">今日の変更をコミットする（サービス名の改名・Supabase 対応・Stripe 設定）</label></li>
+        <li><input type="checkbox" id="c102"><label for="c102">Shikumiai の GitHub で新しいリポジトリ <code>mado</code> を作る。<b>README も .gitignore も追加しない</b>（空で作る）</label></li>
+        <li><input type="checkbox" id="c103"><label for="c103">手元の向き先を新リポジトリに変えて push する（下のコマンド）</label></li>
+        <li><input type="checkbox" id="c104"><label for="c104">GitHub 上で 116 コミットが並んでいることを確認</label></li>
+      </ol>
+
+      <div class="copy">
+        <div class="copy-head"><span>ターミナル（USERNAME は Shikumiai の GitHub 名に置き換え）</span><button class="copy-btn" type="button">コピー</button></div>
+        <pre>git remote set-url origin https://github.com/USERNAME/mado.git
+git push -u origin main
+git remote -v</pre>
+      </div>
+
+      <div class="aside">
+        <b>移管（Transfer）ではなく新規作成で足ります。</b>
+        116 コミットは全部手元の <code>.git</code> に入っているので、push すればそのまま移ります。
+        Issue も PR も付いていないリポジトリなので、移管の手間をかける利点がありません。
+      </div>
+
+      <div class="aside">
+        旧リポジトリ <code>AndoLyo/shikumiya</code> は<b>すぐ消さずに残して</b>ください。
+        新しい側で動くのを見届けてから、最後にまとめて片付けます。
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ 2 ══════════════ -->
+  <section class="phase">
+    <div class="phase-head">
+      <div class="step-no">02</div>
+      <div>
+        <h2>Vercel プロジェクトを作る</h2>
+        <p class="when">ドメインを足す先が要るので、ドメイン作業より先。</p>
+      </div>
+    </div>
+    <div class="phase-body">
+      <ol class="steps">
+        <li><input type="checkbox" id="c201a"><label for="c201a"><b>Shikumiai のアカウントで</b> Vercel にログインしていることを確認</label></li>
+        <li><input type="checkbox" id="c201b"><label for="c201b">初回だけ: Vercel の GitHub 連携を Shikumiai の GitHub アカウントに許可する（Import 画面で案内が出る）</label></li>
+        <li><input type="checkbox" id="c201"><label for="c201">Vercel → <b>Add New</b> → <b>Project</b> → GitHub の <code>mado</code> を Import</label></li>
+        <li><input type="checkbox" id="c202"><label for="c202">Project Name を <code>mado</code> に。Framework は Next.js が自動で入る</label></li>
+        <li><input type="checkbox" id="c203"><label for="c203">Environment Variables に下の 9 個を入れる（<b>値は手元の <code>.env.local</code> からコピー</b>）</label></li>
+        <li><input type="checkbox" id="c204"><label for="c204">Deploy を押して、ビルドが通ることを確認</label></li>
+      </ol>
+
+      <div class="scroll-x">
+        <table>
+          <thead><tr><th>変数名</th><th>値の出どころ</th></tr></thead>
+          <tbody>
+            <tr><td><code>NEXT_PUBLIC_SUPABASE_URL</code></td><td>Supabase → Settings → API の Project URL</td></tr>
+            <tr><td><code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code></td><td>同上 anon key</td></tr>
+            <tr><td><code>SUPABASE_SERVICE_ROLE_KEY</code></td><td>同上 service_role key（<b>NEXT_PUBLIC_ を付けない</b>）</td></tr>
+            <tr><td><code>STRIPE_SECRET_KEY</code></td><td><code>.env.local</code></td></tr>
+            <tr><td><code>NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</code></td><td><code>.env.local</code></td></tr>
+            <tr><td><code>STRIPE_WEBHOOK_SECRET</code></td><td>まだ空。手順 07 で取る</td></tr>
+            <tr><td><code>ANTHROPIC_API_KEY</code></td><td><code>.env.local</code></td></tr>
+            <tr><td><code>NEXT_PUBLIC_BASE_URL</code></td><td><code>https://mado.shikumiai.com</code></td></tr>
+            <tr><td><code>NEXT_PUBLIC_SITE_BASE_URL</code></td><td><code>https://mado.shikumiai.com</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="aside">
+        <b>秘密の値はこの手順書に載せていません。</b>
+        このページは共有できる形で置いてあるので、鍵はすべて手元の <code>.env.local</code> を見てください。
+        <code>vercel.json</code> に東京リージョン（<code>hnd1</code>）を指定済みなので、そちらの設定は不要です。
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ 3 ══════════════ -->
+  <section class="phase">
+    <div class="phase-head">
+      <div class="step-no">03</div>
+      <div>
+        <h2>mado.shikumiai.com を繋ぐ</h2>
+        <p class="when">ここが通らないと 04 以降が進みません。</p>
+      </div>
+    </div>
+    <div class="phase-body">
+      <ol class="steps">
+        <li><input type="checkbox" id="c301"><label for="c301">Vercel → mado プロジェクト → <b>Settings</b> → <b>Domains</b> → <code>mado.shikumiai.com</code> を Add</label></li>
+        <li><input type="checkbox" id="c302"><label for="c302">Vercel が出す CNAME の値を控える（下の形のはず）</label></li>
+        <li><input type="checkbox" id="c303"><label for="c303">エックスサーバーのサーバーパネル → <b>DNSレコード設定</b> → <code>shikumiai.com</code> を選択 → レコードを1件追加</label></li>
+        <li><input type="checkbox" id="c304"><label for="c304">数分待って、Vercel の Domains 画面が緑（Valid Configuration）になるのを確認</label></li>
+        <li><input type="checkbox" id="c305"><label for="c305">ブラウザで <code>https://mado.shikumiai.com</code> を開いて表示されることを確認</label></li>
+      </ol>
+
+      <div class="copy">
+        <div class="copy-head"><span>エックスサーバーに入れる DNS レコード</span><button class="copy-btn" type="button">コピー</button></div>
+        <pre>ホスト名  : mado
+種別      : CNAME
+内容      : cname.vercel-dns.com
+TTL       : 3600</pre>
+      </div>
+
+      <div class="aside">
+        <b><code>shikumiai.com</code> 本体（エックスサーバー側）には触りません。</b>
+        足すのは <code>mado</code> のサブドメイン1件だけなので、今そこに載っているものは無事です。
+        Vercel の画面に出る値が <code>cname.vercel-dns.com</code> と違っていたら、<b>画面に出た方</b>を使ってください。
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ 4 ══════════════ -->
+  <section class="phase">
+    <div class="phase-head">
+      <div class="step-no">04</div>
+      <div>
+        <h2>OAuth 同意画面を公開する<span class="flag note">審査なしで通ります</span></h2>
+        <p class="when">03 で URL が実在してから。テストユーザー限定の状態を外します。</p>
+      </div>
+    </div>
+    <div class="phase-body">
+      <div class="aside">
+        <b>Google の審査は要りません。</b>
+        Supabase のログインが使うのは <code>openid</code> / <code>email</code> / <code>profile</code> の3つだけで、
+        これは機密スコープに当たらないためです。項目を埋めて「アプリを公開」を押せば、その場で本番になります。
+        （もし審査を求める画面が出たら、そこで止めて連絡してください）
+      </div>
+
+      <ol class="steps">
+        <li><input type="checkbox" id="c401"><label for="c401">Google Cloud で、右上のプロジェクトが <b>Mado</b> になっていることを確認</label></li>
+        <li><input type="checkbox" id="c402"><label for="c402"><b>API とサービス</b> → <b>OAuth 同意画面</b> を開く</label></li>
+        <li><input type="checkbox" id="c403"><label for="c403">User Type が <b>外部</b> であることを確認</label></li>
+        <li><input type="checkbox" id="c404"><label for="c404">下の項目を埋める</label></li>
+        <li><input type="checkbox" id="c405"><label for="c405">保存して、<b>「アプリを公開」</b>（PUBLISH APP）を押す → 公開ステータスが「本番環境」になる</label></li>
+      </ol>
+
+      <div class="scroll-x">
+        <table>
+          <thead><tr><th>項目</th><th>入れる値</th></tr></thead>
+          <tbody>
+            <tr><td>アプリ名</td><td><code>Mado</code></td></tr>
+            <tr><td>ユーザーサポートメール</td><td>ryoya112@gmail.com</td></tr>
+            <tr><td>アプリのホームページ</td><td><code>https://mado.shikumiai.com</code></td></tr>
+            <tr><td>プライバシーポリシー</td><td><code>https://mado.shikumiai.com/privacy</code></td></tr>
+            <tr><td>利用規約</td><td><code>https://mado.shikumiai.com/legal</code></td></tr>
+            <tr><td>承認済みドメイン</td><td><code>shikumiai.com</code></td></tr>
+            <tr><td>デベロッパーの連絡先</td><td>ryoya112@gmail.com</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="aside">
+        プライバシーポリシーと利用規約のページは<b>コードに既にあります</b>
+        （<code>/privacy</code> と <code>/legal</code>）。02〜03 が終わっていれば、この URL で開けます。
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ 5 ══════════════ -->
+  <section class="phase">
+    <div class="phase-head">
+      <div class="step-no">05</div>
+      <div>
+        <h2>Google のクライアントを差し替える<span class="flag block">いま止まっている所</span></h2>
+        <p class="when">Supabase に古いプロジェクトのクライアントが入ったままです。</p>
+      </div>
+    </div>
+    <div class="phase-body">
+      <div class="aside stop">
+        <b>いま食い違っています。</b>
+        Supabase に入っているのは <code>193352583496-…</code>（前のプロジェクトのもの）で、
+        テストユーザーを登録したのは新しい Mado プロジェクトの
+        <code>1030602025638-…</code> です。このままだとログインで弾かれます。
+      </div>
+
+      <ol class="steps">
+        <li><input type="checkbox" id="c501"><label for="c501">Google Cloud（Mado）→ <b>API とサービス</b> → <b>認証情報</b></label></li>
+        <li><input type="checkbox" id="c502"><label for="c502"><b>OAuth 2.0 クライアント ID</b> の一覧から、<code>1030602025638-…</code> のものを開く</label></li>
+        <li><input type="checkbox" id="c503"><label for="c503"><b>承認済みのリダイレクト URI</b> に下の1件を追加して保存</label></li>
+        <li><input type="checkbox" id="c504"><label for="c504">Supabase → <b>Authentication</b> → <b>Sign In / Providers</b> → <b>Google</b></label></li>
+        <li><input type="checkbox" id="c505"><label for="c505">Client ID を下の値に差し替え</label></li>
+        <li><input type="checkbox" id="c506"><label for="c506">Client Secret を差し替え（ダウンロードした JSON の <code>client_secret</code>。<code>GOCSPX-</code> で始まる値）</label></li>
+        <li><input type="checkbox" id="c507"><label for="c507">保存</label></li>
+      </ol>
+
+      <div class="copy">
+        <div class="copy-head"><span>承認済みのリダイレクト URI</span><button class="copy-btn" type="button">コピー</button></div>
+        <pre>https://dralpswprcifzmgojgxu.supabase.co/auth/v1/callback</pre>
+      </div>
+
+      <div class="copy">
+        <div class="copy-head"><span>Supabase に入れる Client ID</span><button class="copy-btn" type="button">コピー</button></div>
+        <pre>1030602025638-tpgpqoc2u7civ1hvsvl65j2ta54m06bf.apps.googleusercontent.com</pre>
+      </div>
+
+      <div class="aside">
+        Client Secret はこのページに載せていません。ダウンロード済みの
+        <code>client_secret_1030602025638-….json</code> を開いて、<code>client_secret</code> の値をコピーしてください。
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ 6 ══════════════ -->
+  <section class="phase">
+    <div class="phase-head">
+      <div class="step-no">06</div>
+      <div>
+        <h2>Supabase 側の URL を本番に向ける</h2>
+        <p class="when">ここが localhost のままだと、ログイン後に本番へ戻れません。</p>
+      </div>
+    </div>
+    <div class="phase-body">
+      <ol class="steps">
+        <li><input type="checkbox" id="c601"><label for="c601"><b>Authentication</b> → <b>URL Configuration</b> → Site URL を <code>https://mado.shikumiai.com</code> に</label></li>
+        <li><input type="checkbox" id="c602"><label for="c602">Redirect URLs に2件を登録（本番と開発の両方）</label></li>
+        <li><input type="checkbox" id="c603"><label for="c603"><b>Settings</b> → <b>General</b> → プロジェクト名を <code>site</code> から <code>Mado</code> に変更</label></li>
+      </ol>
+
+      <div class="copy">
+        <div class="copy-head"><span>Redirect URLs（2件とも入れる）</span><button class="copy-btn" type="button">コピー</button></div>
+        <pre>https://mado.shikumiai.com/**
+http://localhost:3000/**</pre>
+      </div>
+
+      <div class="aside">
+        プロジェクト名を変えても、接続先の <code>dralpswprcifzmgojgxu</code> は変わりません。表示名だけなので影響ゼロです。
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ 7 ══════════════ -->
+  <section class="phase">
+    <div class="phase-head">
+      <div class="step-no">07</div>
+      <div>
+        <h2>通しで確認する</h2>
+        <p class="when">ここまで来たら、実際にログインして確かめます。</p>
+      </div>
+    </div>
+    <div class="phase-body">
+      <ol class="steps">
+        <li><input type="checkbox" id="c701"><label for="c701"><code>https://mado.shikumiai.com/auth/login</code> を開く</label></li>
+        <li><input type="checkbox" id="c702"><label for="c702">「Google でログイン」を押して、自分のアカウントで通る</label></li>
+        <li><input type="checkbox" id="c703"><label for="c703">Supabase → <b>Authentication</b> → <b>Users</b> に自分が出ている</label></li>
+        <li><input type="checkbox" id="c704"><label for="c704">その <b>UID</b> を控える（管理者登録に使う）</label></li>
+        <li><input type="checkbox" id="c705"><label for="c705">Stripe → 開発者 → Webhook で <code>https://mado.shikumiai.com/api/webhook</code> を登録し、<code>whsec_</code> で始まる署名鍵を控える</label></li>
+      </ol>
+
+      <div class="aside">
+        Webhook で受けるイベントは4つです。
+        <code>checkout.session.completed</code> /
+        <code>customer.subscription.updated</code> /
+        <code>customer.subscription.deleted</code> /
+        <code>invoice.payment_failed</code>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <h2>終わったら伝えてほしいこと</h2>
+    <ul>
+      <li>ログインで出た <b>UID</b> — <code>platform_admins</code> に入れて、全顧客が見える管理者にします</li>
+      <li>Stripe の <b>署名鍵</b>（<code>whsec_</code> で始まる値）— これが入るまで決済後の処理は動きません</li>
+      <li>途中で止まった段の番号と、画面に出たメッセージ</li>
+    </ul>
+  </footer>
+
+</div>
+
+<script>
+  const boxes = Array.from(document.querySelectorAll('ol.steps input[type="checkbox"]'));
+  const fill = document.getElementById('fill');
+  const count = document.getElementById('count');
+  const KEY = 'mado-setup-v1';
+
+  function load() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(KEY) || '{}');
+      boxes.forEach(b => { if (saved[b.id]) b.checked = true; });
+    } catch (e) { /* 保存が使えない環境でも表は動く */ }
+  }
+  function save() {
+    try {
+      const state = {};
+      boxes.forEach(b => { if (b.checked) state[b.id] = 1; });
+      localStorage.setItem(KEY, JSON.stringify(state));
+    } catch (e) { /* 同上 */ }
+  }
+  function render() {
+    const done = boxes.filter(b => b.checked).length;
+    fill.style.width = (boxes.length ? (done / boxes.length) * 100 : 0) + '%';
+    count.textContent = done + ' / ' + boxes.length;
+  }
+
+  load();
+  render();
+  boxes.forEach(b => b.addEventListener('change', () => { save(); render(); }));
+
+  document.getElementById('reset').addEventListener('click', () => {
+    boxes.forEach(b => { b.checked = false; });
+    save(); render();
+  });
+
+  document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const pre = btn.closest('.copy').querySelector('pre');
+      try {
+        await navigator.clipboard.writeText(pre.textContent.trim());
+        btn.textContent = 'コピーした';
+        btn.dataset.done = '1';
+        setTimeout(() => { btn.textContent = 'コピー'; btn.dataset.done = ''; }, 1600);
+      } catch (e) {
+        btn.textContent = '手で選んでコピー';
+        setTimeout(() => { btn.textContent = 'コピー'; }, 2200);
+      }
+    });
+  });
+</script>
