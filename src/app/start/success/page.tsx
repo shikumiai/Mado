@@ -73,7 +73,7 @@ export default function StartSuccessPage() {
             サイトの編集や設定はそちらから行えます。
           </p>
           <Link
-            href="/member/site"
+            href="/app"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-500 text-white text-xs font-medium hover:bg-purple-600 transition-colors"
           >
             マイページを開く <ArrowRight className="w-3 h-3" />

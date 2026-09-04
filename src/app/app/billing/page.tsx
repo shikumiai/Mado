@@ -1,0 +1,226 @@
+/**
+ * 支払い・透明性 /app/billing
+ *
+ * SaaS決済憲章「透明性を第1級」: 今のプラン・次回の請求・今月の使用状況を
+ * その場で見せ、使う人が自分で管理できる状態にする。
+ * 有料の会社は Stripe のカスタマーポータルへ直結（アップグレードも解約も同じ入口）。
+ * 無料の会社はプランを上げる導線（今は /start）。
+ *
+ * 未ログイン → /auth/login、会社がまだ無い → /start。権限は DB(RLS) が守る。
+ */
+
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getMyAccount } from "@/lib/auth";
+import { createServerSupabase } from "@/lib/supabase/ssr";
+import { getStripe } from "@/lib/stripe-server";
+import {
+  PLAN_LABELS,
+  PLAN_PRICES,
+  PLAN_EDIT_LIMITS,
+  normalizePlanId,
+} from "@/lib/stripe";
+import { Card, Badge } from "@/components/ui";
+import { BillingPortalButton } from "./BillingPortalButton";
+import { ArrowLeft, ArrowUpRight, Receipt, Gauge, Info } from "lucide-react";
+
+export const metadata = { title: "支払い・プラン｜Mado" };
+
+const backLink =
+  "inline-flex items-center gap-1.5 rounded-md text-sm text-ink2 outline-none transition hover:text-ink focus-visible:ring-2 focus-visible:ring-ring";
+const upgradeLink =
+  "inline-flex h-10 items-center justify-center gap-1.5 rounded-md bg-accent px-5 text-sm font-medium text-on-accent shadow-sh1 outline-none transition hover:brightness-105 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg active:translate-y-px";
+
+/** 今の期間キー（ai_edit_usage.period と同じ 'YYYY-MM'） */
+function currentPeriod(now = new Date()): { key: string; label: string } {
+  const y = now.getFullYear();
+  const m = now.getMonth() + 1;
+  return { key: `${y}-${String(m).padStart(2, "0")}`, label: `${y}年${m}月` };
+}
+
+function formatJpDate(d: Date): string {
+  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
+}
+
+export default async function BillingPage() {
+  const account = await getMyAccount();
+  if (!account) redirect("/auth/login?next=/app/billing");
+  if (!account.org) redirect("/start");
+
+  const { org, sites } = account;
+  const plan = normalizePlanId(org.plan);
+  const limit = PLAN_EDIT_LIMITS[plan];
+  const period = currentPeriod();
+
+  // 本人のセッション（RLS）で、Stripe連携の有無と今月の使用状況を引く
+  const supabase = await createServerSupabase();
+
+  // Stripe の顧客・サブスクID（getMyAccount には含めていないので個別に取る）
+  let stripeCustomerId: string | null = null;
+  let stripeSubscriptionId: string | null = null;
+  if (supabase) {
+    const { data: orgRows } = await supabase
+      .from("orgs")
+      .select("stripe_customer_id, stripe_subscription_id")
+      .limit(1);
+    const row = orgRows?.[0] as
+      | { stripe_customer_id: string | null; stripe_subscription_id: string | null }
+      | undefined;
+    stripeCustomerId = row?.stripe_customer_id ?? null;
+    stripeSubscriptionId = row?.stripe_subscription_id ?? null;
+  }
+  const isPaid = Boolean(stripeCustomerId);
+
+  // 今月の AI 編集の使用回数（このプランのサイト分を合算）
+  let usedThisMonth = 0;
+  const siteIds = sites.map((s) => s.id);
+  if (supabase && siteIds.length > 0) {
+    const { data: usageRows } = await supabase
+      .from("ai_edit_usage")
+      .select("used")
+      .in("site_id", siteIds)
+      .eq("period", period.key);
+    const rows = (usageRows ?? []) as { used: number | null }[];
+    usedThisMonth = rows.reduce((n, r) => n + (r.used ?? 0), 0);
+  }
+
+  // 次回の請求日（取れる範囲で）。取れなくても画面は成り立たせる
+  let nextBillingDate: string | null = null;
+  if (isPaid && stripeSubscriptionId) {
+    const stripe = getStripe();
+    if (stripe) {
+      try {
+        const sub = await stripe.subscriptions.retrieve(stripeSubscriptionId);
+        const sec = sub.items.data[0]?.current_period_end;
+        if (typeof sec === "number") nextBillingDate = formatJpDate(new Date(sec * 1000));
+      } catch (err) {
+        console.error("[billing] 次回請求日の取得に失敗", err);
+      }
+    }
+  }
+
+  const unlimited = limit >= 999;
+  const noAiEdit = limit === 0;
+  const usagePct = unlimited || limit === 0 ? 0 : Math.min(100, Math.round((usedThisMonth / limit) * 100));
+  const overLimit = !unlimited && limit > 0 && usedThisMonth >= limit;
+
+  return (
+    <div className="flex flex-col gap-7">
+      <div>
+        <Link href="/app" className={backLink}>
+          <ArrowLeft className="size-4" aria-hidden /> マイページに戻る
+        </Link>
+        <h1 className="mt-3 text-2xl font-bold">支払い・プラン</h1>
+        <p className="mt-1 text-sm text-ink2">{org.name}</p>
+      </div>
+
+      {/* 現在のプラン */}
+      <Card className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-sm text-ink2">現在のプラン</p>
+            <p className="mt-1 flex items-baseline gap-2">
+              <span className="text-xl font-bold">{PLAN_LABELS[plan]}</span>
+              <span className="tnum text-sm text-ink2">{PLAN_PRICES[plan]}／月</span>
+            </p>
+          </div>
+          <Badge tone={isPaid ? "success" : "neutral"}>{isPaid ? "お支払い中" : "無料プラン"}</Badge>
+        </div>
+
+        <div className="border-t border-line pt-4">
+          {isPaid ? (
+            <div className="flex flex-col gap-2">
+              <BillingPortalButton />
+              <p className="flex items-start gap-1.5 text-xs text-ink3">
+                <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+                プランの変更（上げる・下げる）も、解約も、この画面から自分で行えます。
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <Link href="/start" className={upgradeLink}>
+                プランを上げる <ArrowUpRight className="size-4" aria-hidden />
+              </Link>
+              <p className="text-xs text-ink3">
+                有料プランにすると、AIでの編集や機能の追加ができるようになります。
+              </p>
+            </div>
+          )}
+        </div>
+      </Card>
+
+      {/* 次回の請求 */}
+      <section className="flex flex-col gap-3">
+        <h2 className="flex items-center gap-1.5 text-sm font-semibold text-ink2">
+          <Receipt className="size-4" aria-hidden /> 次回の請求
+        </h2>
+        <Card>
+          {!isPaid ? (
+            <p className="text-sm text-ink2">無料プランのため、請求はありません。</p>
+          ) : (
+            <div className="flex flex-wrap items-baseline justify-between gap-3">
+              <div>
+                <p className="text-sm text-ink2">請求予定日</p>
+                <p className="mt-1 text-base font-semibold text-ink">
+                  {nextBillingDate ?? "Stripe の管理画面でご確認ください"}
+                </p>
+              </div>
+              <p className="tnum text-lg font-bold text-ink">{PLAN_PRICES[plan]}</p>
+            </div>
+          )}
+        </Card>
+      </section>
+
+      {/* 今月の AI 編集の使用状況（透明性を第1級に） */}
+      <section className="flex flex-col gap-3">
+        <h2 className="flex items-center gap-1.5 text-sm font-semibold text-ink2">
+          <Gauge className="size-4" aria-hidden /> 今月のAI編集（{period.label}）
+        </h2>
+        <Card className="flex flex-col gap-3">
+          {noAiEdit ? (
+            <p className="text-sm text-ink2">
+              このプランにはAIでの編集はありません。手動での編集はいつでもできます。
+            </p>
+          ) : unlimited ? (
+            <div className="flex items-baseline justify-between gap-3">
+              <p className="text-sm text-ink2">今月の利用回数</p>
+              <p className="text-base font-semibold text-ink">
+                <span className="tnum">{usedThisMonth}</span> 回
+                <span className="ml-2 text-sm font-normal text-ink2">（無制限）</span>
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-baseline justify-between gap-3">
+                <p className="text-sm text-ink2">今月の利用回数</p>
+                <p className="tnum text-base font-semibold text-ink">
+                  {usedThisMonth} / {limit} 回
+                </p>
+              </div>
+              <div
+                className="h-2 w-full overflow-hidden rounded-pill bg-surface2"
+                role="progressbar"
+                aria-valuenow={usedThisMonth}
+                aria-valuemin={0}
+                aria-valuemax={limit}
+              >
+                <div
+                  className="h-full rounded-pill transition-[width] duration-300"
+                  style={{
+                    width: `${usagePct}%`,
+                    backgroundColor: overLimit ? "var(--warn)" : "var(--accent)",
+                  }}
+                />
+              </div>
+              <p className="text-xs text-ink3">
+                {overLimit
+                  ? "今月の回数を使い切りました。来月にリセットされます。"
+                  : `今月はあと ${Math.max(limit - usedThisMonth, 0)} 回つかえます。`}
+              </p>
+            </>
+          )}
+        </Card>
+      </section>
+    </div>
+  );
+}

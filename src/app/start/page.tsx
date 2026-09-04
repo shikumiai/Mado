@@ -520,7 +520,7 @@ export default function StartPage() {
           setSubmitting(false);
           return;
         }
-        window.location.href = "/member/site";
+        window.location.href = "/app";
       } else {
         const res = await startPaidCheckout(input);
         if (!res.ok) {

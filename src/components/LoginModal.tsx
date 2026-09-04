@@ -53,7 +53,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   async function handleGoogle() {
     setBusy(true);
     setError("");
-    // 着地先はコールバックが会社の有無で判定する（/member/site か /start）。
+    // 着地先はコールバックが会社の有無で判定する（/app か /start）。
     const result = await signInWithGoogle();
     if (!result.ok) {
       setError(result.message ?? "ログインを開始できませんでした。");

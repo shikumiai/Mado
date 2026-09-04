@@ -44,9 +44,8 @@ export async function GET(request: Request) {
 
   // 会社がある人はダッシュボード、まだの人は申込へ
   const { data: orgs } = await supabase.from("orgs").select("id").limit(1);
-  // 会社がある人は Supabase 版の会員トップ（/member/site）へ。
-  // 旧 /member は next-auth なので、ここへ返すと再ログインを促してしまう。
-  const dest = orgs && orgs.length > 0 ? "/member/site" : "/start";
+  // 会社がある人は会員ホーム（/app）へ。まだの人は申込フローの続きへ。
+  const dest = orgs && orgs.length > 0 ? "/app" : "/start";
 
   return NextResponse.redirect(`${origin}${dest}`);
 }
