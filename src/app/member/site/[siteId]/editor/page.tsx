@@ -23,6 +23,7 @@ import { customerSiteUrl, customerSiteLabel } from "@/lib/resolve-site";
 const TEMPLATE_RENDERERS: Record<string, React.ComponentType<any>> = {
   "warm-craft": dynamic(() => import("@/components/template-renderers/WarmCraftRenderer")),
   "clean-arch": dynamic(() => import("@/components/template-renderers/CleanArchRenderer")),
+  "trust-navy": dynamic(() => import("@/components/template-renderers/TrustNavyRenderer")),
 };
 
 /* ═══════════════════════════════════════

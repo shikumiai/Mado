@@ -15,6 +15,7 @@
 import type { SiteConfig } from "@/lib/site-config-schema";
 import WarmCraftRenderer from "./WarmCraftRenderer";
 import CleanArchRenderer from "./CleanArchRenderer";
+import TrustNavyRenderer from "./TrustNavyRenderer";
 
 type RendererProps = {
   config: SiteConfig;
@@ -26,8 +27,7 @@ type RendererProps = {
 const RENDERERS: Record<string, React.ComponentType<RendererProps>> = {
   "warm-craft": WarmCraftRenderer,
   "clean-arch": CleanArchRenderer,
-  // TODO: trust-navy の Renderer を作る。
-  // 新設計では Renderer が本番サイトを描くので、これが無いと trust-navy は売れない。
+  "trust-navy": TrustNavyRenderer,
 };
 
 /** warm-craft-pro → warm-craft のように系統名へ丸める */

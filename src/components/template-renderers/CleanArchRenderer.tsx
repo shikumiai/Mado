@@ -1,54 +1,32 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, Phone, Check, Send } from "lucide-react";
+import { Mail, Phone, Check, ArrowUpRight } from "lucide-react";
 import type { SiteConfig } from "@/lib/site-config-schema";
 import { getSections } from "@/lib/site-config-schema";
 
 /**
- * clean-arch テンプレートの描画コンポーネント（セクション単位描画版）
+ * clean-arch テンプレートの描画コンポーネント（設計事務所向け）
+ *
+ * 余白の効いたミニマル白基調。細字・広い余白・ヘアライン。
+ * 固定のモノトーン + ストーン系パレット（アプリのダークモードに引きずられない）。
+ * sections配列の順序でセクションを描く。会社情報は全て config から差し込む。
  */
 
-const archGradients = [
-  ["#D4CFC5", "#C4B8A6"], ["#C8C2B5", "#B8AE96"],
-  ["#D1CBC1", "#BFB7A5"], ["#CCC7BC", "#BAB2A0"],
-  ["#D6D0C6", "#C6BDA9"], ["#C9C3B6", "#B5AD9A"],
-  ["#D2CCC2", "#C0B8A6"], ["#CDCAB9", "#BDB5A3"],
-];
+/* ─── 固定パレット ─── */
+const INK = "#2B2B2B";
+const SUB = "#8A8A84";
+const FAINT = "#B8B8B2";
+const LINE = "#EAEAE6";
+const STONE1 = "#D8D3C8";
+const STONE2 = "#C3BCAD";
 
-const archPatterns = [
-  (c1: string, c2: string) => (
-    <>
-      <rect x="200" y="200" width="400" height="220" fill={c1} />
-      <rect x="200" y="190" width="400" height="15" fill={c2} />
-      <rect x="240" y="230" width="160" height="160" fill="white" opacity="0.4" />
-      <line x1="320" y1="230" x2="320" y2="390" stroke={c2} strokeWidth="1.5" />
-      <rect x="460" y="280" width="100" height="140" fill={c2} opacity="0.6" />
-    </>
-  ),
-  (c1: string, c2: string) => (
-    <>
-      <rect x="150" y="260" width="200" height="160" fill={c1} />
-      <rect x="350" y="180" width="250" height="240" fill={c2} opacity="0.9" />
-      <rect x="180" y="290" width="80" height="100" fill="white" opacity="0.35" />
-      <rect x="390" y="210" width="60" height="80" fill="white" opacity="0.35" />
-    </>
-  ),
-  (c1: string, c2: string) => (
-    <>
-      <rect x="100" y="280" width="600" height="120" fill={c1} />
-      <rect x="100" y="270" width="600" height="14" fill={c2} />
-      <rect x="140" y="300" width="200" height="80" fill="white" opacity="0.4" />
-      <rect x="420" y="310" width="60" height="90" fill={c2} opacity="0.5" />
-    </>
-  ),
-  (c1: string, c2: string) => (
-    <>
-      <rect x="200" y="150" width="180" height="270" fill={c1} />
-      <rect x="380" y="220" width="220" height="200" fill={c2} opacity="0.85" />
-      <rect x="230" y="180" width="120" height="80" fill="white" opacity="0.4" />
-    </>
-  ),
+/* 作品プレースホルダーのパターン */
+const ARCH_STONES: [string, string][] = [
+  ["#D9D4C9", "#C5BDAD"], ["#D2CCC1", "#BEB6A5"],
+  ["#DAD5CB", "#C8C0B0"], ["#CFC9BD", "#BBB2A1"],
+  ["#D6D1C6", "#C2BAAA"], ["#D0CABE", "#BAB1A0"],
+  ["#DBD6CC", "#C6BEAE"], ["#CDC7BB", "#B9B09F"],
 ];
 
 interface Props {
@@ -92,31 +70,61 @@ function E({ fieldId, value, type = "text", editMode, onFieldClick, changedField
   );
 }
 
-/* ═══════════════════════════════════════
-   各セクション
-   ═══════════════════════════════════════ */
+function ArchArt({ seed }: { seed: number }) {
+  const [c1, c2] = ARCH_STONES[seed % ARCH_STONES.length];
+  const variant = seed % 4;
+  return (
+    <svg viewBox="0 0 600 460" style={{ width: "100%", height: "100%", display: "block" }} preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <rect width="600" height="460" fill="#EFEDE7" />
+      {variant === 0 && (<>
+        <rect x="130" y="150" width="340" height="230" fill={c1} />
+        <rect x="130" y="140" width="340" height="14" fill={c2} />
+        <rect x="170" y="190" width="130" height="130" fill="#fff" opacity="0.5" />
+        <line x1="235" y1="190" x2="235" y2="320" stroke={c2} strokeWidth="1.5" />
+        <rect x="340" y="230" width="90" height="120" fill={c2} opacity="0.55" />
+      </>)}
+      {variant === 1 && (<>
+        <rect x="90" y="220" width="180" height="160" fill={c1} />
+        <rect x="290" y="130" width="220" height="250" fill={c2} opacity="0.9" />
+        <rect x="120" y="250" width="70" height="90" fill="#fff" opacity="0.45" />
+        <rect x="330" y="165" width="55" height="70" fill="#fff" opacity="0.45" />
+      </>)}
+      {variant === 2 && (<>
+        <rect x="70" y="250" width="460" height="110" fill={c1} />
+        <rect x="70" y="240" width="460" height="12" fill={c2} />
+        <rect x="110" y="275" width="170" height="70" fill="#fff" opacity="0.5" />
+        <rect x="360" y="285" width="55" height="75" fill={c2} opacity="0.5" />
+      </>)}
+      {variant === 3 && (<>
+        <rect x="160" y="110" width="150" height="270" fill={c1} />
+        <rect x="310" y="190" width="180" height="190" fill={c2} opacity="0.85" />
+        <rect x="185" y="140" width="100" height="70" fill="#fff" opacity="0.5" />
+      </>)}
+      <line x1="0" y1="382" x2="600" y2="382" stroke={c2} strokeWidth="1" opacity="0.4" />
+    </svg>
+  );
+}
 
+/* ═══════════════════════════════════════
+   Hero
+   ═══════════════════════════════════════ */
 function HeroSection({ config, ep }: { config: SiteConfig; ep: EP }) {
   const c = config.company;
   return (
-    <section style={{ minHeight: "80vh", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "#fff" }}>
-      <div style={{ textAlign: "center", padding: "48px 24px", maxWidth: 800 }}>
-        <p style={{ color: "#ccc", fontSize: 10, letterSpacing: "0.5em", marginBottom: 32 }}>
-          ARCHITECTURE + DESIGN
-        </p>
+    <section className="ca-hero">
+      <div className="ca-hero-inner">
+        <p className="ca-hero-eyebrow">ARCHITECTURE &amp; DESIGN</p>
         <E fieldId="company.tagline" value={c.tagline} {...ep}>
-          <h1 style={{ color: "#333", fontWeight: 300, lineHeight: 1.5, fontSize: "clamp(2rem, 6vw, 4rem)", letterSpacing: "0.08em", margin: 0 }}>
-            {c.tagline}
-          </h1>
+          <h1 className="ca-hero-title">{c.tagline}</h1>
         </E>
-        <div style={{ width: 48, height: 1, backgroundColor: "#ddd", margin: "28px auto" }} />
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
+        <div className="ca-hero-rule" />
+        <div className="ca-hero-meta">
           <E fieldId="company.name" value={c.name} {...ep}>
-            <span style={{ color: "#aaa", fontSize: 14, letterSpacing: "0.1em" }}>{c.name}</span>
+            <span>{c.name}</span>
           </E>
-          <span style={{ color: "#ddd" }}>|</span>
+          <span className="ca-hero-sep">/</span>
           <E fieldId="company.description" value={c.description} {...ep}>
-            <span style={{ color: "#aaa", fontSize: 14, letterSpacing: "0.1em" }}>{c.description}</span>
+            <span>{c.description}</span>
           </E>
         </div>
       </div>
@@ -124,80 +132,44 @@ function HeroSection({ config, ep }: { config: SiteConfig; ep: EP }) {
   );
 }
 
+/* ═══════════════════════════════════════
+   Works（作品一覧）
+   ═══════════════════════════════════════ */
 function WorksSection({ config, ep }: { config: SiteConfig; ep: EP }) {
-  const works = config.projects.map((p, i) => ({
-    id: p.id, title: p.titleEn || p.title, titleJa: p.title,
-    year: p.year, type: p.category, desc: p.description,
-    size: (p.size || "landscape") as string,
-    colors: archGradients[i % archGradients.length],
-    pattern: i % archPatterns.length,
-  }));
+  const projects = config.projects || [];
+  if (projects.length === 0) return null;
   return (
-    <section id="works" style={{ padding: "80px 24px", backgroundColor: "#fff" }}>
-      <div style={{ maxWidth: 1400, margin: "0 auto" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 48 }}>
-          <p style={{ color: "#ccc", fontSize: 10, letterSpacing: "0.4em" }}>SELECTED WORKS</p>
-          <h2 style={{ color: "#333", fontSize: 24, fontWeight: 300, letterSpacing: "0.1em", margin: 0 }}>作品一覧</h2>
+    <section id="works" className="ca-sec">
+      <div className="ca-wrap">
+        <div className="ca-head-row">
+          <p className="ca-eyebrow">SELECTED WORKS</p>
+          <h2 className="ca-h2">作品一覧</h2>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 12 }}>
-          {works.map((w, i) => {
-            const [c1, c2] = w.colors;
-            const PatternSvg = archPatterns[w.pattern];
-            return (
-              <div key={w.id} style={{ overflow: "hidden" }}>
-                <E fieldId={`projects.${i}.image`} value="" type="image" {...ep}>
-                  <div style={{ height: w.size === "portrait" ? 400 : 260, overflow: "hidden" }}>
-                    <svg viewBox="0 0 800 500" style={{ width: "100%", height: "100%", display: "block" }} xmlns="http://www.w3.org/2000/svg">
-                      <rect width="800" height="500" fill="#EDEBE5" />
-                      <rect y="420" width="800" height="80" fill={c2} opacity="0.3" />
-                      {PatternSvg(c1, c2)}
-                      <circle cx={650 + (i % 3) * 20} cy={380} r={20 + (i % 2) * 8} fill={c2} opacity="0.25" />
-                    </svg>
-                  </div>
+        <div className="ca-grid-works">
+          {projects.map((p, i) => (
+            <div key={p.id} className={`ca-work${p.size === "portrait" ? " ca-work-tall" : ""}`}>
+              <E fieldId={`projects.${i}.image`} value={p.image || ""} type="image" {...ep}>
+                <div className="ca-work-img">
+                  {p.image
+                    ? <img src={p.image} alt={p.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                    : <ArchArt seed={i} />}
+                </div>
+              </E>
+              <div className="ca-work-cap">
+                <E fieldId={`projects.${i}.title`} value={p.title} {...ep}>
+                  <p className="ca-work-title">{p.titleEn || p.title}</p>
                 </E>
-                <div style={{ padding: "12px 4px 24px" }}>
-                  <E fieldId={`projects.${i}.title`} value={w.titleJa} {...ep}>
-                    <p style={{ fontSize: 14, fontWeight: 300, color: "#333", letterSpacing: "0.1em", margin: "0 0 2px" }}>{w.title}</p>
-                  </E>
-                  <div style={{ display: "flex", gap: 8, alignItems: "center", margin: "2px 0 0" }}>
-                    <E fieldId={`projects.${i}.category`} value={w.type} {...ep}>
-                      <span style={{ fontSize: 11, color: "#aaa" }}>{w.type}</span>
-                    </E>
-                    <E fieldId={`projects.${i}.year`} value={w.year} {...ep}>
-                      <span style={{ fontSize: 11, color: "#aaa" }}>{w.year}</span>
-                    </E>
-                  </div>
-                  <E fieldId={`projects.${i}.description`} value={w.desc} {...ep}>
-                    <p style={{ fontSize: 13, color: "#888", marginTop: 8, lineHeight: 1.8 }}>{w.desc}</p>
-                  </E>
+                <div className="ca-work-meta">
+                  <E fieldId={`projects.${i}.category`} value={p.category} {...ep}><span>{p.category}</span></E>
+                  <E fieldId={`projects.${i}.year`} value={p.year} {...ep}><span>{p.year}</span></E>
                 </div>
+                {p.description && (
+                  <E fieldId={`projects.${i}.description`} value={p.description} {...ep}>
+                    <p className="ca-work-desc">{p.description}</p>
+                  </E>
+                )}
               </div>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function AwardsSection({ config, ep }: { config: SiteConfig; ep: EP }) {
-  const awards = config.awards;
-  if (!awards || awards.length === 0) return null;
-  return (
-    <section id="awards" style={{ padding: "80px 24px", backgroundColor: "#fff", borderTop: "1px solid #f0f0f0" }}>
-      <div style={{ maxWidth: 1000, margin: "0 auto" }}>
-        <p style={{ color: "#ccc", fontSize: 10, letterSpacing: "0.4em", marginBottom: 48 }}>AWARDS</p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          {awards.map((a, i) => (
-            <E key={i} fieldId={`awards.${i}.title`} value={a.title} {...ep}>
-              <div style={{ display: "flex", gap: 24, padding: "12px 0", borderBottom: "1px solid #f0f0f0" }}>
-                <span style={{ fontSize: 12, color: "#ccc", flexShrink: 0, width: 48 }}>{a.year}</span>
-                <div>
-                  <p style={{ fontSize: 14, color: "#333", fontWeight: 300 }}>{a.title}</p>
-                  <p style={{ fontSize: 12, color: "#aaa", marginTop: 2 }}>{a.project}</p>
-                </div>
-              </div>
-            </E>
+            </div>
           ))}
         </div>
       </div>
@@ -205,56 +177,58 @@ function AwardsSection({ config, ep }: { config: SiteConfig; ep: EP }) {
   );
 }
 
+/* ═══════════════════════════════════════
+   About（設計者紹介）
+   ═══════════════════════════════════════ */
 function AboutSection({ config, ep }: { config: SiteConfig; ep: EP }) {
   const c = config.company;
+  const facts: [string, string | undefined][] = [
+    ["設立", c.since ? `${c.since}年` : undefined],
+    ["所在地", c.address],
+    ["資格", c.ceoTitle],
+    ["登録", c.license],
+  ];
   return (
-    <section id="about" style={{ padding: "80px 24px", backgroundColor: "#fff", borderTop: "1px solid #f0f0f0" }}>
-      <div style={{ maxWidth: 1000, margin: "0 auto" }}>
-        <p style={{ color: "#ccc", fontSize: 10, letterSpacing: "0.4em", marginBottom: 48 }}>ABOUT</p>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 48 }}>
+    <section id="about" className="ca-sec ca-sec-line">
+      <div className="ca-wrap">
+        <p className="ca-eyebrow" style={{ marginBottom: 44 }}>ABOUT</p>
+        <div className="ca-about">
           <div>
-            <E fieldId="company.ceoPhoto" value="" type="image" {...ep}>
-              <div style={{ width: "100%", aspectRatio: "3/4", overflow: "hidden" }}>
-                <svg viewBox="0 0 400 530" style={{ width: "100%", height: "100%", display: "block" }} xmlns="http://www.w3.org/2000/svg">
-                  <rect width="400" height="530" fill="#E0DCD4" />
-                  <circle cx="200" cy="180" r="60" fill="#C4B8A6" />
-                  <ellipse cx="200" cy="370" rx="80" ry="100" fill="#C4B8A6" />
-                  <line x1="50" y1="480" x2="350" y2="480" stroke="#D4CFC5" strokeWidth="1" />
-                  <text x="200" y="520" textAnchor="middle" fill="#B8AE96" fontSize="11" fontFamily="sans-serif" letterSpacing="0.2em">PORTRAIT</text>
-                </svg>
+            <E fieldId="company.ceoPhoto" value={c.ceoPhoto || ""} type="image" {...ep}>
+              <div className="ca-portrait">
+                {c.ceoPhoto
+                  ? <img src={c.ceoPhoto} alt={c.ceo} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  : (
+                    <svg viewBox="0 0 400 500" style={{ width: "100%", height: "100%", display: "block" }} xmlns="http://www.w3.org/2000/svg">
+                      <rect width="400" height="500" fill="#E4E1D9" />
+                      <circle cx="200" cy="175" r="58" fill={STONE2} />
+                      <ellipse cx="200" cy="370" rx="82" ry="98" fill={STONE2} />
+                      <line x1="60" y1="460" x2="340" y2="460" stroke={STONE1} strokeWidth="1" />
+                    </svg>
+                  )}
               </div>
             </E>
-            <div style={{ marginTop: 20 }}>
+            <div className="ca-portrait-cap">
               <E fieldId="company.ceo" value={c.ceo || ""} {...ep}>
-                <h3 style={{ fontSize: 20, fontWeight: 300, color: "#333", letterSpacing: "0.1em", margin: 0 }}>{c.ceo}</h3>
+                <p className="ca-portrait-name">{c.ceo}</p>
               </E>
-              <E fieldId="company.ceoTitle" value={c.ceoTitle || ""} {...ep}>
-                <p style={{ fontSize: 12, color: "#aaa", letterSpacing: "0.1em", marginTop: 6 }}>{c.ceoTitle || ""}</p>
-              </E>
+              {c.ceoTitle && (
+                <E fieldId="company.ceoTitle" value={c.ceoTitle} {...ep}>
+                  <p className="ca-portrait-role">{c.ceoTitle}</p>
+                </E>
+              )}
             </div>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
+          <div className="ca-about-body">
             <E fieldId="company.bio" value={c.bio} {...ep}>
-              <div style={{ fontSize: 14, color: "#666", lineHeight: 2.4 }}>
-                {c.bio.split("\n\n").map((para, i) => (
-                  <p key={i} style={{ margin: 0, marginTop: i > 0 ? 20 : 0 }}>{para}</p>
-                ))}
+              <div className="ca-bio">
+                {c.bio.split("\n\n").map((para, i) => <p key={i} style={{ margin: i > 0 ? "18px 0 0" : 0 }}>{para}</p>)}
               </div>
             </E>
-            <div style={{ width: 32, height: 1, backgroundColor: "#ddd", margin: "32px 0" }} />
-            <div style={{ display: "flex", flexDirection: "column", gap: 12, fontSize: 12, color: "#aaa" }}>
-              {[
-                { label: "設立", fieldId: "company.since", value: `${c.since}年` },
-                { label: "所在地", fieldId: "company.address", value: c.address },
-                { label: "資格", fieldId: "company.ceoTitle", value: c.ceoTitle || "" },
-                { label: "登録", fieldId: "company.license", value: c.license || "" },
-              ].filter(item => item.value).map((item) => (
-                <E key={item.fieldId} fieldId={item.fieldId} value={item.value} {...ep}>
-                  <div style={{ display: "flex", gap: 24 }}>
-                    <span style={{ width: 48, color: "#ccc", flexShrink: 0 }}>{item.label}</span>
-                    <span>{item.value}</span>
-                  </div>
-                </E>
+            <div className="ca-about-rule" />
+            <div className="ca-facts">
+              {facts.filter((f) => f[1]).map(([label, value]) => (
+                <div key={label} className="ca-fact"><span className="ca-fact-key">{label}</span><span>{value}</span></div>
               ))}
             </div>
           </div>
@@ -264,19 +238,25 @@ function AboutSection({ config, ep }: { config: SiteConfig; ep: EP }) {
   );
 }
 
-function TestimonialsSection({ config, ep }: { config: SiteConfig; ep: EP }) {
-  const testimonials = config.testimonials;
-  if (!testimonials || testimonials.length === 0) return null;
+/* ═══════════════════════════════════════
+   Awards（受賞歴）
+   ═══════════════════════════════════════ */
+function AwardsSection({ config, ep }: { config: SiteConfig; ep: EP }) {
+  const awards = config.awards || [];
+  if (awards.length === 0) return null;
   return (
-    <section id="testimonials" style={{ padding: "80px 24px", backgroundColor: "#fff", borderTop: "1px solid #f0f0f0" }}>
-      <div style={{ maxWidth: 1000, margin: "0 auto" }}>
-        <p style={{ color: "#ccc", fontSize: 10, letterSpacing: "0.4em", marginBottom: 48 }}>VOICE</p>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 24 }}>
-          {testimonials.map((t, i) => (
-            <E key={i} fieldId={`testimonials.${i}.text`} value={t.text} {...ep}>
-              <div style={{ padding: 24, border: "1px solid #f0f0f0" }}>
-                <p style={{ fontSize: 14, color: "#666", lineHeight: 2.0, marginBottom: 16 }}>「{t.text}」</p>
-                <p style={{ fontSize: 11, color: "#aaa" }}>{t.name} — {t.project}</p>
+    <section id="awards" className="ca-sec ca-sec-line">
+      <div className="ca-wrap" style={{ maxWidth: 900 }}>
+        <p className="ca-eyebrow" style={{ marginBottom: 44 }}>AWARDS</p>
+        <div>
+          {awards.map((a, i) => (
+            <E key={i} fieldId={`awards.${i}.title`} value={a.title} {...ep}>
+              <div className="ca-award-row">
+                <span className="ca-award-year">{a.year}</span>
+                <div>
+                  <p className="ca-award-title">{a.title}</p>
+                  {a.project && <p className="ca-award-project">{a.project}</p>}
+                </div>
               </div>
             </E>
           ))}
@@ -286,19 +266,47 @@ function TestimonialsSection({ config, ep }: { config: SiteConfig; ep: EP }) {
   );
 }
 
-function NewsSection({ config, ep }: { config: SiteConfig; ep: EP }) {
-  const news = config.news;
-  if (!news || news.length === 0) return null;
+/* ═══════════════════════════════════════
+   Testimonials（お客様の声）
+   ═══════════════════════════════════════ */
+function TestimonialsSection({ config, ep }: { config: SiteConfig; ep: EP }) {
+  const items = config.testimonials || [];
+  if (items.length === 0) return null;
   return (
-    <section id="news" style={{ padding: "80px 24px", backgroundColor: "#fff", borderTop: "1px solid #f0f0f0" }}>
-      <div style={{ maxWidth: 1000, margin: "0 auto" }}>
-        <p style={{ color: "#ccc", fontSize: 10, letterSpacing: "0.4em", marginBottom: 48 }}>NEWS</p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+    <section className="ca-sec ca-sec-line">
+      <div className="ca-wrap">
+        <p className="ca-eyebrow" style={{ marginBottom: 44 }}>VOICE</p>
+        <div className="ca-grid-voice">
+          {items.map((t, i) => (
+            <E key={i} fieldId={`testimonials.${i}.text`} value={t.text} {...ep}>
+              <div className="ca-voice">
+                <p className="ca-voice-text">「{t.text}」</p>
+                <p className="ca-voice-name">{t.name} — {t.project}</p>
+              </div>
+            </E>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ═══════════════════════════════════════
+   News（お知らせ）
+   ═══════════════════════════════════════ */
+function NewsSection({ config, ep }: { config: SiteConfig; ep: EP }) {
+  const news = config.news || [];
+  if (news.length === 0) return null;
+  return (
+    <section className="ca-sec ca-sec-line">
+      <div className="ca-wrap" style={{ maxWidth: 900 }}>
+        <p className="ca-eyebrow" style={{ marginBottom: 44 }}>NEWS</p>
+        <div>
           {news.map((n, i) => (
             <E key={i} fieldId={`news.${i}.title`} value={n.title} {...ep}>
-              <div style={{ display: "flex", gap: 24, padding: "12px 0", borderBottom: "1px solid #f0f0f0" }}>
-                <span style={{ fontSize: 11, color: "#ccc", flexShrink: 0 }}>{n.date}</span>
-                <span style={{ fontSize: 14, color: "#333", fontWeight: 300 }}>{n.title}</span>
+              <div className="ca-news-row">
+                <span className="ca-news-date">{n.date}</span>
+                <span className="ca-news-title">{n.title}</span>
               </div>
             </E>
           ))}
@@ -308,76 +316,39 @@ function NewsSection({ config, ep }: { config: SiteConfig; ep: EP }) {
   );
 }
 
+/* ═══════════════════════════════════════
+   Contact（お問い合わせ）
+   ═══════════════════════════════════════ */
 function ContactSection({ config, ep }: { config: SiteConfig; ep: EP }) {
   const c = config.company;
-  const [submitted, setSubmitted] = useState(false);
+  const [sent, setSent] = useState(false);
   return (
-    <section id="contact" style={{ padding: "80px 24px", backgroundColor: "#fff", borderTop: "1px solid #f0f0f0" }}>
-      <div style={{ maxWidth: 700, margin: "0 auto" }}>
-        <p style={{ color: "#ccc", fontSize: 10, letterSpacing: "0.4em", marginBottom: 16 }}>CONTACT</p>
-        <p style={{ fontSize: 14, color: "#888", lineHeight: 1.8, marginBottom: 40 }}>
-          お気軽にお問い合わせください。
-        </p>
-        <div style={{ display: "flex", gap: 12, marginBottom: 40 }}>
+    <section id="contact" className="ca-sec ca-sec-line">
+      <div className="ca-wrap" style={{ maxWidth: 720 }}>
+        <p className="ca-eyebrow" style={{ marginBottom: 16 }}>CONTACT</p>
+        <p className="ca-contact-lead">お気軽にお問い合わせください。</p>
+        <div className="ca-contact-links">
           <E fieldId="company.email" value={c.email} {...ep}>
-            <a href={`mailto:${c.email}`} style={{
-              flex: 1, display: "flex", alignItems: "center", gap: 12,
-              padding: "14px 16px", border: "1px solid #e5e5e5",
-              fontSize: 14, color: "#666", textDecoration: "none",
-            }}>
-              <Mail size={16} color="#ccc" strokeWidth={1.5} />
-              {c.email}
-            </a>
+            <a href={`mailto:${c.email}`} className="ca-contact-link"><Mail size={16} color={FAINT} strokeWidth={1.5} /> {c.email}</a>
           </E>
           <E fieldId="company.phone" value={c.phone} {...ep}>
-            <a href={`tel:${c.phone}`} style={{
-              flex: 1, display: "flex", alignItems: "center", gap: 12,
-              padding: "14px 16px", border: "1px solid #e5e5e5",
-              fontSize: 14, color: "#666", textDecoration: "none",
-            }}>
-              <Phone size={16} color="#ccc" strokeWidth={1.5} />
-              {c.phone}
-            </a>
+            <a href={`tel:${c.phone}`} className="ca-contact-link"><Phone size={16} color={FAINT} strokeWidth={1.5} /> {c.phone}</a>
           </E>
         </div>
-        {submitted ? (
-          <div style={{ textAlign: "center", padding: "48px 0", border: "1px solid #f0f0f0" }}>
-            <div style={{ width: 48, height: 48, border: "1px solid #e5e5e5", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px" }}>
-              <Check size={20} color="#aaa" />
-            </div>
-            <p style={{ fontSize: 15, fontWeight: 300, color: "#333", letterSpacing: "0.05em" }}>送信ありがとうございます</p>
-            <p style={{ fontSize: 12, color: "#aaa", marginTop: 4 }}>3営業日以内にご返信いたします。</p>
+        {sent ? (
+          <div className="ca-thanks">
+            <div className="ca-thanks-icon"><Check size={20} color={SUB} /></div>
+            <p className="ca-thanks-title">送信ありがとうございます</p>
+            <p className="ca-thanks-sub">3営業日以内にご返信いたします。</p>
           </div>
         ) : (
-          <form onSubmit={(e) => { e.preventDefault(); setSubmitted(true); }} style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-              {[
-                { label: "お名前", placeholder: "高橋 花子", type: "text" },
-                { label: "メールアドレス", placeholder: "hello@example.com", type: "email" },
-              ].map((f) => (
-                <div key={f.label}>
-                  <label style={{ display: "block", fontSize: 10, color: "#ccc", letterSpacing: "0.2em", marginBottom: 8 }}>{f.label}</label>
-                  <input type={f.type} placeholder={f.placeholder} style={{
-                    width: "100%", padding: "10px 0", border: "none", borderBottom: "1px solid #e5e5e5",
-                    fontSize: 14, color: "#333", outline: "none", background: "transparent",
-                  }} />
-                </div>
-              ))}
+          <form className="ca-form" onSubmit={(e) => { e.preventDefault(); setSent(true); }}>
+            <div className="ca-form-row">
+              <label className="ca-field"><span>お名前</span><input type="text" required placeholder="高橋 花子" /></label>
+              <label className="ca-field"><span>メールアドレス</span><input type="email" required placeholder="hello@example.com" /></label>
             </div>
-            <div>
-              <label style={{ display: "block", fontSize: 10, color: "#ccc", letterSpacing: "0.2em", marginBottom: 8 }}>ご相談内容</label>
-              <textarea rows={5} placeholder="ご計画の概要をお聞かせください。" style={{
-                width: "100%", padding: "10px 0", border: "none", borderBottom: "1px solid #e5e5e5",
-                fontSize: 14, color: "#333", outline: "none", background: "transparent", resize: "none",
-              }} />
-            </div>
-            <button type="submit" style={{
-              width: "100%", padding: "14px", backgroundColor: "#333", color: "#fff",
-              fontSize: 12, letterSpacing: "0.2em", border: "none", cursor: "pointer",
-            }}>
-              SEND MESSAGE
-            </button>
-            <p style={{ fontSize: 10, color: "#ccc", textAlign: "center" }}>※ 3営業日以内にご返信いたします</p>
+            <label className="ca-field"><span>ご相談内容</span><textarea rows={5} required placeholder="ご計画の概要をお聞かせください。" /></label>
+            <button type="submit" className="ca-submit">SEND MESSAGE <ArrowUpRight size={15} /></button>
           </form>
         )}
       </div>
@@ -386,23 +357,132 @@ function ContactSection({ config, ep }: { config: SiteConfig; ep: EP }) {
 }
 
 /* ═══════════════════════════════════════
-   セクション→コンポーネントのマッピング
+   セクション→コンポーネント
    ═══════════════════════════════════════ */
-
 const SECTION_COMPONENTS: Record<string, (props: { config: SiteConfig; ep: EP }) => React.ReactNode> = {
   hero: HeroSection,
   works: WorksSection,
-  awards: AwardsSection,
   about: AboutSection,
+  awards: AwardsSection,
   testimonials: TestimonialsSection,
   news: NewsSection,
   contact: ContactSection,
 };
 
 /* ═══════════════════════════════════════
+   スコープCSS
+   ═══════════════════════════════════════ */
+const STYLES = `
+.ca-root { font-family: 'Noto Sans JP', system-ui, sans-serif; color: ${INK}; background: #fff; font-weight: 300; }
+.ca-root * { box-sizing: border-box; }
+.ca-root img { max-width: 100%; }
+.ca-wrap { max-width: 1240px; margin: 0 auto; padding: 0 32px; }
+.ca-sec { padding: 96px 0; background: #fff; }
+.ca-sec-line { border-top: 1px solid ${LINE}; }
+.ca-eyebrow { font-size: 10px; letter-spacing: 0.45em; color: ${FAINT}; margin: 0; font-weight: 400; }
+.ca-h2 { font-size: 24px; font-weight: 300; letter-spacing: 0.1em; color: ${INK}; margin: 8px 0 0; }
+.ca-head-row { margin-bottom: 56px; }
+
+/* Header */
+.ca-head { position: sticky; top: 0; z-index: 50; background: rgba(255,255,255,0.94); backdrop-filter: blur(12px); border-bottom: 1px solid ${LINE}; }
+.ca-head.ca-head-static { position: relative; }
+.ca-head-inner { max-width: 1240px; margin: 0 auto; padding: 0 32px; height: 62px; display: flex; align-items: center; justify-content: space-between; }
+.ca-head-name { font-size: 14px; font-weight: 300; letter-spacing: 0.28em; color: ${INK}; }
+.ca-head-nav { display: flex; align-items: center; gap: 34px; }
+.ca-head-nav a { font-size: 11px; letter-spacing: 0.18em; color: ${SUB}; text-decoration: none; transition: color 0.2s; }
+.ca-head-nav a:hover { color: ${INK}; }
+
+/* Hero */
+.ca-hero { min-height: 78vh; display: flex; align-items: center; justify-content: center; background: #fff; }
+.ca-hero-inner { text-align: center; padding: 64px 32px; max-width: 860px; }
+.ca-hero-eyebrow { color: ${FAINT}; font-size: 10px; letter-spacing: 0.5em; margin: 0 0 34px; font-weight: 400; }
+.ca-hero-title { color: ${INK}; font-weight: 300; line-height: 1.5; font-size: clamp(2rem, 6vw, 3.9rem); letter-spacing: 0.06em; margin: 0; }
+.ca-hero-rule { width: 48px; height: 1px; background: ${STONE1}; margin: 32px auto; }
+.ca-hero-meta { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 12px; color: ${SUB}; font-size: 14px; letter-spacing: 0.08em; }
+.ca-hero-sep { color: ${LINE}; }
+
+/* Works */
+.ca-grid-works { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px 20px; }
+.ca-work-img { overflow: hidden; height: 280px; background: #EFEDE7; }
+.ca-work-tall .ca-work-img { height: 420px; }
+.ca-work-cap { padding: 14px 2px 4px; }
+.ca-work-title { font-size: 14px; font-weight: 300; color: ${INK}; letter-spacing: 0.1em; margin: 0 0 4px; }
+.ca-work-meta { display: flex; gap: 10px; }
+.ca-work-meta span { font-size: 11px; color: ${FAINT}; }
+.ca-work-desc { font-size: 13px; color: ${SUB}; line-height: 1.9; margin: 10px 0 0; }
+
+/* About */
+.ca-about { display: grid; grid-template-columns: 0.85fr 1.15fr; gap: 56px; }
+.ca-portrait { aspect-ratio: 4/5; overflow: hidden; }
+.ca-portrait-cap { margin-top: 20px; }
+.ca-portrait-name { font-size: 20px; font-weight: 300; color: ${INK}; letter-spacing: 0.1em; margin: 0; }
+.ca-portrait-role { font-size: 12px; color: ${FAINT}; letter-spacing: 0.1em; margin: 6px 0 0; }
+.ca-about-body { display: flex; flex-direction: column; justify-content: center; }
+.ca-bio { font-size: 15px; color: ${SUB}; line-height: 2.4; }
+.ca-about-rule { width: 32px; height: 1px; background: ${STONE1}; margin: 32px 0; }
+.ca-facts { display: flex; flex-direction: column; gap: 14px; }
+.ca-fact { display: flex; gap: 24px; font-size: 13px; color: ${SUB}; }
+.ca-fact-key { width: 56px; flex-shrink: 0; color: ${FAINT}; }
+
+/* Awards */
+.ca-award-row { display: flex; gap: 28px; padding: 18px 0; border-bottom: 1px solid ${LINE}; }
+.ca-award-year { font-size: 12px; color: ${FAINT}; flex-shrink: 0; width: 52px; padding-top: 2px; }
+.ca-award-title { font-size: 15px; font-weight: 300; color: ${INK}; margin: 0; }
+.ca-award-project { font-size: 12px; color: ${FAINT}; margin: 4px 0 0; }
+
+/* Voice */
+.ca-grid-voice { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+.ca-voice { padding: 28px; border: 1px solid ${LINE}; }
+.ca-voice-text { font-size: 14px; color: ${SUB}; line-height: 2.1; margin: 0 0 16px; }
+.ca-voice-name { font-size: 11px; color: ${FAINT}; letter-spacing: 0.05em; margin: 0; }
+
+/* News */
+.ca-news-row { display: flex; gap: 28px; align-items: baseline; padding: 16px 0; border-bottom: 1px solid ${LINE}; }
+.ca-news-date { font-size: 11px; color: ${FAINT}; flex-shrink: 0; width: 84px; }
+.ca-news-title { font-size: 14px; font-weight: 300; color: ${INK}; }
+
+/* Contact */
+.ca-contact-lead { font-size: 15px; color: ${SUB}; line-height: 1.8; margin: 0 0 40px; font-weight: 300; }
+.ca-contact-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 44px; }
+.ca-contact-link { display: flex; align-items: center; gap: 12px; padding: 16px 18px; border: 1px solid ${LINE}; font-size: 14px; color: ${SUB}; text-decoration: none; transition: border-color 0.2s; }
+.ca-contact-link:hover { border-color: ${STONE2}; }
+.ca-form { display: flex; flex-direction: column; gap: 26px; }
+.ca-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; }
+.ca-field { display: flex; flex-direction: column; }
+.ca-field span { font-size: 10px; color: ${FAINT}; letter-spacing: 0.2em; margin-bottom: 10px; }
+.ca-field input, .ca-field textarea { padding: 10px 0; border: none; border-bottom: 1px solid ${LINE}; font-size: 14px; color: ${INK}; background: transparent; outline: none; font-family: inherit; resize: vertical; transition: border-color 0.2s; }
+.ca-field input:focus, .ca-field textarea:focus { border-bottom-color: ${INK}; }
+.ca-submit { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 16px; background: ${INK}; color: #fff; font-size: 11px; letter-spacing: 0.22em; border: none; cursor: pointer; transition: background 0.2s; }
+.ca-submit:hover { background: #000; }
+.ca-thanks { text-align: center; padding: 56px 24px; border: 1px solid ${LINE}; }
+.ca-thanks-icon { width: 48px; height: 48px; border: 1px solid ${LINE}; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; }
+.ca-thanks-title { font-size: 15px; font-weight: 300; color: ${INK}; letter-spacing: 0.05em; margin: 0; }
+.ca-thanks-sub { font-size: 12px; color: ${FAINT}; margin: 6px 0 0; }
+
+/* Footer */
+.ca-foot { padding: 32px; border-top: 1px solid ${LINE}; background: #fff; }
+.ca-foot-inner { max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; align-items: center; }
+.ca-foot-top { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; justify-content: center; }
+.ca-foot-name { font-size: 12px; font-weight: 300; letter-spacing: 0.28em; color: ${SUB}; }
+.ca-foot-addr { font-size: 10px; color: ${FAINT}; }
+.ca-foot-copy { font-size: 10px; color: ${FAINT}; margin: 0; }
+
+@media (max-width: 820px) {
+  .ca-about { grid-template-columns: 1fr; gap: 36px; }
+  .ca-head-nav { gap: 20px; }
+}
+@media (max-width: 560px) {
+  .ca-form-row { grid-template-columns: 1fr; }
+  .ca-head-nav a { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ca-root * { transition: none !important; }
+}
+`;
+
+/* ═══════════════════════════════════════
    メインRenderer
    ═══════════════════════════════════════ */
-
 export default function CleanArchRenderer({ config, editMode = false, onFieldClick, changedFields }: Props) {
   const c = config.company;
   const name = c.nameEn || c.name;
@@ -410,33 +490,24 @@ export default function CleanArchRenderer({ config, editMode = false, onFieldCli
   const ep: EP = { editMode, onFieldClick, changedFields };
 
   return (
-    <div
-      style={{ background: "#fff", fontFamily: "system-ui, -apple-system, sans-serif", color: "#333" }}
-      onClick={(e) => {
-        if (editMode && (e.target as HTMLElement).closest("a")) {
-          e.preventDefault();
-        }
-      }}
-    >
-      {/* ═══ Header（常に表示） ═══ */}
-      <header style={{
-        position: editMode ? "relative" : "sticky", top: 0, zIndex: 50,
-        backgroundColor: "rgba(255,255,255,0.95)", backdropFilter: "blur(12px)",
-      }}>
-        <div style={{ maxWidth: 1400, margin: "0 auto", padding: "0 24px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+    <div className="ca-root" onClick={(e) => { if (editMode && (e.target as HTMLElement).closest("a")) e.preventDefault(); }}>
+      <style>{STYLES}</style>
+
+      {/* ─── Header ─── */}
+      <header className={`ca-head${editMode ? " ca-head-static" : ""}`}>
+        <div className="ca-head-inner">
           <E fieldId="company.nameEn" value={c.nameEn || c.name} {...ep}>
-            <span style={{ fontSize: 14, fontWeight: 300, letterSpacing: "0.25em", color: "#333" }}>{name}</span>
+            <span className="ca-head-name">{name}</span>
           </E>
-          <nav style={{ display: "flex", alignItems: "center", gap: 32 }}>
-            {[["WORKS", "#works"], ["ABOUT", "#about"], ["CONTACT", "#contact"]].map(([label, href]) => (
-              <a key={href} href={href} style={{ fontSize: 12, letterSpacing: "0.15em", color: "#aaa", textDecoration: "none", transition: "color 0.2s" }}>{label}</a>
-            ))}
+          <nav className="ca-head-nav">
+            <a href="#works">WORKS</a>
+            <a href="#about">ABOUT</a>
+            <a href="#contact">CONTACT</a>
           </nav>
         </div>
-        <div style={{ width: "100%", height: 1, backgroundColor: "#f0f0f0" }} />
       </header>
 
-      {/* ═══ セクション（sections配列の順序で描画） ═══ */}
+      {/* ─── セクション ─── */}
       {sections.map((section) => {
         if (!section.visible) return null;
         const Component = SECTION_COMPONENTS[section.type];
@@ -444,16 +515,16 @@ export default function CleanArchRenderer({ config, editMode = false, onFieldCli
         return <Component key={section.type} config={config} ep={ep} />;
       })}
 
-      {/* ═══ Footer（常に表示） ═══ */}
-      <footer style={{ padding: "28px 24px", borderTop: "1px solid #f0f0f0", backgroundColor: "#fff" }}>
-        <div style={{ maxWidth: 1400, margin: "0 auto", display: "flex", flexDirection: "column", gap: 12, alignItems: "center" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-            <span style={{ fontSize: 12, fontWeight: 300, letterSpacing: "0.25em", color: "#aaa" }}>{name}</span>
+      {/* ─── Footer ─── */}
+      <footer className="ca-foot">
+        <div className="ca-foot-inner">
+          <div className="ca-foot-top">
+            <span className="ca-foot-name">{name}</span>
             <E fieldId="company.address" value={c.address} {...ep}>
-              <span style={{ fontSize: 10, color: "#ccc" }}>{c.address}</span>
+              <span className="ca-foot-addr">{c.address}</span>
             </E>
           </div>
-          <p style={{ fontSize: 10, color: "#ccc" }}>© {new Date().getFullYear()} {c.name}</p>
+          <p className="ca-foot-copy">© {new Date().getFullYear()} {c.name}</p>
         </div>
       </footer>
     </div>
