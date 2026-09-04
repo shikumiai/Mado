@@ -7,28 +7,28 @@ const articles = [
   {
     title: "#0 なぜAIに仕事を任せようと思ったのか",
     desc: "開発日記のはじまり — 仕組み化の原点",
-    url: "https://note.com/ando_lyo_ai/n/nfdd8093d0b87",
+    url: "https://note.com/shikumiai/n/nfdd8093d0b87",
     tag: "無料",
     tagColor: "text-primary bg-primary/10",
   },
   {
     title: "#1 Claude Codeの始め方",
     desc: "黒い画面は怖くない — 初心者向け完全ガイド",
-    url: "https://note.com/ando_lyo_ai/n/n9d25ef9f4e27",
+    url: "https://note.com/shikumiai/n/n9d25ef9f4e27",
     tag: "無料",
     tagColor: "text-primary bg-primary/10",
   },
   {
     title: "開発日記マガジン",
     desc: "AIで何か作ってみる開発日記 — まとめ読み",
-    url: "https://note.com/ando_lyo_ai/m/m3294daf5f300",
+    url: "https://note.com/shikumiai/m/m3294daf5f300",
     tag: "無料",
     tagColor: "text-primary bg-primary/10",
   },
   {
     title: "Hires.fix設定の黄金比",
     desc: "300時間検証のデータをすべて公開",
-    url: "https://note.com/ando_lyo_ai/n/nd2a696b8f901",
+    url: "https://note.com/shikumiai/n/nd2a696b8f901",
     tag: "有料",
     tagColor: "text-gold bg-gold/10",
   },
@@ -82,7 +82,7 @@ export default function ResourcesSection() {
           viewport={{ once: true }}
         >
           <a
-            href="https://note.com/ando_lyo_ai"
+            href="https://note.com/shikumiai"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-6 py-2.5 border border-primary/30 text-primary text-xs tracking-widest hover:bg-primary/10 transition-all"

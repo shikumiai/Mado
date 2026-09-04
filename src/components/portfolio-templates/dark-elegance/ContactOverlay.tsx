@@ -44,7 +44,7 @@ interface ContactOverlayProps {
 }
 
 const defaultSocialLinks = [
-  { label: "X / Twitter", href: "https://x.com/", platform: "@ando_lyo" },
+  { label: "X / Twitter", href: "https://x.com/", platform: "@Lyo_shikumiai" },
   { label: "Instagram", href: "https://instagram.com/", platform: "@lyo.art" },
   { label: "note", href: "https://note.com/", platform: "Lyo Vision" },
   { label: "Behance", href: "https://behance.net/", platform: "Lyo Works" },

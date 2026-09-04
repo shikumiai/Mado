@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     title: "施工実績が映えるホームページ｜月0円から｜Mado",
     description:
       "写真を送るだけでプロ品質のホームページが完成。月額0円から。",
-    creator: "@ando_lyo",
+    creator: "@Lyo_shikumiai",
   },
 };
 

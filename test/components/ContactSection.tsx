@@ -22,7 +22,7 @@ const actions: {
     icon: BookOpen,
     title: "noteで記事を読む",
     desc: "開発日記・チュートリアル・プロンプト集を無料で公開中",
-    href: "https://note.com/ando_lyo_ai",
+    href: "https://note.com/shikumiai",
     cta: "noteを見る",
     iconColor: "text-cyan-400",
     iconBg: "bg-cyan-500/10",
@@ -33,7 +33,7 @@ const actions: {
     icon: Users,
     title: "メンバーシップに参加",
     desc: "限定記事・自動化スクリプト・Q&Aで、あなたの仕組み作りを加速",
-    href: "https://note.com/ando_lyo_ai/membership",
+    href: "https://note.com/shikumiai/membership",
     cta: "メンバーシップを見る",
     iconColor: "text-amber-400",
     iconBg: "bg-amber-500/10",
@@ -179,7 +179,7 @@ export default function ContactSection() {
           transition={{ delay: 0.5 }}
         >
           <a
-            href="https://x.com/ando_lyo"
+            href="https://x.com/Lyo_shikumiai"
             target="_blank"
             rel="noopener noreferrer"
             className="hover:text-primary transition-colors duration-300"

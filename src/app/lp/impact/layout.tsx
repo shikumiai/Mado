@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     description:
       "外注すると5〜10万円のギャラリーサイトが¥980。フォーム入力だけで完成。",
     images: ["/lp-impact.webp"],
-    creator: "@ando_lyo",
+    creator: "@Lyo_shikumiai",
   },
 };
 

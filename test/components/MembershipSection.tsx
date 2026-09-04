@@ -188,7 +188,7 @@ export default function MembershipSection() {
                     {plan.current ? (
                       <>
                         <a
-                          href="https://note.com/ando_lyo_ai/membership"
+                          href="https://note.com/shikumiai/membership"
                           target="_blank"
                           rel="noopener noreferrer"
                           className={`block text-center py-3 rounded-xl font-mono text-xs tracking-widest uppercase transition-all duration-300 ${

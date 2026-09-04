@@ -126,7 +126,7 @@ export default function ContactSection() {
           viewport={{ once: true }}
           transition={{ delay: 0.3 }}
         >
-          <a href="https://x.com/ando_lyo" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">X</a>
+          <a href="https://x.com/Lyo_shikumiai" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">X</a>
           <span className="w-1 h-1 rounded-full bg-primary/30" />
           <a href="https://github.com/ando-lyo" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">GitHub</a>
           <span className="w-1 h-1 rounded-full bg-primary/30" />

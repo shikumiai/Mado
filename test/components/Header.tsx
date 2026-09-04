@@ -130,7 +130,7 @@ export default function Header() {
 
             {/* CTA button - Anthropic Learn filled style */}
             <a
-              href="https://note.com/ando_lyo_ai"
+              href="https://note.com/shikumiai"
               target="_blank"
               rel="noopener noreferrer"
               className="hidden md:flex items-center gap-2 px-5 py-2 bg-primary text-[#0a0a0f] rounded-lg font-mono text-[11px] tracking-widest uppercase font-bold hover:bg-primary/90 transition-all duration-300 hover:shadow-lg hover:shadow-primary/20"
@@ -222,7 +222,7 @@ export default function Header() {
                 transition={{ delay: 0.4 }}
               >
                 <a
-                  href="https://x.com/ando_lyo"
+                  href="https://x.com/Lyo_shikumiai"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-primary transition-colors"

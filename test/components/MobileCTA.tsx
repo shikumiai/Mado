@@ -24,7 +24,7 @@ export default function MobileCTA() {
         >
           <div className="h-16 bg-[#0a0a0f]/95 backdrop-blur-xl border-t border-white/[0.06] flex items-center justify-center px-4 gap-3">
             <a
-              href="https://note.com/ando_lyo_ai"
+              href="https://note.com/shikumiai"
               target="_blank"
               rel="noopener noreferrer"
               className="flex-1 max-w-sm block text-center py-2.5 rounded-xl bg-primary text-[#0a0a0f] font-mono text-xs tracking-widest uppercase font-bold transition-all duration-300"
@@ -32,7 +32,7 @@ export default function MobileCTA() {
               無料で記事を読む
             </a>
             <a
-              href="https://note.com/ando_lyo_ai/membership"
+              href="https://note.com/shikumiai/membership"
               target="_blank"
               rel="noopener noreferrer"
               className="px-4 py-2.5 rounded-xl border border-gold/40 text-gold font-mono text-[10px] tracking-widest uppercase font-bold transition-all duration-300"

@@ -246,7 +246,7 @@ export default function HeroSection() {
               </svg>
             </a>
             <a
-              href="https://note.com/ando_lyo_ai"
+              href="https://note.com/shikumiai"
               target="_blank"
               rel="noopener noreferrer"
               className="group px-8 py-3.5 rounded-xl border border-white/[0.12] text-text-secondary text-sm font-mono tracking-wider hover:text-white hover:border-white/25 hover:bg-white/[0.03] transition-all duration-300 flex items-center gap-2"

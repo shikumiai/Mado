@@ -12,12 +12,12 @@ const links = {
     { label: "お問い合わせ", href: "mailto:ando.lyo.ai@gmail.com" },
   ],
   note: [
-    { label: "note（記事一覧）", href: "https://note.com/ando_lyo_ai" },
-    { label: "開発日記マガジン", href: "https://note.com/ando_lyo_ai/m/m3294daf5f300" },
-    { label: "プロンプト集マガジン", href: "https://note.com/ando_lyo_ai/m/m039aea8b90ac" },
+    { label: "note（記事一覧）", href: "https://note.com/shikumiai" },
+    { label: "開発日記マガジン", href: "https://note.com/shikumiai/m/m3294daf5f300" },
+    { label: "プロンプト集マガジン", href: "https://note.com/shikumiai/m/m039aea8b90ac" },
   ],
   social: [
-    { label: "X（Twitter）", href: "https://x.com/ando_lyo" },
+    { label: "X（Twitter）", href: "https://x.com/Lyo_shikumiai" },
     { label: "GitHub", href: "https://github.com/ando-lyo" },
     { label: "Instagram", href: "https://www.instagram.com/ando_lyo_ai/" },
   ],

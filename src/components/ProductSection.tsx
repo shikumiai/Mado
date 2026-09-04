@@ -181,7 +181,7 @@ export default function ProductSection() {
           viewport={{ once: true }}
         >
           <a
-            href="https://note.com/ando_lyo_ai/m/m3294daf5f300"
+            href="https://note.com/shikumiai/m/m3294daf5f300"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl border border-primary/30 text-primary text-xs tracking-widest hover:bg-primary/10 hover:border-primary/50 transition-all duration-300"

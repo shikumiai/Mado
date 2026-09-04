@@ -69,9 +69,9 @@ function Header() {
         </nav>
 
         <div className="hidden md:flex items-center gap-4">
-          <button onClick={() => setLoginOpen(true)} className="text-sm text-gray-400 hover:text-purple-600 transition-colors cursor-pointer">
+          <Link href="/auth/login" className="text-sm text-gray-400 hover:text-purple-600 transition-colors">
             ログイン
-          </button>
+          </Link>
           <button
             onClick={() => setLoginOpen(true)}
             className={`flex items-center gap-2 px-5 py-2 rounded-full ${gradientBg} text-white text-sm font-medium hover:opacity-90 transition-opacity shadow-lg shadow-purple-200/30 cursor-pointer`}
@@ -94,9 +94,9 @@ function Header() {
             {[["サービス","#services"],["テンプレート","#templates"],["料金","#pricing"],["よくある質問","#faq"]].map(([l,h])=>(
               <a key={h} href={h} onClick={()=>setIsOpen(false)} className="text-gray-600 text-base">{l}</a>
             ))}
-            <button onClick={()=>{ setIsOpen(false); setLoginOpen(true); }} className="text-gray-400 text-base text-left cursor-pointer">
+            <Link href="/auth/login" onClick={()=>setIsOpen(false)} className="text-gray-400 text-base text-left">
               ログイン
-            </button>
+            </Link>
             <button onClick={()=>{ setIsOpen(false); setLoginOpen(true); }} className={`mt-2 text-center px-5 py-3 rounded-full ${gradientBg} text-white font-medium w-full cursor-pointer`}>
               今すぐサイトを作る
             </button>
@@ -1102,11 +1102,11 @@ function FooterSection() {
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-5 text-xs text-gray-400">
-            <Link href="/member" className="hover:text-purple-500 transition-colors">ログイン</Link>
+            <Link href="/auth/login" className="hover:text-purple-500 transition-colors">ログイン</Link>
             <Link href="/privacy" className="hover:text-purple-500 transition-colors">プライバシーポリシー</Link>
             <Link href="/legal" className="hover:text-purple-500 transition-colors">特定商取引法</Link>
-            <a href="https://x.com/ando_lyo" target="_blank" rel="noopener noreferrer" className="hover:text-purple-500 transition-colors">X (Twitter)</a>
-            <a href="https://note.com/ando_lyo_ai" target="_blank" rel="noopener noreferrer" className="hover:text-purple-500 transition-colors">note</a>
+            <a href="https://x.com/Lyo_shikumiai" target="_blank" rel="noopener noreferrer" className="hover:text-purple-500 transition-colors">X (Twitter)</a>
+            <a href="https://note.com/shikumiai" target="_blank" rel="noopener noreferrer" className="hover:text-purple-500 transition-colors">note</a>
             <Link href="/admin" className="hover:text-gray-500 transition-colors text-gray-300">管理</Link>
           </div>
         </div>

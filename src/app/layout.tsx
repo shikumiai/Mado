@@ -94,8 +94,8 @@ const jsonLd = {
       jobTitle: "Webサイトデザイナー / クリエイター",
       url: "https://lyo-vision.com",
       sameAs: [
-        "https://note.com/ando_lyo_ai",
-        "https://x.com/ando_lyo",
+        "https://note.com/shikumiai",
+        "https://x.com/Lyo_shikumiai",
         "https://github.com/ando-lyo",
         "https://www.instagram.com/ando_lyo_ai/",
       ],
