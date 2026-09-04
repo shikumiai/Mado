@@ -24,8 +24,9 @@ export async function signInWithGoogle(next?: string): Promise<{ ok: boolean; me
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
+      // prompt:"consent" は付けない。付けると毎回同意画面が出て入口が重くなる。
+      // 2回目以降の人はそのまま素通しで戻ってこられるようにする。
       redirectTo: redirectTo.toString(),
-      queryParams: { access_type: "offline", prompt: "consent" },
     },
   });
 

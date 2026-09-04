@@ -1,37 +1,42 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Noto_Sans_JP, JetBrains_Mono } from "next/font/google";
+import { Noto_Sans_JP, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 
-const playfair = Playfair_Display({
-  variable: "--font-serif",
-  subsets: ["latin"],
-  weight: ["400", "600", "700", "800"],
-});
-
 const notoSansJP = Noto_Sans_JP({
-  variable: "--font-sans",
+  variable: "--font-sans-jp",
   subsets: ["latin"],
   weight: ["400", "500", "700"],
+  display: "swap",
 });
 
 const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-mono",
+  variable: "--font-mono-jb",
   subsets: ["latin"],
-  weight: ["400", "500"],
+  weight: ["400", "500", "700"],
+  display: "swap",
 });
+
+const SITE_URL = "https://mado.shikumiai.com";
 
 export const metadata: Metadata = {
   title: "Mado｜ホームページ制作 制作費0円・月額0円から",
   description:
     "全業種対応のホームページ制作SaaS。制作費0円、月額0円から。写真を送るだけで最短翌日完成。独自ドメイン全プラン対応。",
-  keywords: ["ホームページ制作 安い", "ホームページ制作 0円", "ウェブサイト制作 月額", "工務店 ホームページ", "建設会社 ホームページ"],
+  keywords: [
+    "ホームページ制作 安い",
+    "ホームページ制作 0円",
+    "ウェブサイト制作 月額",
+    "工務店 ホームページ",
+    "建設会社 ホームページ",
+  ],
   openGraph: {
     title: "Mado｜ホームページ制作 制作費0円・月額0円から",
     description:
       "写真を送るだけでホームページが完成。制作費0円、月額0円から。全業種対応。",
+    url: SITE_URL,
     type: "website",
-    siteName: "Mado by Lyo Vision",
+    siteName: "Mado",
     locale: "ja_JP",
   },
   twitter: {
@@ -41,7 +46,7 @@ export const metadata: Metadata = {
       "写真を送るだけでホームページが完成。制作費0円、月額0円から。全業種対応。",
     creator: "@Lyo_shikumiai",
   },
-  metadataBase: new URL("https://lyo-vision.com"),
+  metadataBase: new URL(SITE_URL),
 };
 
 const jsonLd = {
@@ -50,39 +55,42 @@ const jsonLd = {
     {
       "@type": "WebSite",
       name: "Mado",
-      url: "https://lyo-vision.com",
-      description: "建築業向けホームページ制作サービス。制作費0円、月額0円から。",
+      url: SITE_URL,
+      description: "全業種対応のホームページ制作サービス。制作費0円、月額0円から。",
     },
     {
       "@type": "Service",
       name: "Mado ホームページ制作",
       provider: {
         "@type": "Organization",
-        name: "Mado by Lyo Vision",
-        url: "https://lyo-vision.com",
+        name: "Mado",
+        url: SITE_URL,
       },
-      description: "工務店・建設会社・設計事務所のホームページ制作。写真を送るだけで最短翌日完成。制作費0円。",
+      description:
+        "全業種対応のホームページ制作。写真を送るだけで最短翌日完成。制作費0円。",
       offers: [
         {
           "@type": "Offer",
           name: "おためしプラン",
           price: "0",
           priceCurrency: "JPY",
-          description: "テンプレート選択、施工写真10枚、会社概要、お問い合わせフォーム、独自ドメイン対応。無料。",
+          description:
+            "テンプレート選択、写真掲載、会社概要、お問い合わせフォーム、独自ドメイン対応。無料。",
         },
         {
           "@type": "Offer",
           name: "おまかせプラン",
           price: "1480",
           priceCurrency: "JPY",
-          description: "施工実績詳細、お客様の声、ブログ、Google Maps、SEO強化。月額。",
+          description: "実績詳細、お客様の声、ブログ、Google Maps、SEO強化。月額。",
         },
         {
           "@type": "Offer",
           name: "おまかせプロプラン",
           price: "4980",
           priceCurrency: "JPY",
-          description: "AIチャットボット、予約システム、採用ページ、多言語対応、360°ビューア。月額。",
+          description:
+            "AIチャットボット、予約システム、採用ページ、多言語対応。月額。",
         },
       ],
       areaServed: { "@type": "Country", name: "JP" },
@@ -92,13 +100,8 @@ const jsonLd = {
       "@type": "Person",
       name: "Lyo",
       jobTitle: "Webサイトデザイナー / クリエイター",
-      url: "https://lyo-vision.com",
-      sameAs: [
-        "https://note.com/shikumiai",
-        "https://x.com/Lyo_shikumiai",
-        "https://github.com/ando-lyo",
-        "https://www.instagram.com/ando_lyo_ai/",
-      ],
+      url: SITE_URL,
+      sameAs: ["https://note.com/shikumiai", "https://x.com/Lyo_shikumiai"],
     },
     {
       "@type": "FAQPage",
@@ -132,6 +135,9 @@ const jsonLd = {
   ],
 };
 
+// 初回表示のちらつき防止。保存済みのテーマを描画前に <html> へ反映する。
+const themeScript = `(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||t==='light'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -140,9 +146,13 @@ export default function RootLayout({
   return (
     <html
       lang="ja"
-      className={`${playfair.variable} ${notoSansJP.variable} ${jetbrainsMono.variable} antialiased`}
+      className={`${notoSansJP.variable} ${jetbrainsMono.variable}`}
+      suppressHydrationWarning
     >
-      <body className="min-h-screen bg-[#0a0a0f] text-text-primary font-sans overflow-x-hidden">
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body className="min-h-screen bg-bg text-ink font-sans antialiased overflow-x-hidden">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
