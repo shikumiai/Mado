@@ -600,13 +600,27 @@ updateTag(`site:${slug}`)   // 即座に無効化 = read-your-own-writes
 ## 10. 編集フロー（新）
 
 ```
-/member/{siteId}/editor
+/member/site                      … 自分のサイト一覧（新しい会員トップ）
+/member/site/{siteId}/editor      … エディタ
   ├ 見る    … Renderer で現在の config を描画
   ├ 編集    … クリック → 編集パネル → config を更新
-  │           保存 = Server Action → update_site_config(site_id, config, version)
-  │           → 成功: 即反映 ／ 409: 「他で変更されています」
+  │           保存 = Server Action saveSiteConfig(siteId, config, version)
+  │                 → update_site_config で衝突検出
+  │           → 成功: 即反映 ／ conflict: 「別の画面で先に保存されています」
   └ AI      … 質問 → Claude API → Before/After → 承認 → 上と同じ保存経路
 ```
+
+実装は `src/lib/site-editor.ts`（Server Action）にまとめてある。
+
+| 関数 | 役割 |
+|---|---|
+| `loadSiteForEdit(siteId)` | サイト1件と設定を取る（RLS 越し） |
+| `saveSiteConfig(siteId, config, version)` | 版を照合して保存。履歴も積む |
+| `uploadSiteImage(siteId, formData)` | 画像を Storage へ。公開 URL を返す |
+| `listSiteHistory` / `getSiteVersion` | 「1つ前に戻す」の材料 |
+
+**保存の順番**: 画像を先に Storage へ上げ、返ってきた URL を設定に書いてから、
+設定を1回だけ保存する。存在しない URL が設定に残らない。
 
 - **画像**: Storage へアップロード → 返ってきた URL を config に書く（1トランザクション）
 - **履歴**: 保存のたびに `site_config_versions` に積む → 「1つ前に戻す」が作れる
@@ -753,7 +767,7 @@ templateId は 3つだけ:  warm-craft / trust-navy / clean-arch
 | **0. 器** ✅ | Supabase（東京・プロジェクト名 `site`）作成 / `vercel.json` に hnd1 / `0001` + `0002` 適用 / 疎通確認 | **2026-09-03 完了**。全10テーブル・RLS・スラッグ検証まで実機確認 |
 | **1. 描画** ✅ | `[siteSlug]/page.tsx` を作り、DB の config を Renderer で描く / テスト行を1件投入 | **2026-09-03 完了**。`/test-koumuten` が表示。DB直読みで 0.06 秒 |
 | **2. 認証** | Supabase Auth（Google）/ `org_members` の紐付け / `platform_admins` に Lyo | ログインして自分の org が引ける |
-| **3. 編集** | エディタの保存先を Supabase に / Server Action + `update_site_config` / 画像を Storage へ | 文字を直して**1秒で**サイトに出る |
+| **3. 編集** ⌛ | エディタの保存先を Supabase に / Server Action + `update_site_config` / 画像を Storage へ | **2026-09-04 実装完了**（`/member/site/{siteId}/editor`）。動作確認はログイン後 |
 | **4. 申込** | `/start` → orgs/sites を INSERT / Stripe webhook を書き換え | 申込→サイト公開が通しで動く |
 | **5. 管理** | `/admin` を実データに / 顧客一覧・MRR・依頼キュー | Lyo が1画面で全部見える |
 | **6. テンプレ統合** | 9→3 に集約 / trust-navy Renderer 作成 / デモページも Renderer 経由に | 3系統すべてがエディタで編集できる |

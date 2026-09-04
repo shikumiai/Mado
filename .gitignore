@@ -51,3 +51,6 @@ SNS_AutoControl_App/
 template-site/
 scripts/*.png
 tsconfig.tsbuildinfo
+
+.vercel
+.env*
