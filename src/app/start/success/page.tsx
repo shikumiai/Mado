@@ -67,16 +67,16 @@ export default function StartSuccessPage() {
 
         {/* 会員ページ案内 */}
         <div className="bg-purple-50 border border-purple-100 rounded-2xl p-5 text-left mb-6">
-          <h3 className="text-purple-700 font-bold text-sm mb-2">サイト完成後のご案内</h3>
+          <h3 className="text-purple-700 font-bold text-sm mb-2">サイトの編集はこちらから</h3>
           <p className="text-purple-600 text-xs leading-relaxed mb-3">
-            完成メールに記載される「注文ID」と「メールアドレス」で会員ページにログインできます。
-            サイトの編集依頼や機能管理はそちらから行えます。
+            ログイン中の Google アカウントで、いつでもマイページを開けます。
+            サイトの編集や設定はそちらから行えます。
           </p>
           <Link
-            href="/member"
+            href="/member/site"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-500 text-white text-xs font-medium hover:bg-purple-600 transition-colors"
           >
-            会員ページはこちら <ArrowRight className="w-3 h-3" />
+            マイページを開く <ArrowRight className="w-3 h-3" />
           </Link>
         </div>
 

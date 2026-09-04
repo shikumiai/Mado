@@ -2,14 +2,17 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useSession } from "next-auth/react";
 import Link from "next/link";
 import {
   Building2, Palette, Globe, ArrowRight, ArrowLeft, Check,
   Sparkles, Search, AlertCircle, ExternalLink, Mail, Phone,
   ChevronRight, Loader2, X, Eye, Heart, Maximize2, Monitor,
 } from "lucide-react";
-import LoginModal from "@/components/LoginModal";
+import type { User } from "@supabase/supabase-js";
+import { getBrowserClient } from "@/lib/supabase/client";
+import { signInWithGoogle } from "@/lib/supabase/sign-in";
+import { createFreeSite, startPaidCheckout, checkSlugAvailability } from "@/lib/signup";
+import { getPlanFromTemplateId } from "@/lib/stripe";
 import { customerSiteLabel, SITE_URL_PREFIX } from "@/lib/resolve-site";
 
 /* ═══════════════════════════════════════
@@ -107,8 +110,8 @@ function ProgressBar({ step, total }: { step: number; total: number }) {
    Main Page
    ═══════════════════════════════════════ */
 export default function StartPage() {
-  const { data: session, status: authStatus } = useSession();
-  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [authReady, setAuthReady] = useState(false);
 
   const [step, setStep] = useState(0);
   const [industry, setIndustry] = useState<string | null>(null);
@@ -124,17 +127,29 @@ export default function StartPage() {
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
   const [useSubdomain, setUseSubdomain] = useState(false);
 
-  // 未ログインの場合、1.5秒後にLoginModalを自動表示
+  // ログイン状態は Supabase から取る（next-auth は使わない）
   useEffect(() => {
-    if (authStatus === "unauthenticated") {
-      const timer = setTimeout(() => setShowAuthModal(true), 1500);
-      return () => clearTimeout(timer);
+    const supabase = getBrowserClient();
+    if (!supabase) {
+      setAuthReady(true);
+      return;
     }
-  }, [authStatus]);
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data?.user ?? null);
+      setAuthReady(true);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, sess) => {
+      setUser(sess?.user ?? null);
+      setAuthReady(true);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
 
   // 申込
   const [email, setEmail] = useState("");
   const [siteSlugInput, setSiteSlugInput] = useState("");
+  const [slugStatus, setSlugStatus] = useState<null | "checking" | "ok" | "ng">(null);
+  const [slugMsg, setSlugMsg] = useState<string | null>(null);
 
   // トップページで入力したスラッグを自動反映
   useEffect(() => {
@@ -147,14 +162,72 @@ export default function StartPage() {
 
   // ログイン済みならメールアドレスを自動設定
   useEffect(() => {
-    if (session?.user?.email && !email) {
-      setEmail(session.user.email);
-    }
-  }, [session, email]);
-  const [submitted, setSubmitted] = useState(false);
+    if (user?.email && !email) setEmail(user.email);
+  }, [user, email]);
+
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
+
+  // ログインのために離脱して戻ってきたとき、入力を復元する
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem("startDraft");
+      if (!raw) return;
+      const d = JSON.parse(raw) as {
+        industry?: string; template?: string; companyName?: string; siteSlug?: string; step?: number;
+      };
+      if (d.industry) setIndustry(d.industry);
+      if (d.template) setTemplate(d.template);
+      if (d.companyName) setCompanyName(d.companyName);
+      if (d.siteSlug) setSiteSlugInput(d.siteSlug);
+      if (typeof d.step === "number") setStep(d.step);
+      sessionStorage.removeItem("startDraft");
+    } catch {
+      /* 壊れていたら無視 */
+    }
+    // 初回マウント時だけ動かす
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Google ログインの直前に入力を控える（戻ってきたら上の効果が復元する）
+  const goLogin = useCallback(async () => {
+    try {
+      sessionStorage.setItem(
+        "startDraft",
+        JSON.stringify({ industry, template, companyName, siteSlug: siteSlugInput, step })
+      );
+    } catch {
+      /* ignore */
+    }
+    const r = await signInWithGoogle("/start");
+    if (!r.ok) setSubmitError(r.message ?? "ログインできませんでした。");
+    return r.ok;
+  }, [industry, template, companyName, siteSlugInput, step]);
+
+  // サイトURLの空き確認（少し待ってから問い合わせる）
+  useEffect(() => {
+    if (step !== 3) return;
+    const s = siteSlugInput.trim();
+    if (!s) {
+      setSlugStatus(null);
+      setSlugMsg(null);
+      return;
+    }
+    setSlugStatus("checking");
+    setSlugMsg(null);
+    const timer = setTimeout(async () => {
+      const res = await checkSlugAvailability(s);
+      if (res.ok) {
+        setSlugStatus("ok");
+        setSlugMsg(null);
+      } else {
+        setSlugStatus("ng");
+        setSlugMsg(res.message);
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [siteSlugInput, step]);
 
   // プレビュー iframe への postMessage 送信
   const previewRef = useRef<HTMLIFrameElement>(null);
@@ -192,57 +265,6 @@ export default function StartPage() {
   const subdomain = customerSiteLabel(
     companyName ? companyName.replace(/[^a-zA-Z0-9]/g, "").toLowerCase() || "sample" : "sample"
   );
-
-  if (submitted) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-[#fdf2f8] via-[#f3f0ff] to-[#fff7ed] flex items-center justify-center p-5">
-        <motion.div className="bg-white rounded-3xl shadow-xl p-10 max-w-[500px] w-full text-center" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-          <motion.div
-            className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-6"
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: "spring" }}
-          >
-            <Check className="w-10 h-10 text-green-500" />
-          </motion.div>
-          <h2 className="text-gray-800 text-2xl font-bold mb-3">お申し込みありがとうございます！</h2>
-          <p className="text-gray-500 text-sm leading-relaxed mb-6">
-            ご入力いただいた内容をもとに、サイトの制作を開始します。
-            <br />最短翌日にはあなたのホームページが完成します。
-          </p>
-
-          <div className="bg-gray-50 rounded-2xl p-5 text-left space-y-3 mb-6">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400">ユーザー名</span>
-              <span className="text-gray-700 font-medium">{companyName}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400">テンプレート</span>
-              <span className="text-gray-700 font-medium">{Object.values(TEMPLATES).flat().find((t) => t.id === template)?.name}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400">ドメイン</span>
-              <span className="text-gray-700 font-medium text-xs">{siteSlugInput ? customerSiteLabel(siteSlugInput) : subdomain}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400">プラン</span>
-              <span className="text-gray-700">{getPlanInfo(template).label}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-400">月額</span>
-              <span className={`font-bold ${gradientText}`}>{getPlanInfo(template).price}/月</span>
-            </div>
-          </div>
-
-          <p className="text-gray-400 text-xs mb-4">確認メールを {email} に送信しました</p>
-
-          <Link href="/" className="text-purple-500 text-sm hover:underline">
-            トップページに戻る
-          </Link>
-        </motion.div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#fdf2f8] via-[#f3f0ff] to-[#fff7ed]">
@@ -476,7 +498,7 @@ export default function StartPage() {
                           <div className="w-2 h-2 rounded-full bg-green-300" />
                         </div>
                         <div className="flex-1 mx-2 px-2 py-0.5 rounded bg-white border border-gray-200 text-[9px] text-gray-400 font-mono truncate">
-                          {companyName.trim() ? subdomain : "your-site.vercel.app"}
+                          {companyName.trim() ? subdomain : SITE_URL_PREFIX + "your-site"}
                         </div>
                         <button
                           onClick={() => setFullscreen(true)}
@@ -563,7 +585,7 @@ export default function StartPage() {
                         <div className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
                         <div className="w-2.5 h-2.5 rounded-full bg-green-400" />
                       </div>
-                      <span className="text-gray-500 text-xs font-mono">{companyName.trim() ? subdomain : "your-site.vercel.app"}</span>
+                      <span className="text-gray-500 text-xs font-mono">{companyName.trim() ? subdomain : SITE_URL_PREFIX + "your-site"}</span>
                     </div>
                     <button onClick={() => setFullscreen(false)} className="p-1.5 rounded-lg hover:bg-gray-200 transition-colors">
                       <X className="w-4 h-4 text-gray-500" />
@@ -617,15 +639,22 @@ export default function StartPage() {
                         value={siteSlugInput}
                         onChange={(e) => setSiteSlugInput(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
                         placeholder="yamada-koumuten"
-                        className="flex-1 px-3 py-3 bg-gray-50 border border-gray-200 text-gray-800 text-sm placeholder:text-gray-300 focus:outline-none focus:border-purple-300 focus:ring-2 focus:ring-purple-100"
+                        className="flex-1 px-3 py-3 bg-gray-50 border border-gray-200 rounded-r-xl text-gray-800 text-sm placeholder:text-gray-300 focus:outline-none focus:border-purple-300 focus:ring-2 focus:ring-purple-100"
                       />
-                      <span className="text-gray-400 text-sm bg-gray-50 border border-l-0 border-gray-200 rounded-r-xl px-3 py-3 whitespace-nowrap">
-                        .vercel.app
-                      </span>
                     </div>
-                    {siteSlugInput && (
-                      <p className="text-xs text-purple-500 mt-2">
-                        あなたのサイト: <strong>shikumiya-{siteSlugInput}.vercel.app</strong>
+                    {siteSlugInput && slugStatus === "checking" && (
+                      <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
+                        <Loader2 className="w-3 h-3 animate-spin" /> 空きを確認しています…
+                      </p>
+                    )}
+                    {siteSlugInput && slugStatus === "ok" && (
+                      <p className="text-xs text-green-600 mt-2">
+                        このURLは使えます: <strong>{customerSiteLabel(siteSlugInput)}</strong>
+                      </p>
+                    )}
+                    {siteSlugInput && slugStatus === "ng" && (
+                      <p className="text-xs text-red-500 mt-2 flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" /> {slugMsg ?? "このURLは使えません。"}
                       </p>
                     )}
                     <p className="text-xs text-gray-400 mt-1">
@@ -658,38 +687,51 @@ export default function StartPage() {
                   </button>
                   <button
                     onClick={async () => {
+                      if (!template) return;
                       setSubmitting(true);
                       setSubmitError(null);
-                      try {
-                        const res = await fetch("/api/start", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({
-                            industry,
-                            templateId: template,
-                            companyName,
-                            email: email || session?.user?.email || "",
-                            domain: "",
-                            useSubdomain: true,
-                            siteSlug: siteSlugInput,
-                          }),
-                        });
-                        const data = await res.json();
-                        if (!res.ok) throw new Error(data.error || "エラーが発生しました");
 
-                        if (data.devMode) {
-                          // 開発モード（Stripe Price未設定時）
-                          setSubmitted(true);
-                        } else if (data.url) {
-                          // Stripe Checkoutにリダイレクト
-                          window.location.href = data.url;
+                      // 送信の直前にログイン必須。未ログインなら Google へ（戻り先 /start）
+                      if (!user) {
+                        const started = await goLogin();
+                        if (!started) setSubmitting(false);
+                        return; // 成功時は Google の画面へ移動する
+                      }
+
+                      const input = {
+                        companyName: companyName.trim(),
+                        email: email || user.email || "",
+                        industry: industry || "other",
+                        templateId: template,
+                        slug: siteSlugInput.trim(),
+                      };
+
+                      try {
+                        if (getPlanFromTemplateId(template) === "otameshi") {
+                          // 無料 → その場で作成して会員トップへ
+                          const res = await createFreeSite(input);
+                          if (!res.ok) {
+                            setSubmitError(res.message);
+                            setSubmitting(false);
+                            return;
+                          }
+                          window.location.href = "/member/site";
+                        } else {
+                          // 有料 → Stripe の決済ページへ
+                          const res = await startPaidCheckout(input);
+                          if (!res.ok) {
+                            setSubmitError(res.message);
+                            setSubmitting(false);
+                            return;
+                          }
+                          window.location.href = res.url;
                         }
-                      } catch (err) {
-                        setSubmitError(err instanceof Error ? err.message : "エラーが発生しました");
+                      } catch {
+                        setSubmitError("エラーが発生しました。時間をおいてお試しください。");
                         setSubmitting(false);
                       }
                     }}
-                    disabled={submitting || !siteSlugInput.trim()}
+                    disabled={submitting || slugStatus !== "ok"}
                     className={`px-10 py-4 rounded-full ${gradientBg} text-white font-bold text-base tracking-wider hover:opacity-90 transition-all shadow-lg shadow-purple-200/50 disabled:opacity-40 disabled:cursor-not-allowed`}
                   >
                     {submitting ? (
@@ -716,21 +758,13 @@ export default function StartPage() {
         </AnimatePresence>
       </div>
 
-      {/* 未ログイン時の認証モーダル */}
-      <LoginModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        initialMode="register"
-        callbackUrl="/start"
-      />
-
-      {/* 未ログイン時のフローティングボタン（モーダルを閉じた後でも再表示可能） */}
-      {authStatus === "unauthenticated" && !showAuthModal && (
+      {/* 未ログイン時のログイン導線（Google・Supabase Auth） */}
+      {authReady && !user && (
         <button
-          onClick={() => setShowAuthModal(true)}
+          onClick={goLogin}
           className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-full ${gradientBg} text-white font-bold text-sm shadow-lg shadow-purple-300/40 hover:opacity-90 transition-all flex items-center gap-2`}
         >
-          <Mail className="w-4 h-4" /> ログイン / 新規登録
+          <Mail className="w-4 h-4" /> Google でログイン
         </button>
       )}
     </div>

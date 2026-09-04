@@ -1,58 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import {
-  fetchGist,
-  deleteGist,
-  createRepoFromTemplate,
-  fetchFileFromRepo,
-  pushFileToRepo,
-  pushBinaryFileToRepo,
-} from "@/lib/github";
-import { generateSiteConfig, stringifySiteConfig } from "@/lib/template-config-generator";
+import { getStripe } from "@/lib/stripe-server";
+import { getWriteClient } from "@/lib/supabase/server";
 import { logger, retryGasWebhook } from "@/lib/error-handler";
-import { normalizePlanId, STRIPE_API_VERSION } from "@/lib/stripe";
+import { normalizePlanId, PLAN_LOOKUP_KEYS, type Plan } from "@/lib/stripe";
+import { customerSiteUrl } from "@/lib/resolve-site";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: STRIPE_API_VERSION as Stripe.LatestApiVersion,
-});
+/* ═══════════════════════════════════════════════════════════════
+   POST /api/webhook — Stripe Webhook
 
-/* ═══════════════════════════════════════
-   型定義
-   ═══════════════════════════════════════ */
-interface OrderData {
-  orderId: string;
-  companyName: string;
-  email: string;
-  phone?: string;
-  address?: string;
-  ceo?: string;
-  bio?: string;
-  tagline?: string;
-  industry?: string;
-  templateId: string;
-  plan?: string;
-  siteSlug?: string;
-  domain?: string;
-  useSubdomain?: boolean;
-  createdAt?: string;
-}
+   新設計では「orgs / sites の1行を更新するだけ」。
+   リポ作成もデプロイもしない。DB 書き込みは service_role で行う。
 
-/* ═══════════════════════════════════════
-   POST /api/webhook — Stripe Webhook Handler
-   ═══════════════════════════════════════ */
+   守ること:
+     - 署名（stripe-signature）と署名鍵（STRIPE_WEBHOOK_SECRET）の両方を必須にする
+     - 同じ event.id を2回受けても2回目は何もしない（stripe_events で冪等）
+     - メール通知はベストエフォート。失敗しても本流（DB更新）は止めない
+   ═══════════════════════════════════════════════════════════════ */
+
 export async function POST(req: NextRequest) {
   const body = await req.text();
   const sig = req.headers.get("stripe-signature");
 
-  let event: Stripe.Event;
-
-  // 署名の検証は必ず通す。
-  // 以前はここに「署名が無ければ本文をそのまま信じる」逃げ道があった。
-  // 署名ヘッダを付けずに POST するだけで検証を素通りでき、
-  // 偽の「決済完了」を投げ込めてしまうため塞いだ。
+  const stripe = getStripe();
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-  if (!webhookSecret) {
-    logger.error("STRIPE", "STRIPE_WEBHOOK_SECRET が未設定のため webhook を受け付けない");
+
+  // 署名鍵か Stripe クライアントが無ければ受け付けない。
+  // （以前あった「署名が無ければ本文をそのまま信じる」逃げ道は塞いである）
+  if (!stripe || !webhookSecret) {
+    logger.error("STRIPE", "Stripe の鍵が未設定のため webhook を受け付けない");
     return NextResponse.json({ error: "webhook not configured" }, { status: 500 });
   }
   if (!sig) {
@@ -60,345 +36,274 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "missing signature" }, { status: 400 });
   }
 
+  let event: Stripe.Event;
   try {
     event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
   } catch (err) {
-    logger.error("STRIPE", "Webhook署名検証失敗", { error: err });
-    return NextResponse.json({ error: "Webhook signature verification failed" }, { status: 400 });
+    logger.error("STRIPE", "Webhook 署名検証に失敗", { error: err });
+    return NextResponse.json({ error: "signature verification failed" }, { status: 400 });
+  }
+
+  const admin = getWriteClient();
+  if (!admin) {
+    logger.error("STRIPE", "DB（service_role）が未設定のため webhook を処理できない");
+    return NextResponse.json({ error: "storage not configured" }, { status: 500 });
+  }
+
+  /* ─── 冪等性: この event.id を初めて見たときだけ処理する ─── */
+  const { error: insErr } = await admin
+    .from("stripe_events")
+    .insert({ event_id: event.id, type: event.type });
+
+  if (insErr?.code === "23505") {
+    // 重複キー = 既に受け取り済み。二重処理しない
+    logger.debug("STRIPE", `重複 webhook を無視: ${event.id}`);
+    return NextResponse.json({ received: true, duplicate: true });
+  }
+  // 台帳に書けたか。書けていれば、処理に失敗したとき台帳から消し、
+  // Stripe の再送で処理をやり直せるようにする（先に記録して弾くと取りこぼす）。
+  const recorded = !insErr;
+  if (insErr) {
+    // 台帳に書けない他の理由（テーブル未作成など）。取りこぼしを避けるため処理は続ける
+    logger.warn("STRIPE", "stripe_events への記録に失敗（処理は続行）", { error: insErr });
   }
 
   /* ─── イベント別処理 ─── */
-  switch (event.type) {
-    case "checkout.session.completed":
-      await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
-      break;
+  try {
+    switch (event.type) {
+      case "checkout.session.completed":
+        await handleCheckoutCompleted(admin, stripe, event.data.object as Stripe.Checkout.Session);
+        break;
 
-    case "customer.subscription.updated":
-      await handleSubscriptionUpdated(event.data.object as Stripe.Subscription);
-      break;
+      case "customer.subscription.updated":
+        await handleSubscriptionUpdated(admin, event.data.object as Stripe.Subscription);
+        break;
 
-    case "customer.subscription.deleted":
-      await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
-      break;
+      case "customer.subscription.deleted":
+        await handleSubscriptionDeleted(admin, event.data.object as Stripe.Subscription);
+        break;
 
-    case "invoice.payment_failed":
-      logger.warn("STRIPE", "決済失敗", { details: { eventId: event.id } });
-      break;
+      case "invoice.payment_failed":
+        await handlePaymentFailed(admin, event.data.object as Stripe.Invoice);
+        break;
 
-    default:
-      logger.debug("STRIPE", `未処理イベント: ${event.type}`);
+      default:
+        logger.debug("STRIPE", `未処理イベント: ${event.type}`);
+    }
+  } catch (err) {
+    // 記録済みなら台帳から消す。こうしないと Stripe の再送が「処理済み」として弾かれ、
+    // 決済は済んだのに org が pending のまま、という取りこぼしになる。
+    // 500 を返すと Stripe がリトライするので、DB更新の一時失敗はそこで回復する。
+    if (recorded) {
+      await admin.from("stripe_events").delete().eq("event_id", event.id);
+    }
+    logger.error("STRIPE", `イベント処理に失敗: ${event.type}`, { error: err });
+    return NextResponse.json({ error: "handler failed" }, { status: 500 });
   }
 
   return NextResponse.json({ received: true });
 }
 
 /* ═══════════════════════════════════════
+   型の短縮
+   ═══════════════════════════════════════ */
+type WriteClient = NonNullable<ReturnType<typeof getWriteClient>>;
+
+/** string | オブジェクト | null から ID 文字列を取り出す */
+function toId(ref: string | { id: string } | null | undefined): string | null {
+  if (!ref) return null;
+  return typeof ref === "string" ? ref : ref.id;
+}
+
+/* ═══════════════════════════════════════
    checkout.session.completed
-   サイト自動生成の本体
+   決済完了 → 会社を有効化・サイトを公開
    ═══════════════════════════════════════ */
-async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
-  const metadata = session.metadata || {};
-  const gistId = metadata.gist_id;
-  const imageGistId = metadata.image_gist_id;
+async function handleCheckoutCompleted(
+  admin: WriteClient,
+  _stripe: Stripe,
+  session: Stripe.Checkout.Session
+) {
+  const orgId = session.metadata?.org_id;
+  const siteId = session.metadata?.site_id;
 
-  if (!gistId) {
-    logger.error("STRIPE", "gist_idがmetadataにありません", { details: { sessionId: session.id } });
+  if (!orgId || !siteId) {
+    logger.error("STRIPE", "metadata に org_id / site_id が無い", {
+      details: { sessionId: session.id },
+    });
     return;
   }
 
-  try {
-    // 1. 注文データ取得
-    logger.info("DEPLOY", "サイト生成開始", { orderId: metadata.order_id });
+  const customerId = toId(session.customer);
+  const subscriptionId = toId(session.subscription);
 
-    const gistFiles = await fetchGist(gistId);
-    const orderMeta: OrderData = JSON.parse(gistFiles["order.json"]);
+  const { error: orgErr } = await admin
+    .from("orgs")
+    .update({
+      status: "active",
+      stripe_customer_id: customerId,
+      stripe_subscription_id: subscriptionId,
+    })
+    .eq("id", orgId);
+  if (orgErr) throw orgErr;
 
-    logger.info("DEPLOY", `注文データ取得: ${orderMeta.companyName}`, { orderId: orderMeta.orderId });
+  const { error: siteErr } = await admin
+    .from("sites")
+    .update({ status: "live", published_at: new Date().toISOString() })
+    .eq("id", siteId);
+  if (siteErr) throw siteErr;
 
-    // 2. 画像取得（ある場合）
-    let imageFiles: Record<string, string> = {};
-    if (imageGistId) {
-      try {
-        imageFiles = await fetchImageGist(imageGistId);
-        logger.info("DEPLOY", `画像取得: ${Object.keys(imageFiles).length}枚`, { orderId: orderMeta.orderId });
-      } catch {
-        logger.warn("DEPLOY", "画像Gist取得失敗（スキップ）", { orderId: orderMeta.orderId });
-      }
-    }
-
-    // 3. サイト生成
-    const siteUrl = await createSite(orderMeta, imageFiles);
-    logger.success("DEPLOY", `サイト生成完了: ${siteUrl}`, { orderId: orderMeta.orderId });
-
-    // 4. Gist削除
-    await deleteGist(gistId);
-    if (imageGistId) await deleteGist(imageGistId);
-
-    // 5. GAS通知
-    await notifyGAS({
-      order_id: orderMeta.orderId,
-      company_name: orderMeta.companyName,
-      email: orderMeta.email,
-      phone: orderMeta.phone || "",
-      industry: orderMeta.industry || "other",
-      template: orderMeta.templateId,
-      plan: normalizePlanId(orderMeta.plan || "otameshi"),
-      site_url: siteUrl,
-      domain: orderMeta.domain || "",
-      stripe_session_id: session.id,
-      stripe_customer_id: session.customer as string || "",
-      stripe_subscription_id: session.subscription as string || "",
-      amount_total: session.amount_total,
-      ceo: orderMeta.ceo || "",
-      bio: orderMeta.bio || "",
-      tagline: orderMeta.tagline || "",
-      address: orderMeta.address || "",
-      created_at: orderMeta.createdAt || new Date().toISOString(),
-    });
-
-    logger.success("DEPLOY", "GAS通知完了", { orderId: orderMeta.orderId });
-
-  } catch (err) {
-    logger.error("DEPLOY", "サイト生成失敗", { error: err, orderId: metadata.order_id });
-    // Stripeに400を返さない（リトライされるため）
-  }
-}
-
-/* ═══════════════════════════════════════
-   サイト生成本体
-   ═══════════════════════════════════════ */
-async function createSite(orderMeta: OrderData, imageFiles: Record<string, string>): Promise<string> {
-  const slug = (orderMeta.siteSlug || orderMeta.companyName)
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .trim()
-    .slice(0, 30) || `site-${Date.now()}`;
-
-  const repoName = `shikumiya-${slug}`;
-
-  logger.info("GITHUB_API", `リポジトリ作成: ${repoName}`, { orderId: orderMeta.orderId });
-
-  // 1. テンプレートリポからリポ生成
-  const templateRepo = process.env.GITHUB_TEMPLATE_REPO || "shikumiya-template";
-  await createRepoFromTemplate(templateRepo, repoName, `${orderMeta.companyName}のホームページ — Mado`);
-
-  // GitHub APIの伝播待ち
-  await new Promise((r) => setTimeout(r, 5000));
-
-  // 2. テンプレートファイルをコピー
-  await copyTemplateFiles(repoName, orderMeta.templateId);
-
-  // 3. 画像をpush
-  for (const [fileName, base64Data] of Object.entries(imageFiles)) {
-    const cleanName = fileName.replace(/[^a-zA-Z0-9._-]/g, "");
-    const path = `public/images/${cleanName}`;
-    try {
-      await pushBinaryFileToRepo(repoName, path, base64Data, `Add image: ${cleanName}`);
-    } catch (err) {
-      logger.warn("GITHUB_API", `画像push失敗: ${cleanName}`, { orderId: orderMeta.orderId, error: err });
-    }
-  }
-
-  // 4. site.config.json生成+push
-  const config = generateSiteConfig({
-    orderId: orderMeta.orderId,
-    companyName: orderMeta.companyName,
-    email: orderMeta.email,
-    phone: orderMeta.phone,
-    address: orderMeta.address,
-    ceo: orderMeta.ceo,
-    bio: orderMeta.bio,
-    tagline: orderMeta.tagline,
-    industry: orderMeta.industry,
-    templateId: orderMeta.templateId,
-    domain: orderMeta.domain,
-    siteSlug: slug,
+  logger.success("STRIPE", "決済完了を反映（org=active / site=live）", {
+    details: { orgId, siteId },
   });
 
-  await pushFileToRepo(repoName, "src/app/site.config.json", stringifySiteConfig(config), "Setup: サイト設定");
-
-  // 5. Vercelデプロイ
-  const siteUrl = await deployToVercel(repoName);
-
-  return siteUrl;
+  // ここから先はベストエフォート。失敗しても申込は成立している
+  await notifyGasBestEffort(admin, orgId, siteId, session);
 }
 
 /* ═══════════════════════════════════════
-   テンプレートファイルコピー
-   メインリポ → 顧客リポ
+   customer.subscription.updated
+   プラン変更を反映
    ═══════════════════════════════════════ */
-async function copyTemplateFiles(targetRepo: string, templateId: string): Promise<void> {
-  const sourceRepo = "shikumiya";
-  const baseTemplateId = templateId.replace(/-(?:mid|pro)$/, "");
-
-  // 1. page.tsxをコピー（全コンポーネントはpage.tsx内にインライン定義済み）
-  const pageContent = await fetchFileFromRepo(sourceRepo, `src/app/portfolio-templates/${templateId}/page.tsx`);
-  if (pageContent) {
-    // import パスを書き換え
-    const rewritten = pageContent
-      // DemoBanner関連を全て除去
-      .replace(/^.*DemoBanner.*$/gm, "")
-      .replace(/<DemoBanner\s*\/?\s*>/g, "")
-      // コンポーネントパスの書き換え（万が一外部コンポーネントがある場合）
-      .replace(new RegExp(`@/components/portfolio-templates/${templateId}/`, "g"), "@/components/")
-      .replace(new RegExp(`@/components/portfolio-templates/${baseTemplateId}/`, "g"), "@/components/");
-
-    await pushFileToRepo(targetRepo, "src/app/page.tsx", rewritten, `Setup: page.tsx (${templateId})`);
-    logger.info("GITHUB_API", `page.tsx コピー完了: ${templateId}`, { details: { targetRepo } });
-  } else {
-    logger.error("GITHUB_API", `page.tsx が見つかりません: ${templateId}`, { details: { sourceRepo } });
+async function handleSubscriptionUpdated(admin: WriteClient, subscription: Stripe.Subscription) {
+  const plan = planFromSubscription(subscription);
+  if (!plan) {
+    logger.warn("STRIPE", "サブスクからプランを判定できず更新をスキップ", {
+      details: { subscriptionId: subscription.id },
+    });
+    return;
   }
 
-  // 2. 必要なライブラリファイルをコピー
-  const libFiles = [
-    "src/lib/site-config-schema.ts",
-    "src/lib/use-preview-name.ts",
-  ];
-  for (const libFile of libFiles) {
-    try {
-      const content = await fetchFileFromRepo(sourceRepo, libFile);
-      if (content) {
-        await pushFileToRepo(targetRepo, libFile, content, `Setup: ${libFile.split("/").pop()}`);
-      }
-    } catch { /* ファイルがなくても続行 */ }
-  }
+  const { error } = await admin
+    .from("orgs")
+    .update({ plan })
+    .eq("stripe_subscription_id", subscription.id);
+  if (error) throw error;
 
-  logger.info("GITHUB_API", `テンプレートコピー完了: ${templateId}`, { details: { targetRepo } });
-}
-
-/* ═══════════════════════════════════════
-   画像Gist取得（大きい画像用の特別処理）
-   ═══════════════════════════════════════ */
-async function fetchImageGist(gistId: string): Promise<Record<string, string>> {
-  const token = process.env.GITHUB_TOKEN!;
-  const res = await fetch(`https://api.github.com/gists/${gistId}`, {
-    headers: { Authorization: `token ${token}`, Accept: "application/vnd.github.v3+json" },
+  logger.info("STRIPE", `プランを更新: ${plan}`, {
+    details: { subscriptionId: subscription.id },
   });
-
-  if (!res.ok) throw new Error(`Image Gist fetch failed: ${res.status}`);
-
-  const data = await res.json();
-  const result: Record<string, string> = {};
-
-  for (const [name, file] of Object.entries(data.files)) {
-    const f = file as { content?: string; raw_url?: string; truncated?: boolean };
-
-    if (f.truncated && f.raw_url) {
-      // 大きいファイルはraw_urlから取得
-      const rawRes = await fetch(f.raw_url, {
-        headers: { Authorization: `token ${token}` },
-      });
-      if (rawRes.ok) {
-        result[name] = await rawRes.text();
-      }
-    } else if (f.content) {
-      result[name] = f.content;
-    }
-  }
-
-  return result;
 }
 
 /* ═══════════════════════════════════════
-   Vercelデプロイ
+   customer.subscription.deleted
+   解約 → 会社を canceled・サイトを停止
    ═══════════════════════════════════════ */
-async function deployToVercel(repoName: string): Promise<string> {
-  const vercelToken = process.env.VERCEL_TOKEN;
-  if (!vercelToken) {
-    logger.warn("VERCEL_API", "VERCEL_TOKEN未設定。デプロイスキップ");
-    return `https://${repoName}.vercel.app`;
+async function handleSubscriptionDeleted(admin: WriteClient, subscription: Stripe.Subscription) {
+  const { data: org, error: findErr } = await admin
+    .from("orgs")
+    .select("id")
+    .eq("stripe_subscription_id", subscription.id)
+    .maybeSingle();
+  if (findErr) throw findErr;
+
+  if (!org) {
+    logger.warn("STRIPE", "解約対象の会社が見つからない", {
+      details: { subscriptionId: subscription.id },
+    });
+    return;
   }
 
-  const owner = process.env.GITHUB_OWNER || "AndoLyo";
+  const { error: orgErr } = await admin.from("orgs").update({ status: "canceled" }).eq("id", org.id);
+  if (orgErr) throw orgErr;
 
-  try {
-    // プロジェクト作成
-    const projectRes = await fetch("https://api.vercel.com/v10/projects", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${vercelToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name: repoName,
-        framework: "nextjs",
-        gitRepository: {
-          type: "github",
-          repo: `${owner}/${repoName}`,
-        },
-      }),
-    });
+  const { error: siteErr } = await admin
+    .from("sites")
+    .update({ status: "suspended" })
+    .eq("org_id", org.id);
+  if (siteErr) throw siteErr;
 
-    if (!projectRes.ok) {
-      const err = await projectRes.text();
-      logger.warn("VERCEL_API", `プロジェクト作成失敗: ${err}`);
-      return `https://${repoName}.vercel.app`;
-    }
-
-    // デプロイトリガー
-    const deployRes = await fetch("https://api.vercel.com/v13/deployments", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${vercelToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name: repoName,
-        gitSource: {
-          type: "github",
-          org: owner,
-          repo: repoName,
-          ref: "main",
-        },
-      }),
-    });
-
-    if (deployRes.ok) {
-      const deployData = await deployRes.json();
-      const url = deployData.url ? `https://${deployData.url}` : `https://${repoName}.vercel.app`;
-      logger.success("VERCEL_API", `デプロイ成功: ${url}`);
-      return url;
-    }
-  } catch (err) {
-    logger.error("VERCEL_API", "デプロイ失敗", { error: err });
-  }
-
-  return `https://${repoName}.vercel.app`;
+  logger.info("STRIPE", "解約を反映（org=canceled / site=suspended）", {
+    details: { orgId: org.id, subscriptionId: subscription.id },
+  });
 }
 
 /* ═══════════════════════════════════════
-   GAS通知
+   invoice.payment_failed
+   支払い失敗 → 会社を past_due
    ═══════════════════════════════════════ */
-async function notifyGAS(data: Record<string, unknown>): Promise<void> {
+async function handlePaymentFailed(admin: WriteClient, invoice: Stripe.Invoice) {
+  const subscriptionId = toId(invoice.parent?.subscription_details?.subscription);
+  if (!subscriptionId) {
+    logger.warn("STRIPE", "支払い失敗にサブスクIDが無い（スキップ）", {
+      details: { invoiceId: invoice.id },
+    });
+    return;
+  }
+
+  const { error } = await admin
+    .from("orgs")
+    .update({ status: "past_due" })
+    .eq("stripe_subscription_id", subscriptionId);
+  if (error) throw error;
+
+  logger.warn("STRIPE", "支払い失敗を反映（org=past_due）", {
+    details: { subscriptionId },
+  });
+}
+
+/* ═══════════════════════════════════════
+   小道具
+   ═══════════════════════════════════════ */
+
+/** サブスクからプランを決める。metadata.plan を優先し、無ければ price の lookup_key から引く */
+function planFromSubscription(subscription: Stripe.Subscription): Plan | null {
+  const metaPlan = subscription.metadata?.plan;
+  if (metaPlan) return normalizePlanId(metaPlan);
+
+  const lookupKey = subscription.items?.data?.[0]?.price?.lookup_key;
+  if (lookupKey) {
+    for (const [plan, key] of Object.entries(PLAN_LOOKUP_KEYS)) {
+      if (key === lookupKey) return plan as Plan;
+    }
+  }
+  return null;
+}
+
+/**
+ * 完成通知メール（GAS 送信専用）。ベストエフォート。
+ * GAS_WEBHOOK_URL が無ければ何もしない。失敗しても投げ返さない（本流を止めない）。
+ */
+async function notifyGasBestEffort(
+  admin: WriteClient,
+  orgId: string,
+  siteId: string,
+  session: Stripe.Checkout.Session
+) {
   const gasUrl = process.env.GAS_WEBHOOK_URL;
-  if (!gasUrl) {
-    logger.warn("GAS_WEBHOOK", "GAS_WEBHOOK_URL未設定。通知スキップ");
-    return;
+  if (!gasUrl) return;
+
+  try {
+    const { data: org } = await admin
+      .from("orgs")
+      .select("name, email, phone, industry, plan")
+      .eq("id", orgId)
+      .maybeSingle();
+    const { data: site } = await admin
+      .from("sites")
+      .select("slug, template_id")
+      .eq("id", siteId)
+      .maybeSingle();
+
+    await retryGasWebhook(gasUrl, {
+      org_id: orgId,
+      site_id: siteId,
+      company_name: org?.name ?? "",
+      email: org?.email ?? "",
+      phone: org?.phone ?? "",
+      industry: org?.industry ?? "other",
+      plan: normalizePlanId(org?.plan ?? "otameshi"),
+      template: site?.template_id ?? "",
+      slug: site?.slug ?? "",
+      site_url: site?.slug ? customerSiteUrl(site.slug) : "",
+      stripe_session_id: session.id,
+      stripe_customer_id: toId(session.customer) ?? "",
+      stripe_subscription_id: toId(session.subscription) ?? "",
+      amount_total: session.amount_total,
+      _status: "公開中",
+    });
+    logger.success("GAS_WEBHOOK", "完成通知を送信", { details: { orgId, siteId } });
+  } catch (err) {
+    logger.warn("GAS_WEBHOOK", "完成通知に失敗（本流は継続）", { error: err });
   }
-
-  await retryGasWebhook(gasUrl, data);
-}
-
-/* ═══════════════════════════════════════
-   サブスクリプション更新
-   ═══════════════════════════════════════ */
-async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
-  logger.info("STRIPE", `サブスクリプション更新: ${subscription.id}`, {
-    details: {
-      status: subscription.status,
-      metadata: subscription.metadata,
-    },
-  });
-  // TODO: GASのプラン情報を更新
-  // TODO: 顧客サイトのsite.config.jsonのplanフィールドを更新
-}
-
-async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
-  logger.info("STRIPE", `サブスクリプション解約: ${subscription.id}`, {
-    details: { metadata: subscription.metadata },
-  });
-  // TODO: GASに解約記録
-  // 解約後もサイトは残す（PROJECT_STATE通り）
 }

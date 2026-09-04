@@ -28,7 +28,12 @@ export default function LoginPage() {
 
   useEffect(() => {
     const code = new URLSearchParams(window.location.search).get("error");
-    if (code && ERROR_MESSAGES[code]) setMessage(ERROR_MESSAGES[code]);
+    if (code) {
+      setMessage(
+        ERROR_MESSAGES[code] ??
+          `ログインの途中で問題が発生しました。もう一度お試しください。（理由: ${code}）`
+      );
+    }
   }, []);
 
   async function handleGoogle() {

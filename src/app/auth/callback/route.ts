@@ -19,22 +19,22 @@ export async function GET(request: Request) {
   const oauthError = searchParams.get("error_description") || searchParams.get("error");
   if (oauthError) {
     console.error("[auth/callback] ログインに失敗", oauthError);
-    return NextResponse.redirect(`${origin}/member?error=login_failed`);
+    return NextResponse.redirect(`${origin}/auth/login?error=login_failed`);
   }
 
   if (!code) {
-    return NextResponse.redirect(`${origin}/member?error=missing_code`);
+    return NextResponse.redirect(`${origin}/auth/login?error=missing_code`);
   }
 
   const supabase = await createServerSupabase();
   if (!supabase) {
-    return NextResponse.redirect(`${origin}/member?error=not_configured`);
+    return NextResponse.redirect(`${origin}/auth/login?error=not_configured`);
   }
 
   const { error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) {
     console.error("[auth/callback] セッションの作成に失敗", error);
-    return NextResponse.redirect(`${origin}/member?error=session_failed`);
+    return NextResponse.redirect(`${origin}/auth/login?error=session_failed`);
   }
 
   // 行き先が指定されていればそこへ。ただし外部URLへは飛ばさない
@@ -44,7 +44,9 @@ export async function GET(request: Request) {
 
   // 会社がある人はダッシュボード、まだの人は申込へ
   const { data: orgs } = await supabase.from("orgs").select("id").limit(1);
-  const dest = orgs && orgs.length > 0 ? "/member" : "/start";
+  // 会社がある人は Supabase 版の会員トップ（/member/site）へ。
+  // 旧 /member は next-auth なので、ここへ返すと再ログインを促してしまう。
+  const dest = orgs && orgs.length > 0 ? "/member/site" : "/start";
 
   return NextResponse.redirect(`${origin}${dest}`);
 }
