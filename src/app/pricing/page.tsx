@@ -96,21 +96,27 @@ const PRICING_FAQ: FaqItem[] = [
 
 export default function PricingPage() {
   return (
-    <>
+    <div data-mado-marketing className="min-h-screen bg-bg text-ink">
       <SiteHeader />
       <main>
         {/* 見出し */}
-        <section className="scroll-mt-20 pb-6 pt-16 sm:pt-20">
+        <section className="relative scroll-mt-20 overflow-hidden pb-8 pt-16 sm:pt-24">
+          <div
+            aria-hidden
+            className="window-light pointer-events-none absolute inset-x-0 top-0 -z-10 h-72"
+          />
           <div className="mx-auto max-w-3xl px-5 text-center">
-            <p className="mb-3 text-sm font-medium tracking-wide text-accent">
+            <p className="mb-3 inline-flex items-center gap-2 text-sm font-medium tracking-wide text-terracotta">
+              <span aria-hidden className="h-px w-6 bg-terracotta/60" />
               料金
+              <span aria-hidden className="h-px w-6 bg-terracotta/60" />
             </p>
-            <h1 className="text-3xl font-bold leading-tight tracking-tight text-ink sm:text-4xl">
+            <h1 className="font-serif text-4xl font-bold leading-[1.14] tracking-tight text-ink sm:text-5xl">
               0円からはじめて、
               <br className="sm:hidden" />
               必要なら広げる。
             </h1>
-            <p className="mx-auto mt-4 max-w-md text-base leading-relaxed text-ink2">
+            <p className="mx-auto mt-5 max-w-md text-base leading-relaxed text-ink2">
               制作費は0円。まずは無料のおためしから始めて、あとからいつでもプランを変えられます。
             </p>
           </div>
@@ -126,7 +132,7 @@ export default function PricingPage() {
         {/* 比較表 */}
         <section className="scroll-mt-20 py-16 sm:py-20">
           <div className="mx-auto max-w-5xl px-5">
-            <h2 className="text-center text-2xl font-bold leading-snug text-ink sm:text-3xl">
+            <h2 className="font-serif text-center text-3xl font-bold leading-snug text-ink sm:text-4xl">
               含まれるもの、ひと目で。
             </h2>
 
@@ -185,12 +191,7 @@ export default function PricingPage() {
             </div>
 
             <div className="mt-10 flex justify-center">
-              <LinkButton
-                href="/start"
-                variant="cta"
-                size="lg"
-                pill
-              >
+              <LinkButton href="/start" variant="cta" size="lg">
                 無料ではじめる
               </LinkButton>
             </div>
@@ -200,7 +201,7 @@ export default function PricingPage() {
         {/* 料金のFAQ */}
         <section className="scroll-mt-20 bg-surface py-16 sm:py-20">
           <div className="mx-auto max-w-2xl px-5">
-            <h2 className="text-center text-2xl font-bold leading-snug text-ink sm:text-3xl">
+            <h2 className="font-serif text-center text-3xl font-bold leading-snug text-ink sm:text-4xl">
               料金についての質問
             </h2>
             <Faq items={PRICING_FAQ} className="mt-10" />
@@ -208,6 +209,6 @@ export default function PricingPage() {
         </section>
       </main>
       <SiteFooter />
-    </>
+    </div>
   );
 }

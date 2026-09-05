@@ -25,7 +25,9 @@ function Logo() {
     <Link href="/" className="flex items-center gap-2.5">
       <WindowMark className="size-8" />
       <span className="flex flex-col leading-tight">
-        <span className="text-base font-bold tracking-wide text-ink">Mado</span>
+        <span className="font-serif text-xl font-bold tracking-tight text-ink">
+          Mado
+        </span>
         <span className="text-[10px] tracking-wide text-ink3">
           by Lyo Vision
         </span>
@@ -62,7 +64,7 @@ export function SiteHeader() {
           >
             ログイン
           </Link>
-          <LinkButton href="/start" variant="cta" size="sm" pill>
+          <LinkButton href="/start" variant="cta" size="sm">
             サイトを作る
           </LinkButton>
         </div>
@@ -107,7 +109,7 @@ export function SiteHeader() {
           </Link>
         </nav>
         <div className="mt-3">
-          <LinkButton href="/start" variant="cta" block pill>
+          <LinkButton href="/start" variant="cta" block>
             サイトを作る
           </LinkButton>
         </div>

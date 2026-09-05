@@ -1,13 +1,14 @@
 /**
- * 料金カード（3段）。トップの料金セクションと /pricing の両方で使う共通部品。
+ * 料金カード。トップの料金セクションと /pricing の両方で使う共通部品。
  * 表示のズレを防ぐため、金額とプラン名は src/lib/stripe.ts の1か所から引く。
  *
- * 無料先出し（おためし → おまかせ → おまかせプロ）。
- * 金銭的な得は言葉で押し売りせず、単品価格をそのまま並べて体感させる。
+ * 均等3カラムにはしない。真ん中の「おまかせ」を主役として一段大きく・浮かせ、
+ * 両脇（無料・プロ）はそれを支える控えめな段にする（大小差で選びやすく）。
+ * 無料先出し（おためし → おまかせ → おまかせプロ）の並びは保つ。
+ * ボタンは3段の強弱: おまかせ=あかり付き / おためし=オレンジ実面 / プロ=濃紺の枠。
  */
 
 import { Check } from "lucide-react";
-import { Badge } from "@/components/ui";
 import {
   PLAN_LABELS,
   PLAN_PRICES,
@@ -16,16 +17,16 @@ import {
 } from "@/lib/stripe";
 import { LinkButton } from "./LinkButton";
 
+type CtaVariant = "cta" | "primary" | "secondary";
+
 interface PlanMeta {
   plan: Plan;
-  /** 一言で「誰のための段か」 */
   tagline: string;
   features: string[];
-  /** 補足（含まれないもの等） */
   note?: string;
   ctaLabel: string;
-  /** 真ん中の推し */
-  highlighted?: boolean;
+  ctaVariant: CtaVariant;
+  featured?: boolean;
 }
 
 const PLANS: PlanMeta[] = [
@@ -42,6 +43,7 @@ const PLANS: PlanMeta[] = [
     ],
     note: "更新はご自身で（AIおまかせ編集は含みません）",
     ctaLabel: "無料ではじめる",
+    ctaVariant: "primary",
   },
   {
     plan: "omakase",
@@ -54,7 +56,8 @@ const PLANS: PlanMeta[] = [
       "AIにおまかせで編集（月3回）",
     ],
     ctaLabel: "このプランではじめる",
-    highlighted: true,
+    ctaVariant: "cta",
+    featured: true,
   },
   {
     plan: "omakase-pro",
@@ -67,6 +70,7 @@ const PLANS: PlanMeta[] = [
       "AIにおまかせで編集（無制限）",
     ],
     ctaLabel: "このプランではじめる",
+    ctaVariant: "secondary",
   },
 ];
 
@@ -76,65 +80,99 @@ const REASSURANCE = [
   "独自ドメイン全プラン対応",
 ];
 
-function PlanCard({ meta }: { meta: PlanMeta }) {
-  const { plan, tagline, features, note, ctaLabel, highlighted } = meta;
-  const isFree = plan === "otameshi";
-
+function FeatureList({ features }: { features: string[] }) {
   return (
-    <div
-      className={[
-        "relative flex flex-col rounded-2xl p-6 sm:p-7",
-        highlighted
-          ? "bg-surface border border-accent/45 shadow-sh3 ring-1 ring-accent/25"
-          : "bg-surface border border-line shadow-sh2",
-      ].join(" ")}
-    >
-      {highlighted && (
-        <span className="absolute -top-3 left-6">
-          <Badge tone="accent">おすすめ</Badge>
-        </span>
-      )}
+    <ul className="mt-6 flex flex-1 flex-col gap-3">
+      {features.map((f) => (
+        <li key={f} className="flex items-start gap-2.5">
+          <Check
+            className="mt-0.5 size-4 shrink-0 text-accent"
+            strokeWidth={2.5}
+            aria-hidden
+          />
+          <span className="text-sm text-ink2">{f}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
 
-      <p className="text-lg font-bold text-ink">{PLAN_LABELS[plan]}</p>
-      <p className="mt-1 text-sm text-ink2">{tagline}</p>
-
+function PriceBlock({ plan }: { plan: Plan }) {
+  const isFree = plan === "otameshi";
+  return (
+    <>
       <div className="mt-5 flex items-baseline gap-1.5">
-        <span className="tnum text-4xl font-bold text-ink">
+        <span className="font-serif text-5xl font-bold leading-none text-ink">
           {PLAN_PRICES[plan]}
         </span>
         <span className="text-sm text-ink3">/ 月（税込）</span>
       </div>
       {isFree ? (
-        <p className="mt-1 h-5 text-xs text-ink3">ずっと0円ではじめられます</p>
+        <p className="mt-2 h-5 text-xs text-ink3">ずっと0円ではじめられます</p>
       ) : (
-        <p className="mt-1 h-5 text-xs text-ink3">
-          年払いなら月<span className="tnum">{PLAN_YEARLY_PRICES[plan]}</span>
+        <p className="mt-2 h-5 text-xs text-ink3">
+          年払いなら月{" "}
+          <span className="tnum text-ink2">{PLAN_YEARLY_PRICES[plan]}</span>
         </p>
       )}
+    </>
+  );
+}
+
+/** 主役の「おまかせ」。一段大きく・浮かせ・あかりを添える */
+function FeaturedCard({ meta }: { meta: PlanMeta }) {
+  const { plan, tagline, features, ctaLabel, ctaVariant } = meta;
+  return (
+    <div className="relative lg:-my-3 lg:-mx-1">
+      {/* 窓から差すあたたかい光（装飾・静止） */}
+      <div
+        aria-hidden
+        className="window-light pointer-events-none absolute -inset-x-6 -top-8 -z-10 h-40 rounded-full blur-2xl"
+      />
+      <div className="relative flex h-full flex-col rounded-2xl border-2 border-accent/55 bg-surface p-7 shadow-sh3 sm:p-8">
+        <div className="flex items-center justify-between">
+          <p className="font-serif text-2xl font-bold text-ink">
+            {PLAN_LABELS[plan]}
+          </p>
+          <span className="inline-flex items-center rounded-pill bg-accent px-3 py-1 text-xs font-bold text-on-accent">
+            おすすめ
+          </span>
+        </div>
+        <p className="mt-1.5 text-sm text-ink2">{tagline}</p>
+
+        <PriceBlock plan={plan} />
+
+        <div className="mt-6">
+          <LinkButton href="/start" variant={ctaVariant} size="lg" block>
+            {ctaLabel}
+          </LinkButton>
+        </div>
+
+        <FeatureList features={features} />
+      </div>
+    </div>
+  );
+}
+
+/** 脇を支える段（無料・プロ）。控えめに、けれど手を抜かず */
+function SatelliteCard({ meta }: { meta: PlanMeta }) {
+  const { plan, tagline, features, note, ctaLabel, ctaVariant } = meta;
+  return (
+    <div className="flex h-full flex-col rounded-2xl border border-line bg-surface p-6 shadow-sh1 sm:p-7">
+      <p className="font-serif text-xl font-bold text-ink">
+        {PLAN_LABELS[plan]}
+      </p>
+      <p className="mt-1.5 text-sm text-ink2">{tagline}</p>
+
+      <PriceBlock plan={plan} />
 
       <div className="mt-6">
-        <LinkButton
-          href="/start"
-          variant={highlighted ? "cta" : "primary"}
-          block
-          pill
-        >
+        <LinkButton href="/start" variant={ctaVariant} block>
           {ctaLabel}
         </LinkButton>
       </div>
 
-      <ul className="mt-6 flex flex-1 flex-col gap-3">
-        {features.map((f) => (
-          <li key={f} className="flex items-start gap-2.5">
-            <Check
-              className="mt-0.5 size-4 shrink-0 text-success"
-              strokeWidth={2.5}
-              aria-hidden
-            />
-            <span className="text-sm text-ink2">{f}</span>
-          </li>
-        ))}
-      </ul>
+      <FeatureList features={features} />
 
       {note && (
         <p className="mt-5 border-t border-line pt-4 text-xs text-ink3">
@@ -146,12 +184,14 @@ function PlanCard({ meta }: { meta: PlanMeta }) {
 }
 
 export function PricingCards({ className = "" }: { className?: string }) {
+  const [otameshi, omakase, pro] = PLANS;
+
   return (
     <div className={className}>
-      <div className="grid items-stretch gap-5 lg:grid-cols-3">
-        {PLANS.map((meta) => (
-          <PlanCard key={meta.plan} meta={meta} />
-        ))}
+      <div className="grid gap-5 lg:grid-cols-[1fr_1.24fr_1fr] lg:items-center lg:gap-6">
+        <SatelliteCard meta={otameshi} />
+        <FeaturedCard meta={omakase} />
+        <SatelliteCard meta={pro} />
       </div>
 
       <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
@@ -160,7 +200,7 @@ export function PricingCards({ className = "" }: { className?: string }) {
             key={r}
             className="inline-flex items-center gap-1.5 text-sm text-ink2"
           >
-            <Check className="size-4 text-success" strokeWidth={2.5} aria-hidden />
+            <Check className="size-4 text-accent" strokeWidth={2.5} aria-hidden />
             {r}
           </span>
         ))}

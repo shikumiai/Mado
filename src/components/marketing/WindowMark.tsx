@@ -1,7 +1,7 @@
 /**
- * Mado のロゴマーク。「窓（まど）」を思わせる面 + 桟（さん）の記号。
- * 差し色オレンジは印だけに使う方針に沿って、面は淡いオレンジ・線はオレンジ。
- * 装飾なので読み上げからは外す。
+ * Mado のロゴマーク。「窓（まど）」= 枠 + 桟（さん）で4つの窓ガラス。
+ * 左上のガラスに暖色の光を差して「窓から光が入る」世界観を1マークに込める。
+ * 面は淡い砂色、枠と桟は濃紺、光だけ暖色オレンジ。装飾なので読み上げから外す。
  */
 
 export function WindowMark({ className = "size-8" }: { className?: string }) {
@@ -10,21 +10,27 @@ export function WindowMark({ className = "size-8" }: { className?: string }) {
       aria-hidden
       className={["inline-flex shrink-0", className].filter(Boolean).join(" ")}
     >
-      <svg viewBox="0 0 24 24" fill="none" className="size-full">
+      <svg viewBox="0 0 32 32" fill="none" className="size-full">
+        {/* ガラス面 */}
+        <rect x="5" y="4" width="22" height="24" rx="3.5" fill="var(--surface2)" />
+        {/* 左上のガラスに差す光 */}
+        <path d="M6.6 5.6h7.9v9.9H6.6z" fill="var(--accent)" opacity="0.9" />
+        <path d="M6.6 5.6h7.9v9.9H6.6z" fill="var(--accent-soft)" opacity="0.35" />
+        {/* 枠 */}
         <rect
-          x="3.25"
-          y="3.25"
-          width="17.5"
-          height="17.5"
-          rx="5"
-          fill="var(--accent-soft)"
-          stroke="var(--accent)"
-          strokeWidth="1.6"
+          x="5"
+          y="4"
+          width="22"
+          height="24"
+          rx="3.5"
+          stroke="var(--brand)"
+          strokeWidth="2"
         />
+        {/* 桟（十字） */}
         <path
-          d="M12 4.5v15M4.5 12h15"
-          stroke="var(--accent)"
-          strokeWidth="1.6"
+          d="M16 5v22M6 16h20"
+          stroke="var(--brand)"
+          strokeWidth="2"
           strokeLinecap="round"
         />
       </svg>

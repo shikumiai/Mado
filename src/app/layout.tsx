@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
-import { Noto_Sans_JP, JetBrains_Mono } from "next/font/google";
+import {
+  Noto_Sans_JP,
+  Zen_Old_Mincho,
+  Zen_Kaku_Gothic_New,
+  JetBrains_Mono,
+} from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 
+// 本文: 読みやすい角ゴシック
 const notoSansJP = Noto_Sans_JP({
   variable: "--font-sans-jp",
   subsets: ["latin"],
@@ -10,6 +16,25 @@ const notoSansJP = Noto_Sans_JP({
   display: "swap",
 });
 
+// 見出しの主役: 明朝（職人・信頼のたたずまい）。CJK なので preload はしない
+const zenOldMincho = Zen_Old_Mincho({
+  variable: "--font-serif-mincho",
+  subsets: ["latin"],
+  weight: ["400", "500", "700", "900"],
+  display: "swap",
+  preload: false,
+});
+
+// 温かさ重視の見出し・帯に使う角ゴシック
+const zenKakuGothic = Zen_Kaku_Gothic_New({
+  variable: "--font-gothic-zen",
+  subsets: ["latin"],
+  weight: ["400", "500", "700", "900"],
+  display: "swap",
+  preload: false,
+});
+
+// 数字（金額など）を桁で揃える等幅
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono-jb",
   subsets: ["latin"],
@@ -146,7 +171,7 @@ export default function RootLayout({
   return (
     <html
       lang="ja"
-      className={`${notoSansJP.variable} ${jetbrainsMono.variable}`}
+      className={`${notoSansJP.variable} ${zenOldMincho.variable} ${zenKakuGothic.variable} ${jetbrainsMono.variable}`}
       suppressHydrationWarning
     >
       <head>

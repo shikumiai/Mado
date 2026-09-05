@@ -1,38 +1,52 @@
 @import "tailwindcss";
 
 /* ============================================================
-   Mado 設計トークン（rebuild-v2）
-   ブランド = ネイビー × クリーム × オレンジ
-   ライト/ダーク両対応。値の正は docs/REBUILD_V2_MANIFEST.md。
+   Mado 設計トークン（rebuild-v2 / アートディレクション v2）
+   世界観 = 窓・職人・あたたかい光。
+   主表現は「暖かいライト」。ダークは上質な別表現として残す。
+   差し色は暖色オレンジの実面。紫〜ピンクのグラデは identity から撤去。
+   値の正は docs/ART_DIRECTION_V2.md。
    ============================================================ */
 
-/* ---- ライト（既定）: 生トークン ---- */
+/* ---- ライト（既定・signature）: 生トークン ---- */
 :root {
   color-scheme: light;
 
-  --bg: #fbf8f3;
-  --surface: #ffffff;
-  --surface2: #f4efe7;
-  --ink: #1e2a44;
-  --ink2: #5a6478;
-  --ink3: #8a93a6;
-  --brand: #25314f;
-  --accent: #f5a623;
-  --accent-soft: #fcefd6;
-  --line: rgba(30, 42, 68, 0.1);
-  --ring: rgba(245, 166, 35, 0.45);
+  --bg: #fbf8f3;         /* 地: あたたかいクリーム */
+  --surface: #ffffff;    /* 面: 紙の白 */
+  --surface2: #f1ebe0;   /* 段: 一段落とした砂色 */
+  --ink: #1e2a44;        /* 文字: 濃紺 */
+  --ink2: #54607a;       /* 副文字 */
+  --ink3: #8a93a6;       /* 補足・プレースホルダ */
+  --brand: #25314f;      /* ブランド濃紺（枠線・見出しの芯） */
+
+  --accent: #e8873a;         /* 差し色: 暖色オレンジ（CTA・強調の実面） */
+  --accent-strong: #d9752a;  /* 押下・ホバーで一段深いオレンジ */
+  --accent-soft: #fbe7ce;    /* オレンジの淡い面（アイコン地など） */
+  --terracotta: #c06a3f;     /* 補助: テラコッタ（土・木のニュアンス） */
+
+  --line: rgba(30, 42, 68, 0.12);   /* 淡い罫 */
+  --ring: rgba(232, 135, 58, 0.5);  /* フォーカスの輪郭（暖色） */
+
+  /* オレンジの実面に載せる文字は常に濃紺で読ませる（5.4:1・Mado の署名） */
+  --on-accent: #1e2a44;
 
   /* 共通（ライト/ダーク共有） */
-  --success: #2fa37a;
-  --warn: #e0a21a;
+  --success: #2f9c73;
+  --warn: #d68a19;
   --danger: #d8503a;
   --info: #4a73c4;
 
-  /* オレンジ塗りボタンに載せる文字色（常に濃紺で読ませる） */
-  --on-accent: #1e2a44;
+  /* 窓から差す光（装飾専用の暖色の放射。面には塗らない） */
+  --window-light: radial-gradient(
+    120% 92% at 50% -8%,
+    rgba(232, 135, 58, 0.20),
+    rgba(251, 231, 206, 0.12) 42%,
+    transparent 72%
+  );
 
-  /* アクセントグラデ（CTAと印だけ・面には塗らない） */
-  --gradient-accent: linear-gradient(90deg, #e84393 0%, #6c5ce7 50%, #f39c12 100%);
+  /* 暖色の淡いグラデ（"光"の装飾だけに使う。紫は使わない） */
+  --gradient-accent: linear-gradient(118deg, #f4a35a 0%, #e8873a 46%, #c06a3f 100%);
 
   /* 動きの尺 */
   --dur1: 120ms;
@@ -46,17 +60,20 @@
   :root:not([data-theme="light"]) {
     color-scheme: dark;
 
-    --bg: #10151f;
-    --surface: #171e2e;
-    --surface2: #202a40;
-    --ink: #eceff6;
-    --ink2: #aeb6c7;
-    --ink3: #7e879b;
-    --brand: #c9d3ea;
-    --accent: #f7b23d;
-    --accent-soft: rgba(245, 166, 35, 0.14);
-    --line: rgba(255, 255, 255, 0.1);
-    --ring: rgba(247, 178, 61, 0.5);
+    --bg: #121620;
+    --surface: #1a2030;
+    --surface2: #232b3d;
+    --ink: #f4eee3;        /* 温かい白 */
+    --ink2: #aeb6c6;
+    --ink3: #7c8598;
+    --brand: #e8dfd0;
+    --accent: #ef9347;     /* 暖色オレンジ（安いネオンにしない） */
+    --accent-strong: #e8873a;
+    --accent-soft: rgba(239, 147, 71, 0.16);
+    --terracotta: #ce7a4a;
+    --line: rgba(255, 248, 238, 0.13);
+    --ring: rgba(239, 147, 71, 0.55);
+    --on-accent: #201607;  /* 明るいオレンジの上は濃い焦げ茶で読ませる */
   }
 }
 
@@ -64,17 +81,20 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
 
-  --bg: #10151f;
-  --surface: #171e2e;
-  --surface2: #202a40;
-  --ink: #eceff6;
-  --ink2: #aeb6c7;
-  --ink3: #7e879b;
-  --brand: #c9d3ea;
-  --accent: #f7b23d;
-  --accent-soft: rgba(245, 166, 35, 0.14);
-  --line: rgba(255, 255, 255, 0.1);
-  --ring: rgba(247, 178, 61, 0.5);
+  --bg: #121620;
+  --surface: #1a2030;
+  --surface2: #232b3d;
+  --ink: #f4eee3;
+  --ink2: #aeb6c6;
+  --ink3: #7c8598;
+  --brand: #e8dfd0;
+  --accent: #ef9347;
+  --accent-strong: #e8873a;
+  --accent-soft: rgba(239, 147, 71, 0.16);
+  --terracotta: #ce7a4a;
+  --line: rgba(255, 248, 238, 0.13);
+  --ring: rgba(239, 147, 71, 0.55);
+  --on-accent: #201607;
 }
 
 /* ---- ライトを明示指定（media の後ろに置いて優先させる） ---- */
@@ -83,15 +103,59 @@
 
   --bg: #fbf8f3;
   --surface: #ffffff;
-  --surface2: #f4efe7;
+  --surface2: #f1ebe0;
   --ink: #1e2a44;
-  --ink2: #5a6478;
+  --ink2: #54607a;
   --ink3: #8a93a6;
   --brand: #25314f;
-  --accent: #f5a623;
-  --accent-soft: #fcefd6;
-  --line: rgba(30, 42, 68, 0.1);
-  --ring: rgba(245, 166, 35, 0.45);
+  --accent: #e8873a;
+  --accent-strong: #d9752a;
+  --accent-soft: #fbe7ce;
+  --terracotta: #c06a3f;
+  --line: rgba(30, 42, 68, 0.12);
+  --ring: rgba(232, 135, 58, 0.5);
+  --on-accent: #1e2a44;
+}
+
+/* ---- マーケ面（LP・料金）は暖かいライトを signature に固定 ----
+   端末が暗くても第一印象はライトで作る。
+   ただし利用者が自分でダークを選んだ時だけ、その意思を尊重して暗くする。
+   （アプリ側のテーマ切替は data-theme のまま維持される） */
+[data-mado-marketing] {
+  color-scheme: light;
+
+  --bg: #fbf8f3;
+  --surface: #ffffff;
+  --surface2: #f1ebe0;
+  --ink: #1e2a44;
+  --ink2: #54607a;
+  --ink3: #8a93a6;
+  --brand: #25314f;
+  --accent: #e8873a;
+  --accent-strong: #d9752a;
+  --accent-soft: #fbe7ce;
+  --terracotta: #c06a3f;
+  --line: rgba(30, 42, 68, 0.12);
+  --ring: rgba(232, 135, 58, 0.5);
+  --on-accent: #1e2a44;
+}
+:root[data-theme="dark"] [data-mado-marketing] {
+  color-scheme: dark;
+
+  --bg: #121620;
+  --surface: #1a2030;
+  --surface2: #232b3d;
+  --ink: #f4eee3;
+  --ink2: #aeb6c6;
+  --ink3: #7c8598;
+  --brand: #e8dfd0;
+  --accent: #ef9347;
+  --accent-strong: #e8873a;
+  --accent-soft: rgba(239, 147, 71, 0.16);
+  --terracotta: #ce7a4a;
+  --line: rgba(255, 248, 238, 0.13);
+  --ring: rgba(239, 147, 71, 0.55);
+  --on-accent: #201607;
 }
 
 /* ---- Tailwind theme への割り当て（inline: 生トークンを直接参照） ---- */
@@ -104,7 +168,9 @@
   --color-ink3: var(--ink3);
   --color-brand: var(--brand);
   --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
   --color-accent-soft: var(--accent-soft);
+  --color-terracotta: var(--terracotta);
   --color-line: var(--line);
   --color-ring: var(--ring);
   --color-on-accent: var(--on-accent);
@@ -114,20 +180,26 @@
   --color-danger: var(--danger);
   --color-info: var(--info);
 
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  --radius-2xl: 28px;
+  /* 角丸は強弱をつける（大面は小R、ボタンは中R、印だけピル） */
+  --radius-sm: 6px;
+  --radius-md: 11px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-2xl: 22px;
   --radius-pill: 999px;
 
-  --shadow-sh1: 0 1px 2px rgba(16, 21, 31, 0.06);
-  --shadow-sh2: 0 8px 28px rgba(16, 21, 31, 0.1);
-  --shadow-sh3: 0 20px 60px rgba(16, 21, 31, 0.16);
+  /* 影は暖色寄りのやわらかさ（焦げ茶を薄く重ねる） */
+  --shadow-sh1: 0 1px 2px rgba(74, 52, 30, 0.08);
+  --shadow-sh2: 0 10px 30px rgba(74, 52, 30, 0.1), 0 2px 6px rgba(74, 52, 30, 0.06);
+  --shadow-sh3: 0 26px 64px rgba(74, 52, 30, 0.17), 0 6px 16px rgba(74, 52, 30, 0.09);
+  /* CTA の"あかり"。オレンジのやわらかな放射（紫グラデの代わり） */
+  --shadow-glow: 0 10px 30px rgba(232, 135, 58, 0.34), 0 2px 8px rgba(232, 135, 58, 0.22);
 
   --ease-brand: cubic-bezier(0.2, 0.7, 0.2, 1);
 
   --font-sans: var(--font-sans-jp), "Noto Sans JP", system-ui, sans-serif;
+  --font-serif: var(--font-serif-mincho), "Zen Old Mincho", "Yu Mincho", "YuMincho", serif;
+  --font-display: var(--font-gothic-zen), var(--font-sans-jp), "Noto Sans JP", sans-serif;
   --font-mono: var(--font-mono-jb), "JetBrains Mono", ui-monospace, monospace;
 }
 
@@ -138,16 +210,25 @@ body {
   line-height: 1.7;
   font-feature-settings: "palt" 1, "kern" 1;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  line-height: 1.2;
+  line-height: 1.18;
+  letter-spacing: -0.01em;
+}
+
+/* 明朝見出し（職人・信頼）。字間・行間をつめて品を出す */
+.font-serif {
+  font-feature-settings: "palt" 1;
+  letter-spacing: -0.015em;
 }
 
 /* 数字・コードは等幅 + tabular-nums で桁を揃える */
 .tnum {
   font-family: var(--font-mono-jb), "JetBrains Mono", ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }
 
 ::selection {
@@ -181,7 +262,12 @@ html {
    ヘルパー
    ============================================================ */
 
-/* アクセントグラデ（面ではなく CTA と印だけに使う） */
+/* 窓から差す暖色の光（ヒーロー等の装飾に敷く） */
+.window-light {
+  background-image: var(--window-light);
+}
+
+/* 暖色グラデ（"光"の装飾だけ。面の塗りには使わない） */
 .grad-accent {
   background-image: var(--gradient-accent);
 }
@@ -190,6 +276,31 @@ html {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+
+/* 紙の微かな地紋（のっぺりを避ける・静止） */
+.paper-grain {
+  background-image:
+    radial-gradient(rgba(30, 42, 68, 0.035) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+/* ============================================================
+   ページロードの段階表示（設計された"1回だけ"の動き）
+   ============================================================ */
+@keyframes mado-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.mado-load {
+  opacity: 0;
+  animation: mado-rise 0.7s var(--ease) both;
 }
 
 /* スケルトン（読み込み中のちらつき placeholder） */
@@ -239,6 +350,11 @@ html {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+  .mado-load {
+    opacity: 1 !important;
+    animation: none !important;
+    transform: none !important;
   }
   .skeleton::after {
     animation: none;

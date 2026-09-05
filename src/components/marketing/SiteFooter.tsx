@@ -34,7 +34,9 @@ export function SiteFooter() {
             <div className="flex items-center gap-2.5">
               <WindowMark className="size-8" />
               <div className="leading-tight">
-                <p className="text-base font-bold text-ink">Mado</p>
+                <p className="font-serif text-xl font-bold tracking-tight text-ink">
+                  Mado
+                </p>
                 <p className="text-[11px] tracking-wide text-ink3">
                   by Lyo Vision
                 </p>

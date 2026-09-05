@@ -4,9 +4,9 @@
  * ボタン。信頼できる部品カタログの中心。
  *
  * variant:
- *   primary   … オレンジ塗り（主要な操作）
- *   cta       … アクセントグラデ（申し込み等の「印」だけ）
- *   secondary … ネイビーの枠線（対の操作）
+ *   primary   … 暖色オレンジの実面（主要な操作。文字は濃紺）
+ *   cta       … オレンジ + あたたかい放射（申し込み等の一番強い操作）
+ *   secondary … 濃紺の枠線（対の操作）
  *   ghost     … 枠なし（控えめな操作）
  *
  * どのテーマでも読める・キーボードで押せる・focus の枠が出る・
@@ -47,10 +47,10 @@ const sizes: Record<Size, string> = {
 
 const variants: Record<Variant, string> = {
   primary:
-    "bg-accent text-on-accent shadow-sh1 hover:brightness-105 active:brightness-95",
-  cta: "grad-accent text-white shadow-sh2 hover:brightness-105 active:brightness-95",
+    "bg-accent text-on-accent shadow-sh1 hover:bg-accent-strong active:bg-accent-strong",
+  cta: "bg-accent text-on-accent shadow-glow hover:bg-accent-strong active:bg-accent-strong",
   secondary:
-    "bg-transparent text-ink border border-brand/40 hover:bg-surface2 hover:border-brand/70",
+    "bg-transparent text-ink border border-brand/45 hover:bg-surface2 hover:border-brand/70",
   ghost: "bg-transparent text-ink2 hover:bg-surface2 hover:text-ink",
 };
 
