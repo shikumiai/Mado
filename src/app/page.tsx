@@ -119,12 +119,13 @@ function Hero() {
           </span>
 
           <h1
-            className="mado-load font-serif mt-6 text-balance text-4xl font-bold leading-[1.14] tracking-tight text-ink sm:text-5xl lg:text-6xl"
+            className="mado-load font-serif mt-6 text-4xl font-bold leading-[1.16] tracking-tight text-ink sm:text-5xl lg:text-[3.4rem]"
             style={{ animationDelay: "120ms" }}
           >
-            写真を送るだけ。
-            <br />
-            あとは<span className="text-accent">全部おまかせ</span>。
+            <span className="block whitespace-normal sm:whitespace-nowrap">写真を送るだけ。</span>
+            <span className="block whitespace-normal sm:whitespace-nowrap">
+              あとは<span className="text-accent">全部おまかせ</span>。
+            </span>
           </h1>
 
           <p

@@ -11,7 +11,7 @@ import { getMyAccount } from "@/lib/auth";
 import { customerSiteUrl, customerSiteLabel } from "@/lib/resolve-site";
 import { PLAN_LABELS, PLAN_PRICES, normalizePlanId } from "@/lib/stripe";
 import { Card, Badge } from "@/components/ui";
-import { ExternalLink, Pencil, Plus, ArrowRight, ShieldCheck } from "lucide-react";
+import { ExternalLink, Pencil, Plus, ArrowRight, ShieldCheck, KeyRound } from "lucide-react";
 
 export const metadata = { title: "マイページ｜Mado" };
 
@@ -122,6 +122,25 @@ export default async function AppHome() {
           </div>
           <Link href="/app/billing" className={secondaryLink}>
             支払い・プランを見る <ArrowRight className="size-4" aria-hidden />
+          </Link>
+        </Card>
+      </section>
+
+      {/* ログインの安全性（パスキー） */}
+      <section className="flex flex-col gap-3">
+        <h2 className="text-sm font-semibold text-ink2">ログインの安全性</h2>
+        <Card className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent-soft text-accent">
+              <KeyRound className="size-[18px]" aria-hidden />
+            </span>
+            <div>
+              <p className="text-sm font-medium text-ink">パスキー</p>
+              <p className="mt-0.5 text-sm text-ink2">この端末を鍵にして、パスワードなしで入れます。</p>
+            </div>
+          </div>
+          <Link href="/app/security" className={secondaryLink}>
+            設定する <ArrowRight className="size-4" aria-hidden />
           </Link>
         </Card>
       </section>
