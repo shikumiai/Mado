@@ -21,6 +21,9 @@ const LINE = "#EAEAE6";
 const STONE1 = "#D8D3C8";
 const STONE2 = "#C3BCAD";
 
+/* 見出しの明朝（設計事務所の端正さ。未読込でも安全にフォールバック） */
+const SERIF = "var(--font-serif-mincho), 'Zen Old Mincho', 'Yu Mincho', serif";
+
 /* 作品プレースホルダーのパターン */
 const ARCH_STONES: [string, string][] = [
   ["#D9D4C9", "#C5BDAD"], ["#D2CCC1", "#BEB6A5"],
@@ -70,37 +73,71 @@ function E({ fieldId, value, type = "text", editMode, onFieldClick, changedField
   );
 }
 
-function ArchArt({ seed }: { seed: number }) {
-  const [c1, c2] = ARCH_STONES[seed % ARCH_STONES.length];
-  const variant = seed % 4;
+/* ─── 作品写真の枠（実写が来るまで、細線の建築ドローイングで“完成”させる） ─── */
+function ArchArt({ seed, category }: { seed: number; category?: string }) {
+  const u = `caw${seed}`;
+  const [s1, s2] = ARCH_STONES[seed % ARCH_STONES.length];
+  const cat = category || "";
+  const isShop = cat.includes("店");
+  const isOffice = cat.includes("オフィス") || cat.includes("ビル");
+  const isHouse = !isShop && !isOffice; // 住宅・その他
   return (
-    <svg viewBox="0 0 600 460" style={{ width: "100%", height: "100%", display: "block" }} preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-      <rect width="600" height="460" fill="#EFEDE7" />
-      {variant === 0 && (<>
-        <rect x="130" y="150" width="340" height="230" fill={c1} />
-        <rect x="130" y="140" width="340" height="14" fill={c2} />
-        <rect x="170" y="190" width="130" height="130" fill="#fff" opacity="0.5" />
-        <line x1="235" y1="190" x2="235" y2="320" stroke={c2} strokeWidth="1.5" />
-        <rect x="340" y="230" width="90" height="120" fill={c2} opacity="0.55" />
-      </>)}
-      {variant === 1 && (<>
-        <rect x="90" y="220" width="180" height="160" fill={c1} />
-        <rect x="290" y="130" width="220" height="250" fill={c2} opacity="0.9" />
-        <rect x="120" y="250" width="70" height="90" fill="#fff" opacity="0.45" />
-        <rect x="330" y="165" width="55" height="70" fill="#fff" opacity="0.45" />
-      </>)}
-      {variant === 2 && (<>
-        <rect x="70" y="250" width="460" height="110" fill={c1} />
-        <rect x="70" y="240" width="460" height="12" fill={c2} />
-        <rect x="110" y="275" width="170" height="70" fill="#fff" opacity="0.5" />
-        <rect x="360" y="285" width="55" height="75" fill={c2} opacity="0.5" />
-      </>)}
-      {variant === 3 && (<>
-        <rect x="160" y="110" width="150" height="270" fill={c1} />
-        <rect x="310" y="190" width="180" height="190" fill={c2} opacity="0.85" />
-        <rect x="185" y="140" width="100" height="70" fill="#fff" opacity="0.5" />
-      </>)}
-      <line x1="0" y1="382" x2="600" y2="382" stroke={c2} strokeWidth="1" opacity="0.4" />
+    <svg viewBox="0 0 600 460" preserveAspectRatio="xMidYMid slice" style={{ width: "100%", height: "100%", display: "block" }} xmlns="http://www.w3.org/2000/svg" aria-hidden>
+      <defs>
+        <linearGradient id={`${u}bg`} x1="0" y1="0" x2="0.4" y2="1">
+          <stop offset="0%" stopColor="#F4F2EC" />
+          <stop offset="100%" stopColor="#E7E3DA" />
+        </linearGradient>
+        <pattern id={`${u}grid`} width="30" height="30" patternUnits="userSpaceOnUse">
+          <path d="M30 0H0V30" fill="none" stroke={INK} strokeOpacity="0.04" strokeWidth="1" />
+        </pattern>
+      </defs>
+      <rect width="600" height="460" fill={`url(#${u}bg)`} />
+      <rect width="600" height="460" fill={`url(#${u}grid)`} />
+
+      <g fill="none" stroke={INK} strokeOpacity="0.55" strokeWidth="1.4" strokeLinejoin="round">
+        {isHouse && (<>
+          <polygon points="180,150 420,110 420,360 180,360" fill={s1} fillOpacity="0.25" />
+          <line x1="180" y1="150" x2="420" y2="110" />
+          <line x1="180" y1="150" x2="180" y2="360" />
+          <line x1="420" y1="110" x2="420" y2="360" />
+          <rect x="214" y="196" width="120" height="96" fill={s2} fillOpacity="0.2" />
+          <line x1="274" y1="196" x2="274" y2="292" />
+          <line x1="214" y1="244" x2="334" y2="244" />
+          <rect x="356" y="270" width="40" height="90" fill="none" />
+        </>)}
+
+        {isOffice && (<>
+          <rect x="170" y="96" width="260" height="264" fill={s1} fillOpacity="0.22" />
+          {Array.from({ length: 6 }).map((_, r) => (
+            <line key={`h${r}`} x1="170" y1={130 + r * 38} x2="430" y2={130 + r * 38} strokeOpacity="0.4" />
+          ))}
+          {Array.from({ length: 7 }).map((_, c) => (
+            <line key={`v${c}`} x1={170 + c * 37} y1="96" x2={170 + c * 37} y2="360" strokeOpacity="0.4" />
+          ))}
+          <rect x="278" y="320" width="44" height="40" fill={s2} fillOpacity="0.3" />
+        </>)}
+
+        {isShop && (<>
+          <rect x="170" y="150" width="260" height="210" fill={s1} fillOpacity="0.22" />
+          <polygon points="158,196 442,196 420,150 180,150" fill={s2} fillOpacity="0.28" />
+          <line x1="158" y1="196" x2="442" y2="196" />
+          <rect x="196" y="216" width="120" height="110" fill={s2} fillOpacity="0.18" />
+          <rect x="336" y="240" width="54" height="120" fill="none" />
+          <line x1="363" y1="240" x2="363" y2="360" />
+          <line x1="222" y1="130" x2="378" y2="130" strokeWidth="2" />
+        </>)}
+
+        <line x1="120" y1="360" x2="480" y2="360" strokeOpacity="0.5" strokeWidth="1.6" />
+      </g>
+
+      {/* 寸法線（設計図の品位） */}
+      <g stroke={INK} strokeOpacity="0.3" strokeWidth="1">
+        <line x1="120" y1="392" x2="480" y2="392" />
+        <line x1="120" y1="386" x2="120" y2="398" />
+        <line x1="480" y1="386" x2="480" y2="398" />
+      </g>
+      <rect x="10" y="10" width="580" height="440" fill="none" stroke={INK} strokeOpacity="0.1" strokeWidth="1" />
     </svg>
   );
 }
@@ -152,7 +189,7 @@ function WorksSection({ config, ep }: { config: SiteConfig; ep: EP }) {
                 <div className="ca-work-img">
                   {p.image
                     ? <img src={p.image} alt={p.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                    : <ArchArt seed={i} />}
+                    : <ArchArt seed={i} category={p.category} />}
                 </div>
               </E>
               <div className="ca-work-cap">
@@ -199,11 +236,22 @@ function AboutSection({ config, ep }: { config: SiteConfig; ep: EP }) {
                 {c.ceoPhoto
                   ? <img src={c.ceoPhoto} alt={c.ceo} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                   : (
-                    <svg viewBox="0 0 400 500" style={{ width: "100%", height: "100%", display: "block" }} xmlns="http://www.w3.org/2000/svg">
-                      <rect width="400" height="500" fill="#E4E1D9" />
-                      <circle cx="200" cy="175" r="58" fill={STONE2} />
-                      <ellipse cx="200" cy="370" rx="82" ry="98" fill={STONE2} />
-                      <line x1="60" y1="460" x2="340" y2="460" stroke={STONE1} strokeWidth="1" />
+                    <svg viewBox="0 0 400 500" preserveAspectRatio="xMidYMid slice" style={{ width: "100%", height: "100%", display: "block" }} xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                      <defs>
+                        <linearGradient id="caPorBg" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#F2F0EA" />
+                          <stop offset="100%" stopColor="#E4E1D9" />
+                        </linearGradient>
+                      </defs>
+                      <rect width="400" height="500" fill="url(#caPorBg)" />
+                      <g fill="none" stroke={INK} strokeOpacity="0.4" strokeWidth="1.6" strokeLinecap="round">
+                        <path d="M84 500 L84 412 Q92 338 200 332 Q308 338 316 412 L316 500 Z" fill={STONE2} fillOpacity="0.32" stroke="none" />
+                        <rect x="176" y="250" width="48" height="86" fill={STONE2} fillOpacity="0.32" stroke="none" />
+                        <circle cx="200" cy="196" r="60" fill={STONE2} fillOpacity="0.32" />
+                        <path d="M92 412 Q100 338 200 332 Q300 338 308 412" />
+                        <path d="M170 340 L200 372 L230 340" strokeOpacity="0.35" />
+                      </g>
+                      <line x1="60" y1="460" x2="340" y2="460" stroke={STONE1} strokeOpacity="0.8" strokeWidth="1" />
                     </svg>
                   )}
               </div>
@@ -380,7 +428,7 @@ const STYLES = `
 .ca-sec { padding: 96px 0; background: #fff; }
 .ca-sec-line { border-top: 1px solid ${LINE}; }
 .ca-eyebrow { font-size: 10px; letter-spacing: 0.45em; color: ${FAINT}; margin: 0; font-weight: 400; }
-.ca-h2 { font-size: 24px; font-weight: 300; letter-spacing: 0.1em; color: ${INK}; margin: 8px 0 0; }
+.ca-h2 { font-family: ${SERIF}; font-size: 25px; font-weight: 400; letter-spacing: 0.1em; color: ${INK}; margin: 8px 0 0; }
 .ca-head-row { margin-bottom: 56px; }
 
 /* Header */
@@ -396,14 +444,14 @@ const STYLES = `
 .ca-hero { min-height: 78vh; display: flex; align-items: center; justify-content: center; background: #fff; }
 .ca-hero-inner { text-align: center; padding: 64px 32px; max-width: 860px; }
 .ca-hero-eyebrow { color: ${FAINT}; font-size: 10px; letter-spacing: 0.5em; margin: 0 0 34px; font-weight: 400; }
-.ca-hero-title { color: ${INK}; font-weight: 300; line-height: 1.5; font-size: clamp(2rem, 6vw, 3.9rem); letter-spacing: 0.06em; margin: 0; }
+.ca-hero-title { font-family: ${SERIF}; color: ${INK}; font-weight: 400; line-height: 1.5; font-size: clamp(2rem, 6vw, 3.9rem); letter-spacing: 0.06em; margin: 0; }
 .ca-hero-rule { width: 48px; height: 1px; background: ${STONE1}; margin: 32px auto; }
 .ca-hero-meta { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 12px; color: ${SUB}; font-size: 14px; letter-spacing: 0.08em; }
 .ca-hero-sep { color: ${LINE}; }
 
 /* Works */
 .ca-grid-works { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px 20px; }
-.ca-work-img { overflow: hidden; height: 280px; background: #EFEDE7; }
+.ca-work-img { overflow: hidden; height: 280px; background: #EDEAE3; }
 .ca-work-tall .ca-work-img { height: 420px; }
 .ca-work-cap { padding: 14px 2px 4px; }
 .ca-work-title { font-size: 14px; font-weight: 300; color: ${INK}; letter-spacing: 0.1em; margin: 0 0 4px; }

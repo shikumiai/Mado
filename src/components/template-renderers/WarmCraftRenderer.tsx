@@ -29,15 +29,11 @@ const ICON_MAP: Record<string, typeof Home> = {
   Home, Hammer, Shield, Users, Ruler, HardHat, Leaf, Heart,
 };
 
-/* 施工実績プレースホルダーの色バリエーション（木・土・緑） */
-const WORK_ART = [
-  ["#D8C3A5", "#B49B78"],
-  ["#C99A6B", "#A9784B"],
-  ["#B8A488", "#94805F"],
-  ["#CBA98A", "#A6825F"],
-  ["#BFA07C", "#9C7D57"],
-  ["#D3B48C", "#B08E63"],
-];
+/* 施工写真の枠に使う屋根トーン（実写が来たら差し替わる。木・土の暖色） */
+const ROOF_TONES = ["#C0603A", "#B0542E", "#A9764C", "#C77A46"];
+
+/* 見出しフォント（温かみ重視＝Zen Kaku Gothic。未読込でも安全にフォールバック） */
+const HEAD = "var(--font-gothic-zen), 'Zen Kaku Gothic New', 'Noto Sans JP', sans-serif";
 
 interface Props {
   config: SiteConfig;
@@ -92,19 +88,78 @@ function Eyebrow({ en, ja }: { en: string; ja: string }) {
   );
 }
 
-/* ─── 家のプレースホルダー（画像が無くても成立） ─── */
-function HouseArt({ seed }: { seed: number }) {
-  const [c1, c2] = WORK_ART[seed % WORK_ART.length];
+/* ─── 施工写真の枠（実写が来るまで、暖色の建築ラインアートで“完成”させる） ─── */
+function HouseArt({ seed, category }: { seed: number; category?: string }) {
+  const u = `wcw${seed}`;
+  const reform = (category || "").includes("リフォーム") || (category || "").includes("改装");
+  const roof = ROOF_TONES[seed % ROOF_TONES.length];
+  const lit = seed % 3 !== 0; // 窓に灯りを入れるか
+  const winFill = lit ? `url(#${u}win)` : "#DCE6E4";
   return (
-    <svg viewBox="0 0 400 240" style={{ width: "100%", height: "100%", display: "block" }} preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-      <rect width="400" height="240" fill={c1} />
-      <rect x="0" y="170" width="400" height="70" fill={c2} opacity="0.5" />
-      <polygon points="200,50 300,120 100,120" fill={c2} />
-      <rect x="120" y="120" width="160" height="90" fill="#fff" opacity="0.85" />
-      <rect x="140" y="140" width="45" height="45" fill={c2} opacity="0.4" />
-      <rect x="215" y="140" width="45" height="45" fill={c2} opacity="0.4" />
-      <rect x="180" y="165" width="30" height="45" fill={c2} opacity="0.6" />
-      <circle cx="330" cy="60" r="18" fill="#fff" opacity="0.35" />
+    <svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" style={{ width: "100%", height: "100%", display: "block" }} xmlns="http://www.w3.org/2000/svg" aria-hidden>
+      <defs>
+        <linearGradient id={`${u}bg`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#FCF7EE" />
+          <stop offset="58%" stopColor={CREAM_DEEP} />
+          <stop offset="100%" stopColor="#E9DDC8" />
+        </linearGradient>
+        <radialGradient id={`${u}sun`} cx="78%" cy="16%" r="60%">
+          <stop offset="0%" stopColor={TERRA} stopOpacity="0.26" />
+          <stop offset="55%" stopColor={TERRA} stopOpacity="0.06" />
+          <stop offset="100%" stopColor={TERRA} stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id={`${u}win`} cx="50%" cy="38%" r="72%">
+          <stop offset="0%" stopColor="#FDDDA6" />
+          <stop offset="100%" stopColor="#E9A85C" />
+        </radialGradient>
+        <pattern id={`${u}grid`} width="25" height="25" patternUnits="userSpaceOnUse">
+          <path d="M25 0H0V25" fill="none" stroke={BROWN} strokeOpacity="0.055" strokeWidth="1" />
+        </pattern>
+      </defs>
+      <rect width="400" height="300" fill={`url(#${u}bg)`} />
+      <rect width="400" height="300" fill={`url(#${u}grid)`} />
+      <rect width="400" height="300" fill={`url(#${u}sun)`} />
+      {/* 遠景の丘 */}
+      <path d="M0 236 Q130 206 260 228 T400 222 V300 H0 Z" fill={WOOD} opacity="0.15" />
+      {/* 地面 */}
+      <line x1="0" y1="266" x2="400" y2="266" stroke={BROWN} strokeOpacity="0.3" strokeWidth="1.5" />
+      {reform ? (
+        /* リフォーム＝足場のライン */
+        <g stroke={BROWN} strokeOpacity="0.3" strokeWidth="1.6">
+          <line x1="60" y1="150" x2="60" y2="266" />
+          <line x1="98" y1="150" x2="98" y2="266" />
+          <line x1="60" y1="150" x2="98" y2="150" />
+          <line x1="60" y1="186" x2="98" y2="186" />
+          <line x1="60" y1="224" x2="98" y2="224" />
+        </g>
+      ) : (
+        /* 新築＝庭木 */
+        <g>
+          <line x1="74" y1="266" x2="74" y2="206" stroke={BROWN} strokeOpacity="0.55" strokeWidth="2.4" strokeLinecap="round" />
+          <circle cx="74" cy="190" r="26" fill={WOOD} fillOpacity="0.22" />
+          <circle cx="74" cy="190" r="26" fill="none" stroke={BROWN} strokeOpacity="0.5" strokeWidth="2.2" />
+        </g>
+      )}
+      {/* 煙突 */}
+      <rect x="266" y="112" width="16" height="40" fill={roof} stroke={BROWN} strokeWidth="2" />
+      {/* 屋根 */}
+      <polygon points="138,152 225,98 312,152" fill={roof} fillOpacity="0.92" stroke={BROWN} strokeWidth="2.6" strokeLinejoin="round" />
+      {/* 壁 */}
+      <rect x="152" y="152" width="146" height="114" fill="#FFFDF8" fillOpacity="0.94" stroke={BROWN} strokeWidth="2.6" />
+      {/* 上階の窓 */}
+      <g stroke={BROWN} strokeWidth="2">
+        <rect x="168" y="168" width="42" height="34" rx="2" fill={winFill} />
+        <line x1="189" y1="168" x2="189" y2="202" strokeWidth="1.4" />
+        <rect x="240" y="168" width="42" height="34" rx="2" fill={winFill} />
+        <line x1="261" y1="168" x2="261" y2="202" strokeWidth="1.4" />
+      </g>
+      {/* 掃き出し窓・ドア */}
+      <rect x="164" y="220" width="34" height="46" rx="2" fill={winFill} stroke={BROWN} strokeWidth="2" />
+      <rect x="207" y="214" width="36" height="52" rx="2" fill={TERRA} fillOpacity="0.88" stroke={BROWN} strokeWidth="2" />
+      <circle cx="236" cy="242" r="2.6" fill="#FFFDF8" />
+      <rect x="252" y="220" width="34" height="46" rx="2" fill={winFill} stroke={BROWN} strokeWidth="2" />
+      {/* 額縁（枠として成立させる） */}
+      <rect x="6" y="6" width="388" height="288" rx="4" fill="none" stroke={BROWN} strokeOpacity="0.14" strokeWidth="1.5" />
     </svg>
   );
 }
@@ -131,15 +186,62 @@ function HeroSection({ config, ep }: { config: SiteConfig; ep: EP }) {
       </div>
       <div className="wc-hero-art">
         <svg viewBox="0 0 500 460" preserveAspectRatio="xMidYMid slice" style={{ width: "100%", height: "100%", display: "block" }} xmlns="http://www.w3.org/2000/svg" aria-hidden>
-          <rect width="500" height="460" fill={CREAM_DEEP} />
-          <circle cx="380" cy="110" r="60" fill={TERRA} opacity="0.15" />
-          <rect x="60" y="250" width="380" height="180" fill={WOOD} opacity="0.25" />
-          <polygon points="250,90 430,240 70,240" fill={WOOD} opacity="0.55" />
-          <rect x="150" y="240" width="200" height="190" fill="#fff" opacity="0.9" />
-          <rect x="180" y="275" width="60" height="60" fill={WOOD} opacity="0.35" />
-          <rect x="260" y="275" width="60" height="60" fill={WOOD} opacity="0.35" />
-          <rect x="225" y="360" width="50" height="70" fill={TERRA} opacity="0.6" />
-          <rect x="60" y="422" width="380" height="8" fill={BROWN} opacity="0.2" />
+          <defs>
+            <linearGradient id="wcHeroBg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#FDF8EF" />
+              <stop offset="55%" stopColor={CREAM_DEEP} />
+              <stop offset="100%" stopColor="#E7DBC5" />
+            </linearGradient>
+            <radialGradient id="wcHeroSun" cx="26%" cy="20%" r="52%">
+              <stop offset="0%" stopColor="#FBE3B4" stopOpacity="0.85" />
+              <stop offset="45%" stopColor={TERRA} stopOpacity="0.12" />
+              <stop offset="100%" stopColor={TERRA} stopOpacity="0" />
+            </radialGradient>
+            <radialGradient id="wcHeroWin" cx="50%" cy="40%" r="72%">
+              <stop offset="0%" stopColor="#FDDDA6" />
+              <stop offset="100%" stopColor="#E9A85C" />
+            </radialGradient>
+            <pattern id="wcHeroGrid" width="28" height="28" patternUnits="userSpaceOnUse">
+              <path d="M28 0H0V28" fill="none" stroke={BROWN} strokeOpacity="0.05" strokeWidth="1" />
+            </pattern>
+          </defs>
+          <rect width="500" height="460" fill="url(#wcHeroBg)" />
+          <rect width="500" height="460" fill="url(#wcHeroGrid)" />
+          <rect width="500" height="460" fill="url(#wcHeroSun)" />
+          {/* 窓から差す光 */}
+          <g opacity="0.5">
+            <polygon points="70,0 150,0 90,300 40,300" fill="#FBE3B4" opacity="0.35" />
+            <polygon points="150,0 200,0 150,300 110,300" fill="#FBE3B4" opacity="0.22" />
+          </g>
+          {/* 遠景の丘 */}
+          <path d="M0 330 Q140 292 300 320 T500 306 V460 H0 Z" fill={WOOD} opacity="0.16" />
+          <path d="M0 360 Q160 332 340 352 T500 344 V460 H0 Z" fill={WOOD} opacity="0.12" />
+          {/* 地面 */}
+          <line x1="0" y1="372" x2="500" y2="372" stroke={BROWN} strokeOpacity="0.22" strokeWidth="1.5" />
+          {/* 庭木 */}
+          <line x1="86" y1="372" x2="86" y2="286" stroke={BROWN} strokeOpacity="0.5" strokeWidth="3" strokeLinecap="round" />
+          <circle cx="86" cy="262" r="38" fill={WOOD} fillOpacity="0.2" />
+          <circle cx="86" cy="262" r="38" fill="none" stroke={BROWN} strokeOpacity="0.45" strokeWidth="2.6" />
+          {/* 家 */}
+          <rect x="248" y="150" width="30" height="60" fill={TERRA} stroke={BROWN} strokeWidth="3" />
+          <polygon points="196,214 320,120 444,214" fill={TERRA} fillOpacity="0.9" stroke={BROWN} strokeWidth="3.2" strokeLinejoin="round" />
+          <rect x="214" y="214" width="208" height="158" fill="#FFFDF8" fillOpacity="0.95" stroke={BROWN} strokeWidth="3.2" />
+          <g stroke={BROWN} strokeWidth="2.4">
+            <rect x="236" y="238" width="56" height="46" rx="2" fill="url(#wcHeroWin)" />
+            <line x1="264" y1="238" x2="264" y2="284" strokeWidth="1.6" />
+            <line x1="236" y1="261" x2="292" y2="261" strokeWidth="1.6" />
+            <rect x="344" y="238" width="56" height="46" rx="2" fill="url(#wcHeroWin)" />
+            <line x1="372" y1="238" x2="372" y2="284" strokeWidth="1.6" />
+            <line x1="344" y1="261" x2="400" y2="261" strokeWidth="1.6" />
+          </g>
+          <rect x="296" y="300" width="44" height="72" rx="2" fill={TERRA} fillOpacity="0.88" stroke={BROWN} strokeWidth="2.6" />
+          <circle cx="332" cy="338" r="3.2" fill="#FFFDF8" />
+          {/* 前景の草 */}
+          <g stroke={WOOD} strokeOpacity="0.55" strokeWidth="2.4" strokeLinecap="round">
+            <line x1="120" y1="400" x2="120" y2="384" /><line x1="130" y1="400" x2="134" y2="386" /><line x1="110" y1="400" x2="106" y2="388" />
+            <line x1="430" y1="404" x2="430" y2="388" /><line x1="440" y1="404" x2="444" y2="390" /><line x1="420" y1="404" x2="416" y2="392" />
+          </g>
+          <rect x="8" y="8" width="484" height="444" rx="6" fill="none" stroke={BROWN} strokeOpacity="0.12" strokeWidth="1.5" />
         </svg>
       </div>
     </section>
@@ -163,7 +265,7 @@ function WorksSection({ config, ep }: { config: SiteConfig; ep: EP }) {
                 <div className="wc-work-img">
                   {p.image
                     ? <img src={p.image} alt={p.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                    : <HouseArt seed={i} />}
+                    : <HouseArt seed={i} category={p.category} />}
                 </div>
               </E>
               <div className="wc-work-body">
@@ -228,10 +330,31 @@ function AboutSection({ config, ep }: { config: SiteConfig; ep: EP }) {
               {c.ceoPhoto
                 ? <img src={c.ceoPhoto} alt={c.ceo} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                 : (
-                  <svg viewBox="0 0 320 380" style={{ width: "100%", height: "100%", display: "block" }} xmlns="http://www.w3.org/2000/svg">
-                    <rect width="320" height="380" fill={CREAM_DEEP} />
-                    <circle cx="160" cy="140" r="52" fill={WOOD} opacity="0.5" />
-                    <ellipse cx="160" cy="300" rx="78" ry="86" fill={WOOD} opacity="0.5" />
+                  <svg viewBox="0 0 320 380" preserveAspectRatio="xMidYMid slice" style={{ width: "100%", height: "100%", display: "block" }} xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                    <defs>
+                      <linearGradient id="wcCeoBg" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#FBF3E7" />
+                        <stop offset="100%" stopColor={CREAM_DEEP} />
+                      </linearGradient>
+                      <radialGradient id="wcCeoLight" cx="64%" cy="28%" r="62%">
+                        <stop offset="0%" stopColor="#FBE3B4" stopOpacity="0.7" />
+                        <stop offset="100%" stopColor="#FBE3B4" stopOpacity="0" />
+                      </radialGradient>
+                    </defs>
+                    <rect width="320" height="380" fill="url(#wcCeoBg)" />
+                    {/* 背景の窓 */}
+                    <rect x="186" y="42" width="98" height="122" rx="3" fill="#FFFDF8" fillOpacity="0.6" stroke={BROWN} strokeOpacity="0.15" strokeWidth="2" />
+                    <line x1="235" y1="42" x2="235" y2="164" stroke={BROWN} strokeOpacity="0.12" strokeWidth="1.5" />
+                    <line x1="186" y1="103" x2="284" y2="103" stroke={BROWN} strokeOpacity="0.12" strokeWidth="1.5" />
+                    <rect width="320" height="380" fill="url(#wcCeoLight)" />
+                    {/* 人物（頭・首・肩がつながった上半身） */}
+                    <path d="M64 380 L64 300 Q70 248 160 244 Q250 248 256 300 L256 380 Z" fill={WOOD} fillOpacity="0.5" />
+                    <rect x="146" y="188" width="28" height="60" fill={WOOD} fillOpacity="0.5" />
+                    <circle cx="160" cy="150" r="46" fill={WOOD} fillOpacity="0.5" />
+                    <circle cx="160" cy="150" r="46" fill="none" stroke={BROWN} strokeOpacity="0.32" strokeWidth="2" />
+                    <path d="M64 300 Q70 248 160 244 Q250 248 256 300" fill="none" stroke={BROWN} strokeOpacity="0.28" strokeWidth="2" />
+                    <path d="M140 252 L160 272 L180 252" fill="none" stroke={BROWN} strokeOpacity="0.3" strokeWidth="2" />
+                    <line x1="28" y1="352" x2="292" y2="352" stroke={BROWN} strokeOpacity="0.14" strokeWidth="1.5" />
                   </svg>
                 )}
             </div>
@@ -424,7 +547,7 @@ const STYLES = `
 .wc-eyebrow { display: flex; align-items: center; gap: 14px; margin-bottom: 34px; }
 .wc-eyebrow-line { width: 32px; height: 3px; border-radius: 2px; background: ${TERRA}; flex-shrink: 0; }
 .wc-eyebrow-en { font-size: 12px; letter-spacing: 0.25em; color: ${TERRA}; font-weight: 700; margin: 0 0 2px; }
-.wc-eyebrow-ja { font-size: clamp(1.4rem, 3.5vw, 1.9rem); font-weight: 700; color: ${BROWN}; margin: 0; }
+.wc-eyebrow-ja { font-family: ${HEAD}; font-size: clamp(1.4rem, 3.5vw, 1.9rem); font-weight: 700; color: ${BROWN}; margin: 0; }
 
 /* Header */
 .wc-head { position: sticky; top: 0; z-index: 50; background: rgba(251,247,240,0.92); backdrop-filter: blur(8px); border-bottom: 1px solid ${CREAM_DEEP}; }
@@ -440,7 +563,7 @@ const STYLES = `
 .wc-hero { display: grid; grid-template-columns: 1.05fr 0.95fr; align-items: stretch; min-height: 540px; }
 .wc-hero-text { display: flex; flex-direction: column; justify-content: center; padding: 64px clamp(24px, 5vw, 72px); }
 .wc-hero-badge { display: inline-flex; align-items: center; gap: 7px; align-self: flex-start; padding: 6px 14px; border-radius: 999px; background: ${CREAM_DEEP}; color: ${WOOD}; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; margin-bottom: 20px; }
-.wc-hero-title { font-size: clamp(1.9rem, 4.6vw, 3rem); font-weight: 700; line-height: 1.4; color: ${BROWN}; margin: 0 0 18px; }
+.wc-hero-title { font-family: ${HEAD}; font-size: clamp(1.9rem, 4.6vw, 3rem); font-weight: 700; line-height: 1.4; color: ${BROWN}; margin: 0 0 18px; }
 .wc-hero-desc { font-size: 15px; line-height: 2; color: ${BROWN_MID}; margin: 0 0 30px; max-width: 480px; }
 .wc-hero-cta { display: flex; flex-wrap: wrap; gap: 12px; }
 .wc-hero-art { position: relative; min-height: 320px; }

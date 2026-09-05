@@ -24,6 +24,9 @@ const NAVY_MID = "#2A5080";
 const GOLD = "#C8A96E";
 const MIST = "#F0F4F8";
 
+/* 見出し・数字の明朝（信頼・実直さ。未読込でも安全にフォールバック） */
+const SERIF = "var(--font-serif-mincho), 'Zen Old Mincho', 'Yu Mincho', serif";
+
 const SERVICE_ICONS: Record<string, typeof Building2> = {
   Building2, Wrench, Shield, Briefcase, HardHat,
 };
@@ -79,23 +82,115 @@ function Eyebrow({ en, ja, light = false }: { en: string; ja: string; light?: bo
   );
 }
 
-/* ─── 建物のプレースホルダー（画像が無くても成立させる） ─── */
-function BuildingArt({ seed }: { seed: number }) {
-  const cols = 4 + (seed % 2);
-  const rows = 6;
+/* ─── 施工写真の枠（実写が来るまで、ネイビー×ゴールドの建築ラインアートで“完成”させる） ─── */
+function BuildingArt({ seed, category }: { seed: number; category?: string }) {
+  const u = `tnw${seed}`;
+  const cat = category || "";
+  const isResidence = cat.includes("集合") || cat.includes("住宅") || cat.includes("マンション");
+  const isCommercial = cat.includes("商業") || cat.includes("店");
+  const isMedical = cat.includes("医療") || cat.includes("福祉");
+  const isIndustrial = cat.includes("産業") || cat.includes("工場") || cat.includes("倉庫");
+  const isCivic = !isResidence && !isCommercial && !isMedical && !isIndustrial; // 公共・その他
   return (
-    <svg viewBox="0 0 400 260" style={{ width: "100%", height: "100%", display: "block" }} preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-      <rect width="400" height="260" fill={NAVY} />
-      <rect x="0" y="60" width="400" height="200" fill={NAVY_DEEP} opacity="0.5" />
-      <rect x="40" y="90" width="90" height="170" fill={NAVY_MID} opacity="0.55" />
-      <rect x="150" y="50" width="120" height="210" fill={NAVY_MID} opacity="0.8" />
-      <rect x="290" y="110" width="80" height="150" fill={NAVY_MID} opacity="0.45" />
-      {Array.from({ length: rows }).map((_, r) =>
-        Array.from({ length: cols }).map((_, c) => (
-          <rect key={`${r}-${c}`} x={162 + c * 24} y={68 + r * 28} width="12" height="16" rx="1" fill={GOLD} opacity={(seed + r + c) % 3 === 0 ? 0.5 : 0.18} />
-        ))
-      )}
-      <line x1="0" y1="230" x2="400" y2="230" stroke={GOLD} strokeWidth="1.5" strokeDasharray="14 8" opacity="0.35" />
+    <svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" style={{ width: "100%", height: "100%", display: "block" }} xmlns="http://www.w3.org/2000/svg" aria-hidden>
+      <defs>
+        <linearGradient id={`${u}bg`} x1="0" y1="0" x2="0.3" y2="1">
+          <stop offset="0%" stopColor={NAVY_DEEP} />
+          <stop offset="60%" stopColor={NAVY} />
+          <stop offset="100%" stopColor="#16324F" />
+        </linearGradient>
+        <radialGradient id={`${u}glow`} cx="50%" cy="22%" r="62%">
+          <stop offset="0%" stopColor={GOLD} stopOpacity="0.22" />
+          <stop offset="60%" stopColor={GOLD} stopOpacity="0.05" />
+          <stop offset="100%" stopColor={GOLD} stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id={`${u}vig`} cx="50%" cy="45%" r="75%">
+          <stop offset="58%" stopColor="#000000" stopOpacity="0" />
+          <stop offset="100%" stopColor={NAVY_DEEP} stopOpacity="0.5" />
+        </radialGradient>
+        <pattern id={`${u}grid`} width="24" height="24" patternUnits="userSpaceOnUse">
+          <path d="M24 0H0V24" fill="none" stroke={GOLD} strokeOpacity="0.06" strokeWidth="1" />
+        </pattern>
+      </defs>
+      <rect width="400" height="300" fill={`url(#${u}bg)`} />
+      <rect width="400" height="300" fill={`url(#${u}grid)`} />
+      <rect width="400" height="300" fill={`url(#${u}glow)`} />
+
+      <g fill="none" stroke={GOLD} strokeWidth="2" strokeLinejoin="round">
+        {isResidence && (<>
+          <rect x="150" y="72" width="104" height="196" fill={NAVY_MID} fillOpacity="0.4" />
+          <rect x="100" y="140" width="52" height="128" fill={NAVY_MID} fillOpacity="0.26" strokeWidth="1.6" />
+          <rect x="254" y="122" width="52" height="146" fill={NAVY_MID} fillOpacity="0.26" strokeWidth="1.6" />
+          {Array.from({ length: 8 }).map((_, r) =>
+            Array.from({ length: 3 }).map((_, c) => {
+              const on = (r * 3 + c + seed) % 4 === 0;
+              return <rect key={`w${r}-${c}`} x={162 + c * 30} y={98 + r * 22} width="18" height="12" fill={on ? GOLD : "none"} fillOpacity={on ? 0.85 : 0} stroke={GOLD} strokeOpacity="0.5" strokeWidth="1" />;
+            })
+          )}
+          <rect x="188" y="240" width="28" height="28" fill="none" strokeWidth="1.6" />
+        </>)}
+
+        {isCommercial && (<>
+          <rect x="70" y="120" width="260" height="148" fill={NAVY_MID} fillOpacity="0.36" />
+          {Array.from({ length: 5 }).map((_, r) => (
+            <line key={`h${r}`} x1="70" y1={120 + r * 30} x2="330" y2={120 + r * 30} stroke={GOLD} strokeOpacity="0.4" strokeWidth="1" />
+          ))}
+          {Array.from({ length: 9 }).map((_, c) => (
+            <line key={`v${c}`} x1={70 + c * 29} y1="120" x2={70 + c * 29} y2="268" stroke={GOLD} strokeOpacity="0.32" strokeWidth="1" />
+          ))}
+          {[[1, 1], [3, 2], [5, 3], [2, 4], [6, 1]].map(([c, r], i) => (
+            <rect key={`l${i}`} x={70 + c * 29 + 3} y={120 + r * 30 + 3} width="23" height="24" fill={GOLD} fillOpacity="0.7" stroke="none" />
+          ))}
+          <line x1="58" y1="200" x2="342" y2="200" strokeWidth="2.4" />
+          <rect x="182" y="230" width="36" height="38" fill={NAVY_DEEP} fillOpacity="0.5" strokeWidth="1.8" />
+        </>)}
+
+        {isMedical && (<>
+          <rect x="96" y="108" width="208" height="160" fill={NAVY_MID} fillOpacity="0.36" />
+          {Array.from({ length: 4 }).map((_, r) =>
+            Array.from({ length: 6 }).map((_, c) => {
+              const on = (r + c + seed) % 3 === 0;
+              return <rect key={`m${r}-${c}`} x={110 + c * 30} y={118 + r * 32} width="20" height="14" fill={on ? GOLD : "none"} fillOpacity={on ? 0.8 : 0} stroke={GOLD} strokeOpacity="0.45" strokeWidth="1" />;
+            })
+          )}
+          <rect x="186" y="58" width="28" height="28" fill={GOLD} fillOpacity="0.9" stroke="none" />
+          <rect x="196" y="64" width="8" height="16" fill={NAVY_DEEP} stroke="none" />
+          <rect x="192" y="68" width="16" height="8" fill={NAVY_DEEP} stroke="none" />
+        </>)}
+
+        {isIndustrial && (<>
+          <rect x="110" y="170" width="200" height="98" fill={NAVY_MID} fillOpacity="0.36" />
+          {Array.from({ length: 5 }).map((_, i) => (
+            <polygon key={`s${i}`} points={`${110 + i * 40},170 ${110 + i * 40},146 ${150 + i * 40},170`} fill={NAVY_MID} fillOpacity="0.3" strokeWidth="1.6" />
+          ))}
+          <rect x="60" y="150" width="40" height="118" rx="20" fill={NAVY_MID} fillOpacity="0.3" strokeWidth="1.8" />
+          <rect x="326" y="96" width="18" height="172" fill={NAVY_MID} fillOpacity="0.3" strokeWidth="1.8" />
+          {[0, 1, 2, 3].map((c) => {
+            const on = (c + seed) % 2 === 0;
+            return <rect key={`d${c}`} x={128 + c * 46} y="212" width="26" height="30" fill={on ? GOLD : "none"} fillOpacity={on ? 0.7 : 0} stroke={GOLD} strokeOpacity="0.5" strokeWidth="1.2" />;
+          })}
+        </>)}
+
+        {isCivic && (<>
+          <polygon points="120,120 220,72 320,120" fill={NAVY_MID} fillOpacity="0.4" strokeWidth="2.2" />
+          <rect x="120" y="120" width="200" height="20" fill={NAVY_MID} fillOpacity="0.5" strokeWidth="1.8" />
+          {Array.from({ length: 6 }).map((_, i) => (
+            <rect key={`c${i}`} x={132 + i * 32} y="140" width="16" height="104" fill={NAVY_MID} fillOpacity="0.26" strokeWidth="1.6" />
+          ))}
+          <rect x="108" y="244" width="224" height="10" fill={NAVY_MID} fillOpacity="0.5" strokeWidth="1.6" />
+          <rect x="96" y="254" width="248" height="8" fill={NAVY_MID} fillOpacity="0.4" stroke={GOLD} strokeOpacity="0.6" strokeWidth="1.2" />
+        </>)}
+      </g>
+
+      {/* 基準線＋寸法（建築ドローイングの品位） */}
+      <g stroke={GOLD} strokeOpacity="0.5">
+        <line x1="0" y1="268" x2="400" y2="268" strokeWidth="1.5" />
+        <line x1="44" y1="276" x2="44" y2="286" strokeWidth="1" />
+        <line x1="356" y1="276" x2="356" y2="286" strokeWidth="1" />
+        <line x1="44" y1="281" x2="356" y2="281" strokeWidth="1" strokeDasharray="3 5" />
+      </g>
+      <rect width="400" height="300" fill={`url(#${u}vig)`} />
+      <rect x="5" y="5" width="390" height="290" fill="none" stroke={GOLD} strokeOpacity="0.18" strokeWidth="1" />
     </svg>
   );
 }
@@ -109,27 +204,59 @@ function HeroSection({ config, ep }: { config: SiteConfig; ep: EP }) {
     <section className="tn-hero">
       <svg className="tn-hero-bg" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden>
         <defs>
-          <linearGradient id="tnSky" x1="0" y1="0" x2="0.4" y2="1">
+          <linearGradient id="tnSky" x1="0" y1="0" x2="0.2" y2="1">
             <stop offset="0%" stopColor={NAVY_DEEP} />
             <stop offset="55%" stopColor={NAVY} />
-            <stop offset="100%" stopColor="#1E4573" />
+            <stop offset="100%" stopColor="#16324F" />
           </linearGradient>
+          <radialGradient id="tnHeroGlow" cx="64%" cy="80%" r="55%">
+            <stop offset="0%" stopColor={GOLD} stopOpacity="0.26" />
+            <stop offset="55%" stopColor={GOLD} stopOpacity="0.06" />
+            <stop offset="100%" stopColor={GOLD} stopOpacity="0" />
+          </radialGradient>
+          <pattern id="tnHeroGrid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M40 0H0V40" fill="none" stroke={GOLD} strokeOpacity="0.05" strokeWidth="1" />
+          </pattern>
         </defs>
         <rect width="1200" height="700" fill="url(#tnSky)" />
-        <rect x="50" y="300" width="90" height="300" fill={NAVY_MID} opacity="0.4" />
-        <rect x="150" y="240" width="110" height="360" fill={NAVY} opacity="0.5" />
-        <rect x="270" y="190" width="130" height="410" fill={NAVY_MID} opacity="0.6" />
-        <rect x="560" y="120" width="180" height="480" fill={NAVY_MID} opacity="0.8" />
-        {Array.from({ length: 12 }).map((_, row) =>
-          Array.from({ length: 5 }).map((_, col) => (
-            <rect key={`w-${row}-${col}`} x={575 + col * 32} y={140 + row * 35} width="16" height="20" rx="1" fill={GOLD} opacity={(row + col) % 3 === 0 ? 0.4 : 0.15} />
+        <rect width="1200" height="700" fill="url(#tnHeroGrid)" />
+        <rect width="1200" height="700" fill="url(#tnHeroGlow)" />
+        {/* 遠景の稜線 */}
+        <rect x="60" y="360" width="120" height="240" fill={NAVY_MID} opacity="0.22" />
+        <rect x="1030" y="330" width="150" height="270" fill={NAVY_MID} opacity="0.22" />
+        {/* 建築ライン（金の外形線＋奥行きのネイビー面） */}
+        <g fill="none" stroke={GOLD} strokeOpacity="0.7" strokeWidth="1.6" strokeLinejoin="round">
+          <rect x="200" y="300" width="120" height="300" fill={NAVY_MID} fillOpacity="0.3" />
+          <rect x="340" y="220" width="150" height="380" fill={NAVY_MID} fillOpacity="0.4" />
+          <polygon points="560,180 660,120 760,180 760,600 560,600" fill={NAVY_MID} fillOpacity="0.5" />
+          <rect x="790" y="280" width="120" height="320" fill={NAVY_MID} fillOpacity="0.3" />
+        </g>
+        {/* 窓（整然と・一部点灯） */}
+        {Array.from({ length: 10 }).map((_, r) =>
+          Array.from({ length: 4 }).map((_, c) => (
+            <rect key={`a${r}-${c}`} x={356 + c * 34} y={240 + r * 35} width="18" height="22" fill={GOLD} fillOpacity={(r + c) % 3 === 0 ? 0.5 : 0.13} />
           ))
         )}
-        <rect x="760" y="280" width="100" height="320" fill={NAVY} opacity="0.5" />
-        <rect x="900" y="320" width="90" height="280" fill={NAVY_MID} opacity="0.4" />
-        <rect x="1020" y="270" width="130" height="330" fill={NAVY} opacity="0.3" />
+        {Array.from({ length: 11 }).map((_, r) =>
+          Array.from({ length: 4 }).map((_, c) => (
+            <rect key={`b${r}-${c}`} x={576 + c * 40} y={200 + r * 35} width="22" height="24" fill={GOLD} fillOpacity={(r * 2 + c) % 3 === 0 ? 0.45 : 0.12} />
+          ))
+        )}
+        {/* タワークレーン（建設会社の象徴） */}
+        <g fill="none" stroke={GOLD} strokeOpacity="0.6" strokeWidth="2" strokeLinecap="round">
+          <line x1="1000" y1="120" x2="1000" y2="600" />
+          <line x1="884" y1="150" x2="1116" y2="150" />
+          <line x1="1000" y1="120" x2="900" y2="152" />
+          <line x1="1000" y1="120" x2="1092" y2="150" />
+          <line x1="908" y1="150" x2="908" y2="196" />
+          {Array.from({ length: 9 }).map((_, i) => (
+            <line key={`m${i}`} x1="994" y1={150 + i * 50} x2="1006" y2={175 + i * 50} />
+          ))}
+          <rect x="898" y="196" width="20" height="14" fill={GOLD} fillOpacity="0.5" stroke="none" />
+        </g>
+        {/* 地表 */}
         <rect y="600" width="1200" height="100" fill={NAVY_DEEP} />
-        <line x1="0" y1="640" x2="1200" y2="640" stroke={GOLD} strokeWidth="1" strokeDasharray="30 15" opacity="0.3" />
+        <line x1="0" y1="600" x2="1200" y2="600" stroke={GOLD} strokeWidth="1.5" strokeDasharray="40 20" opacity="0.4" />
       </svg>
       <div className="tn-hero-overlay" />
       <div className="tn-hero-inner">
@@ -198,7 +325,7 @@ function WorksSection({ config, ep }: { config: SiteConfig; ep: EP }) {
                 <div className="tn-work-img">
                   {p.image
                     ? <img src={p.image} alt={p.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                    : <BuildingArt seed={i} />}
+                    : <BuildingArt seed={i} category={p.category} />}
                   <span className="tn-work-cat">{p.category}</span>
                 </div>
               </E>
@@ -236,6 +363,7 @@ function StatsSection({ config }: { config: SiteConfig; ep: EP }) {
         {stats.map((s, i) => (
           <div key={i} className="tn-stat">
             <p className="tn-stat-num">{s.num}<span>{s.unit}</span></p>
+            <span className="tn-stat-tick" />
             <p className="tn-stat-label">{s.label}</p>
           </div>
         ))}
@@ -487,7 +615,7 @@ const STYLES = `
 .tn-hero-inner { position: relative; z-index: 2; max-width: 1200px; width: 100%; margin: 0 auto; padding: 56px 24px; }
 .tn-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border: 1px solid rgba(200,169,110,0.4); color: ${GOLD}; font-size: 12px; letter-spacing: 0.2em; margin-bottom: 22px; }
 .tn-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: ${GOLD}; }
-.tn-hero-title { color: #fff; font-weight: 700; line-height: 1.25; font-size: clamp(1.9rem, 5vw, 3.4rem); margin: 0 0 18px; }
+.tn-hero-title { font-family: ${SERIF}; color: #fff; font-weight: 700; line-height: 1.3; font-size: clamp(1.9rem, 5vw, 3.4rem); letter-spacing: 0.01em; margin: 0 0 18px; }
 .tn-hero-desc { color: rgba(255,255,255,0.65); font-size: 15px; line-height: 1.9; max-width: 540px; margin: 0 0 32px; }
 .tn-hero-cta { display: flex; flex-wrap: wrap; gap: 12px; }
 .tn-btn { display: inline-flex; align-items: center; gap: 8px; padding: 13px 30px; font-size: 14px; font-weight: 700; text-decoration: none; border-radius: 2px; transition: all 0.2s; cursor: pointer; border: none; }
@@ -515,11 +643,13 @@ const STYLES = `
 .tn-work-meta span { display: inline-flex; align-items: center; gap: 4px; }
 
 /* Stats band */
-.tn-stats-band { background: ${NAVY}; padding: 48px 0; }
-.tn-stat { text-align: center; }
-.tn-stat-num { color: #fff; font-weight: 700; font-size: clamp(1.8rem, 4vw, 2.6rem); margin: 0; }
-.tn-stat-num span { color: ${GOLD}; font-size: 0.5em; margin-left: 3px; }
-.tn-stat-label { color: rgba(255,255,255,0.5); font-size: 12px; letter-spacing: 0.08em; margin: 4px 0 0; }
+.tn-stats-band { background: linear-gradient(180deg, ${NAVY} 0%, ${NAVY_DEEP} 100%); padding: 54px 0; border-top: 1px solid rgba(200,169,110,0.28); border-bottom: 1px solid rgba(200,169,110,0.28); }
+.tn-stat { text-align: center; padding: 4px 8px; }
+.tn-grid-stats .tn-stat + .tn-stat { border-left: 1px solid rgba(200,169,110,0.16); }
+.tn-stat-num { font-family: ${SERIF}; color: #fff; font-weight: 700; font-size: clamp(2rem, 4.4vw, 2.9rem); line-height: 1; margin: 0; }
+.tn-stat-num span { color: ${GOLD}; font-size: 0.46em; margin-left: 4px; font-weight: 500; }
+.tn-stat-tick { display: block; width: 26px; height: 2px; background: ${GOLD}; opacity: 0.85; margin: 12px auto 0; }
+.tn-stat-label { color: rgba(255,255,255,0.55); font-size: 12px; letter-spacing: 0.08em; margin: 10px 0 0; }
 
 /* About */
 .tn-ceo { padding: 32px; background: ${MIST}; border-left: 4px solid ${GOLD}; margin-bottom: 36px; }
@@ -586,6 +716,7 @@ const STYLES = `
 @media (max-width: 860px) {
   .tn-head-nav a { display: none; }
   .tn-grid-stats { grid-template-columns: repeat(2, 1fr); }
+  .tn-grid-stats .tn-stat + .tn-stat { border-left: none; }
   .tn-table-key { width: 120px; }
 }
 @media (max-width: 600px) {
