@@ -66,7 +66,12 @@ export interface AuthShellProps {
 
 export function AuthShell({ title, subtitle, children, footer }: AuthShellProps) {
   return (
-    <main className="relative grid min-h-dvh place-items-center overflow-hidden bg-bg px-5 py-12">
+    // data-mado-marketing で暖色ライトを既定の signature にする（LP と同じ第一印象）。
+    // 利用者が自分でダークを選んだときだけ、その意思を尊重して暗くする（globals.css）。
+    <main
+      data-mado-marketing
+      className="relative grid min-h-dvh place-items-center overflow-hidden bg-bg px-5 py-12 text-ink"
+    >
       {/* 上方から差す暖色の光（装飾） */}
       <div aria-hidden className="window-light pointer-events-none absolute inset-x-0 top-0 h-[48vh]" />
       <div aria-hidden className="paper-grain pointer-events-none absolute inset-0 opacity-60" />

@@ -8,14 +8,32 @@ import { ArrowRight, X } from "lucide-react";
 /**
  * テンプレートデモページ上部に表示するMadoCTAバナー。
  * 5秒後に自動で閉じる。手動で即閉じも可能。
+ *
+ * ただし iframe に埋め込まれたプレビュー（LP・申し込み画面の「窓」の中）では出さない。
+ * 埋め込みでは実物のサイトだけを見せたい（濃紺のバーで窓を塞がない）。
+ * 埋め込み判定は描画後に行い、サーバー描画とズレないようにする。
  */
 export default function DemoBanner() {
   const [visible, setVisible] = useState(true);
+  const [embedded, setEmbedded] = useState(false);
 
   useEffect(() => {
+    // iframe の中（プレビュー）ではバナーを出さない
+    let inFrame = false;
+    try {
+      inFrame = window.self !== window.top;
+    } catch {
+      inFrame = true; // クロスオリジンで参照できない＝埋め込み中とみなす
+    }
+    if (inFrame) {
+      setEmbedded(true);
+      return;
+    }
     const timer = setTimeout(() => setVisible(false), 5000);
     return () => clearTimeout(timer);
   }, []);
+
+  if (embedded) return null;
 
   return (
     <AnimatePresence>

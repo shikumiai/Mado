@@ -141,34 +141,55 @@ export default async function AdminPage({
   const contracts = activeOrgs.length;
   const pendingRequests = requests.filter((r) => r.status === "pending").length;
 
-  const stats = [
-    { icon: Wallet, label: "月次売上", value: yen(mrr) },
-    { icon: FileEdit, label: "契約数", value: `${contracts}` },
-    { icon: Building2, label: "顧客総数", value: `${orgs.length}` },
-    { icon: Users, label: "未対応の依頼", value: `${pendingRequests}` },
+  const supportStats = [
+    { icon: Users, label: "契約数", value: `${contracts}`, alert: false },
+    { icon: Building2, label: "顧客総数", value: `${orgs.length}`, alert: false },
+    { icon: FileEdit, label: "未対応の依頼", value: `${pendingRequests}`, alert: pendingRequests > 0 },
   ];
 
   return (
     <div className="flex flex-col gap-7">
       <div>
         <p className="text-xs font-medium tracking-wide text-ink3">管理</p>
-        <h1 className="mt-1 text-2xl font-bold">運営のようす</h1>
+        <h1 className="mt-1 font-serif text-2xl font-bold sm:text-3xl">運営のようす</h1>
       </div>
 
-      {/* サマリー（サーバー集計） */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {stats.map((s) => {
-          const Icon = s.icon;
-          return (
-            <Card key={s.label} className="flex flex-col gap-2">
-              <div className="flex size-9 items-center justify-center rounded-md bg-accent-soft">
-                <Icon className="size-5 text-accent" aria-hidden />
-              </div>
-              <p className="tnum text-2xl font-bold text-ink">{s.value}</p>
-              <p className="text-xs text-ink2">{s.label}</p>
-            </Card>
-          );
-        })}
+      {/* サマリー: 売上を主役に、支える3指標を並べる（情報の緩急・サーバー集計） */}
+      <div className="grid gap-3 lg:grid-cols-3">
+        {/* 月次売上（主役・窓から差す暖色の光） */}
+        <div className="relative overflow-hidden rounded-xl border border-line bg-surface p-5 shadow-sh2">
+          <div aria-hidden className="window-light pointer-events-none absolute inset-x-0 -top-8 h-28" />
+          <div className="relative">
+            <p className="flex items-center gap-1.5 text-sm text-ink2">
+              <Wallet className="size-4 text-accent" aria-hidden /> 月次売上（MRR）
+            </p>
+            <p className="tnum mt-2 font-serif text-4xl font-bold leading-none text-ink">{yen(mrr)}</p>
+            <p className="mt-2 text-xs text-ink3">稼働中の契約 {contracts} 件の合計</p>
+          </div>
+        </div>
+
+        {/* 支える3指標 */}
+        <div className="grid grid-cols-3 gap-3 lg:col-span-2">
+          {supportStats.map((s) => {
+            const Icon = s.icon;
+            return (
+              <Card key={s.label} className="flex flex-col justify-between gap-3">
+                <span
+                  className={[
+                    "grid size-9 place-items-center rounded-md",
+                    s.alert ? "bg-warn/15 text-warn" : "bg-accent-soft text-accent",
+                  ].join(" ")}
+                >
+                  <Icon className="size-5" aria-hidden />
+                </span>
+                <div>
+                  <p className="tnum text-2xl font-bold text-ink">{s.value}</p>
+                  <p className="mt-0.5 text-xs text-ink2">{s.label}</p>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
       </div>
 
       {/* 月次売上の内訳 */}

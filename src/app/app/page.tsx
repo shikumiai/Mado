@@ -42,7 +42,7 @@ export default async function AppHome() {
       <div>
         <p className="text-xs font-medium tracking-wide text-ink3">マイページ</p>
         <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-2">
-          <h1 className="text-2xl font-bold">{org.name}</h1>
+          <h1 className="font-serif text-2xl font-bold sm:text-3xl">{org.name}</h1>
           <Badge tone="accent">{PLAN_LABELS[plan]}プラン</Badge>
           {isPlatformAdmin && (
             <Link

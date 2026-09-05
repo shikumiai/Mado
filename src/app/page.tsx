@@ -177,10 +177,10 @@ function Hero() {
               title="完成サイトの例（ウォームクラフト）"
               fallbackBg="#fbf7f0"
               fallbackColors={["#c2703d", "#e8dccb"]}
-              className="h-72 sm:h-[22rem]"
+              className="h-80 sm:h-[26rem]"
               iframeWidth={1280}
-              iframeHeight={860}
-              scale={0.52}
+              iframeHeight={1120}
+              scale={0.56}
             />
           </WindowFrame>
           <RoofLine className="pointer-events-none absolute -bottom-9 right-2 h-14 w-48 opacity-90" />

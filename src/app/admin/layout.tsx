@@ -7,7 +7,8 @@
  */
 
 import Link from "next/link";
-import { Mascot, ThemeToggle } from "@/components/ui";
+import { ThemeToggle } from "@/components/ui";
+import { WindowMark } from "@/components/marketing/WindowMark";
 import { ArrowLeft } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -17,11 +18,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-3">
           <Link
             href="/admin"
-            className="flex items-center gap-2 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex items-center gap-2.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
             aria-label="管理のトップへ"
           >
-            <Mascot size={28} />
-            <span className="text-base font-bold tracking-tight">Mado</span>
+            <WindowMark className="size-8" />
+            <span className="font-serif text-xl font-bold tracking-tight">Mado</span>
             <span className="rounded-pill bg-surface2 px-2 py-0.5 text-xs font-medium text-ink2">
               管理
             </span>

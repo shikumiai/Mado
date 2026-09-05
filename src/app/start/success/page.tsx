@@ -1,92 +1,110 @@
 "use client";
 
-import { motion } from "framer-motion";
-import Link from "next/link";
-import { Check, Sparkles, Mail, ArrowRight } from "lucide-react";
-
 /**
- * /start/success — 決済完了ページ
- * Stripe Checkoutから戻ってきた顧客に表示
+ * /start/success — お申し込み・お支払いのあとに戻ってくる完了画面（作り直し・rebuild-v2）
+ *
+ * 世界観は Mado ＝ 窓・職人・あたたかい光。旧デザイン（紫グラデ＋Google前提の文言）を廃し、
+ * 暖色ライト・明朝見出し・窓モチーフでそろえる。「写真を送るだけ」の世界観に合う、
+ * 落ち着いた完了体験にする。次の一手はマイページ（/app）へ。
+ *
+ * ページを開いた1回だけそっと立ち上がる（mado-load・reduced-motion で静止）。
+ * 純粋な表示だけの画面（送信・課金のロジックは持たない）。
  */
+
+import Link from "next/link";
+import { LinkButton } from "@/components/marketing/LinkButton";
+import { WindowMark } from "@/components/marketing/WindowMark";
+import { Check, Mail, Sparkles, ArrowRight } from "lucide-react";
+
+/** 完成までの流れ（3つ）。番号は明朝で品を出し、1本の光の線でつなぐ */
+const FLOW = [
+  {
+    icon: Mail,
+    title: "確認メールをお送りしました",
+    desc: "届いていないときは、迷惑メールのフォルダもご確認ください。",
+  },
+  {
+    icon: Sparkles,
+    title: "サイトを仕上げています",
+    desc: "いただいた写真と情報をもとに、最短翌日で公開できるよう準備します。",
+  },
+  {
+    icon: Check,
+    title: "完成したらお知らせします",
+    desc: "公開できたら、サイトのアドレスをメールでお届けします。",
+  },
+];
+
 export default function StartSuccessPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#fdf2f8] via-[#f3f0ff] to-[#fff7ed] flex items-center justify-center p-5">
-      <motion.div
-        className="bg-white rounded-3xl shadow-xl p-10 max-w-[520px] w-full text-center"
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-      >
-        <motion.div
-          className="w-20 h-20 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-6"
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ delay: 0.2, type: "spring" }}
-        >
-          <Check className="w-10 h-10 text-green-500" />
-        </motion.div>
+    <main className="relative grid min-h-dvh place-items-center overflow-hidden bg-bg px-5 py-12 text-ink">
+      {/* 窓から差す暖色の光（装飾・静止） */}
+      <div aria-hidden className="window-light pointer-events-none absolute inset-x-0 top-0 h-[46vh]" />
+      <div aria-hidden className="paper-grain pointer-events-none absolute inset-0 opacity-60" />
 
-        <h1 className="text-gray-800 text-2xl font-bold mb-3">
-          お申し込みありがとうございます
-        </h1>
+      <div className="relative z-10 w-full max-w-xl">
+        {/* 窓の印＋完了の合図 */}
+        <div className="mado-load flex flex-col items-center text-center" style={{ animationDelay: "40ms" }}>
+          <span className="relative inline-flex">
+            <WindowMark className="size-16" />
+            <span className="absolute -bottom-1.5 -right-1.5 grid size-7 place-items-center rounded-full bg-success text-white shadow-sh1 ring-2 ring-bg">
+              <Check className="size-4" strokeWidth={3} aria-hidden />
+            </span>
+          </span>
 
-        <p className="text-gray-500 text-sm leading-relaxed mb-6">
-          ご入力いただいた内容をもとに、ホームページの制作を開始します。
-          <br />
-          最短翌日にはあなたのサイトが完成します。
-        </p>
+          <h1 className="mado-load font-serif mt-6 text-3xl font-bold leading-tight text-ink sm:text-[2.1rem]" style={{ animationDelay: "120ms" }}>
+            お申し込み、
+            <br className="sm:hidden" />
+            ありがとうございます。
+          </h1>
+          <p className="mado-load mt-4 max-w-md text-sm leading-relaxed text-ink2 sm:text-base" style={{ animationDelay: "200ms" }}>
+            あとは、こちらにおまかせください。写真をもとにサイトを仕上げて、
+            最短翌日にはあなたの窓を開けます。
+          </p>
+        </div>
 
-        {/* What happens next */}
-        <div className="bg-gray-50 rounded-2xl p-5 text-left space-y-4 mb-6">
-          <h3 className="text-gray-700 font-bold text-sm flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-purple-400" />
-            今後の流れ
-          </h3>
-          <div className="space-y-3">
-            {[
-              { num: "1", text: "確認メールをお送りしました。受信トレイをご確認ください" },
-              { num: "2", text: "ホームページを制作中です（最短翌日に完成）" },
-              { num: "3", text: "完成したらサイトURLを記載したメールをお届けします" },
-            ].map((step) => (
-              <div key={step.num} className="flex items-start gap-3">
-                <div className="w-6 h-6 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-purple-600 text-xs font-bold">{step.num}</span>
+        {/* 完成までの流れ（縦の光の線でつなぐ・紫の丸は使わない） */}
+        <ol className="mado-load relative mt-10 flex flex-col" style={{ animationDelay: "280ms" }}>
+          <span
+            aria-hidden
+            className="absolute bottom-8 left-[1.35rem] top-8 w-px bg-gradient-to-b from-accent/50 via-accent/25 to-transparent"
+          />
+          {FLOW.map((s, i) => {
+            const Icon = s.icon;
+            return (
+              <li key={s.title} className="relative flex items-start gap-4 py-3.5">
+                <span className="relative z-10 grid size-11 shrink-0 place-items-center rounded-full border border-line bg-surface shadow-sh1">
+                  <span className="tnum absolute -left-1 -top-1 grid size-5 place-items-center rounded-full bg-accent text-[10px] font-bold text-on-accent">
+                    {i + 1}
+                  </span>
+                  <Icon className="size-5 text-accent" strokeWidth={1.75} aria-hidden />
+                </span>
+                <div className="pt-1">
+                  <h2 className="text-[15px] font-bold text-ink">{s.title}</h2>
+                  <p className="mt-1 text-sm leading-relaxed text-ink2">{s.desc}</p>
                 </div>
-                <p className="text-gray-600 text-sm">{step.text}</p>
-              </div>
-            ))}
+              </li>
+            );
+          })}
+        </ol>
+
+        {/* 次の一手（マイページへ） */}
+        <div className="mado-load mt-10 rounded-2xl border border-line bg-surface p-6 shadow-sh2 sm:p-7" style={{ animationDelay: "360ms" }}>
+          <h2 className="font-serif text-xl font-bold text-ink">サイトの編集は、マイページから。</h2>
+          <p className="mt-2 text-sm leading-relaxed text-ink2">
+            ログイン中のアカウントで、いつでもマイページを開けます。写真や文章の差し替え、
+            プランの変更もそちらからできます。
+          </p>
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <LinkButton href="/app" variant="cta" size="lg" rightIcon={<ArrowRight className="size-4" aria-hidden />}>
+              マイページを開く
+            </LinkButton>
+            <LinkButton href="/" variant="secondary" size="lg">
+              トップにもどる
+            </LinkButton>
           </div>
         </div>
-
-        {/* Email notice */}
-        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-50 border border-blue-100 mb-6">
-          <Mail className="w-5 h-5 text-blue-400 flex-shrink-0" />
-          <p className="text-blue-600 text-xs text-left">
-            確認メールが届かない場合は、迷惑メールフォルダもご確認ください
-          </p>
-        </div>
-
-        {/* 会員ページ案内 */}
-        <div className="bg-purple-50 border border-purple-100 rounded-2xl p-5 text-left mb-6">
-          <h3 className="text-purple-700 font-bold text-sm mb-2">サイトの編集はこちらから</h3>
-          <p className="text-purple-600 text-xs leading-relaxed mb-3">
-            ログイン中の Google アカウントで、いつでもマイページを開けます。
-            サイトの編集や設定はそちらから行えます。
-          </p>
-          <Link
-            href="/app"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-500 text-white text-xs font-medium hover:bg-purple-600 transition-colors"
-          >
-            マイページを開く <ArrowRight className="w-3 h-3" />
-          </Link>
-        </div>
-
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-gray-400 text-sm hover:text-gray-600 transition-colors"
-        >
-          トップページに戻る
-        </Link>
-      </motion.div>
-    </div>
+      </div>
+    </main>
   );
 }

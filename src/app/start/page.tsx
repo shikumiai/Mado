@@ -44,6 +44,7 @@ import {
   useToast,
 } from "@/components/ui";
 import LazyIframe from "@/components/LazyIframe";
+import { WindowMark } from "@/components/marketing/WindowMark";
 
 /* ═══════════════════════════════════════
    選べる系統・プラン（v1 は建築3系統）
@@ -258,13 +259,9 @@ function PreviewPanel({
   return (
     <>
       <Card padded={false} className="overflow-hidden">
-        {/* ブラウザバー風の飾り */}
+        {/* 窓の下枠ふうの帯（掛け金＝暖色の小さな点 + アドレス） */}
         <div className="flex items-center gap-2 border-b border-line bg-surface2 px-3 py-2">
-          <span className="flex gap-1" aria-hidden>
-            <span className="size-2 rounded-pill bg-ink3/40" />
-            <span className="size-2 rounded-pill bg-ink3/40" />
-            <span className="size-2 rounded-pill bg-ink3/40" />
-          </span>
+          <span aria-hidden className="size-1.5 shrink-0 rounded-full bg-accent" />
           <span className="mx-1 min-w-0 flex-1 truncate rounded-sm bg-surface px-2 py-0.5 text-[11px] text-ink3 tnum">
             {urlLabel}
           </span>
@@ -567,9 +564,9 @@ export default function StartPage() {
       <div className="min-h-screen bg-bg text-ink">
         {/* ヘッダー */}
         <header className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-4">
-          <Link href="/" aria-label="トップへ" className="flex items-center gap-2.5">
-            <Mascot size={34} />
-            <span className="text-base font-bold text-ink">Mado</span>
+          <Link href="/" aria-label="トップへ" className="flex items-center gap-2.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <WindowMark className="size-8" />
+            <span className="font-serif text-xl font-bold tracking-tight text-ink">Mado</span>
           </Link>
           <div className="flex items-center gap-2">
             {authReady && !user && (
@@ -601,12 +598,14 @@ export default function StartPage() {
                   transition={{ duration: 0.2 }}
                 >
                   <div className="mb-5 flex items-center gap-3">
-                    <Mascot size={44} />
+                    <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-accent-soft">
+                      <Mascot size={40} />
+                    </span>
                     <p className="text-sm text-ink2">
                       むずかしい設定はありません。順番に選ぶだけで、あなたのサイトができます。
                     </p>
                   </div>
-                  <h1 className="text-2xl font-bold text-ink sm:text-3xl">どんな雰囲気にしますか？</h1>
+                  <h1 className="font-serif text-2xl font-bold text-ink sm:text-3xl">どんな雰囲気にしますか？</h1>
                   <p className="mt-1.5 text-sm text-ink2">
                     ピンときたものを選んでください。あとから変えられます。
                   </p>
@@ -691,7 +690,7 @@ export default function StartPage() {
                       {/* STEP 1: プラン */}
                       {step === 1 && (
                         <>
-                          <h1 className="text-2xl font-bold text-ink sm:text-3xl">プランを選びましょう</h1>
+                          <h1 className="font-serif text-2xl font-bold text-ink sm:text-3xl">プランを選びましょう</h1>
                           <p className="mt-1.5 text-sm text-ink2">
                             まずは無料の「おためし」でも始められます。あとから変えられます。
                           </p>
@@ -746,7 +745,7 @@ export default function StartPage() {
                       {/* STEP 2: 会社の情報 */}
                       {step === 2 && (
                         <>
-                          <h1 className="text-2xl font-bold text-ink sm:text-3xl">
+                          <h1 className="font-serif text-2xl font-bold text-ink sm:text-3xl">
                             会社のことを教えてください
                           </h1>
                           <p className="mt-1.5 text-sm text-ink2">
@@ -791,7 +790,7 @@ export default function StartPage() {
                       {/* STEP 3: サイトのアドレス */}
                       {step === 3 && (
                         <>
-                          <h1 className="text-2xl font-bold text-ink sm:text-3xl">
+                          <h1 className="font-serif text-2xl font-bold text-ink sm:text-3xl">
                             サイトのアドレスを決めましょう
                           </h1>
                           <p className="mt-1.5 text-sm text-ink2">
@@ -851,7 +850,7 @@ export default function StartPage() {
                       {/* STEP 4: 確認して公開 */}
                       {step === 4 && (
                         <>
-                          <h1 className="text-2xl font-bold text-ink sm:text-3xl">
+                          <h1 className="font-serif text-2xl font-bold text-ink sm:text-3xl">
                             内容を確認して公開しましょう
                           </h1>
                           <p className="mt-1.5 text-sm text-ink2">
