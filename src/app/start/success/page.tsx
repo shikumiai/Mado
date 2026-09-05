@@ -37,7 +37,7 @@ const FLOW = [
 
 export default function StartSuccessPage() {
   return (
-    <main className="relative grid min-h-dvh place-items-center overflow-hidden bg-bg px-5 py-12 text-ink">
+    <main data-mado-marketing className="relative grid min-h-dvh place-items-center overflow-hidden bg-bg px-5 py-12 text-ink">
       {/* 窓から差す暖色の光（装飾・静止） */}
       <div aria-hidden className="window-light pointer-events-none absolute inset-x-0 top-0 h-[46vh]" />
       <div aria-hidden className="paper-grain pointer-events-none absolute inset-0 opacity-60" />
