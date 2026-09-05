@@ -1,139 +1,215 @@
-"use client";
+/**
+ * 管理（Lyo 専用）/admin — 顧客・月次売上・サイト・編集依頼を1枚に。
+ *
+ * ゲート: getMyAccount() の isPlatformAdmin が false／未ログインなら外へ送る。
+ * データ取得はすべて「ログイン中の管理者セッション（RLS）」越し。admin_read_* の
+ * ポリシーが全件読取を許すので service_role は使わない。集計（月次売上）はここで出し、
+ * 一覧と編集依頼の状態更新は AdminConsole（client）が受け持つ。
+ */
 
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import Link from "next/link";
-import {
-  DollarSign, Users, FileEdit, TrendingUp, ArrowUp,
-  Clock, AlertCircle, ChevronRight, Loader2,
-} from "lucide-react";
+import { redirect } from "next/navigation";
+import { getMyAccount } from "@/lib/auth";
+import { createServerSupabase } from "@/lib/supabase/ssr";
+import { isMissingTableError } from "@/lib/supabase/server";
+import { PLAN_LABELS, PLAN_PRICES, normalizePlanId, type Plan } from "@/lib/stripe";
+import { Card } from "@/components/ui";
+import { AdminConsole, type OrgVM, type SiteVM, type RequestVM } from "./AdminConsole";
+import type { EditRequestStatus } from "@/lib/admin";
+import { Wallet, Users, FileEdit, Building2 } from "lucide-react";
 
-/* ═══════════════════════════════════════
-   Lyo管理ダッシュボード — 実データ取得版
-   ═══════════════════════════════════════ */
+export const metadata = { title: "管理｜Mado" };
 
-const planColor: Record<string, string> = {
-  "おためし": "text-gray-600 bg-gray-100",
-  "おまかせ": "text-purple-600 bg-purple-100",
-  "おまかせプロ": "text-orange-600 bg-orange-100",
-  "otameshi": "text-gray-600 bg-gray-100",
-  "omakase": "text-purple-600 bg-purple-100",
-  "omakase-pro": "text-orange-600 bg-orange-100",
-};
+const PLAN_ORDER: Plan[] = ["otameshi", "omakase", "omakase-pro"];
 
-const planLabels: Record<string, string> = {
-  otameshi: "おためし",
-  omakase: "おまかせ",
-  "omakase-pro": "おまかせプロ",
-};
-
-interface DashboardData {
-  pendingCount: number;
-  pendingOrders: { id: string; company: string; plan: string; date: string; template: string }[];
-  note?: string;
+/** 表示用の月額（"¥1,480"）から数値（1480）を取り出す。金額の正は PLAN_PRICES */
+function planYen(plan: Plan): number {
+  return Number(PLAN_PRICES[plan].replace(/[^0-9]/g, "")) || 0;
 }
 
-export default function AdminDashboard() {
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+function yen(n: number): string {
+  return `¥${n.toLocaleString("ja-JP")}`;
+}
 
-  useEffect(() => {
-    fetch("/api/admin?action=dashboard")
-      .then((res) => res.json())
-      .then((d) => { setData(d); setLoading(false); })
-      .catch((err) => { setError(err.message); setLoading(false); });
-  }, []);
+function jpDate(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
+}
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-6 h-6 text-purple-400 animate-spin" />
-      </div>
-    );
+/* Supabase の行の型（select したぶんだけ） */
+type OrgRow = { id: string; name: string; email: string; plan: string; status: string; created_at: string };
+type SiteRow = { id: string; org_id: string; slug: string; status: string; created_at: string };
+type ReqRow = { id: string; site_id: string; kind: string; body: string; status: string; created_at: string };
+
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
+  const account = await getMyAccount();
+  if (!account) redirect("/auth/login?next=/admin");
+  if (!account.isPlatformAdmin) redirect("/app");
+
+  const { tab } = await searchParams;
+
+  const supabase = await createServerSupabase();
+
+  let orgRows: OrgRow[] = [];
+  let siteRows: SiteRow[] = [];
+  let reqRows: ReqRow[] = [];
+
+  if (supabase) {
+    const [orgsRes, sitesRes, reqRes] = await Promise.all([
+      supabase
+        .from("orgs")
+        .select("id, name, email, plan, status, created_at")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("sites")
+        .select("id, org_id, slug, status, created_at")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("edit_requests")
+        .select("id, site_id, kind, body, status, created_at")
+        .order("created_at", { ascending: false }),
+    ]);
+
+    for (const [res, label] of [
+      [orgsRes, "orgs"],
+      [sitesRes, "sites"],
+      [reqRes, "edit_requests"],
+    ] as const) {
+      if (res.error && !isMissingTableError(res.error)) {
+        console.error(`[admin] ${label} の取得に失敗`, res.error);
+      }
+    }
+
+    orgRows = (orgsRes.data as OrgRow[] | null) ?? [];
+    siteRows = (sitesRes.data as SiteRow[] | null) ?? [];
+    reqRows = (reqRes.data as ReqRow[] | null) ?? [];
   }
 
-  if (error) {
-    return (
-      <div className="max-w-[600px] mx-auto p-6 bg-red-50 rounded-2xl border border-red-100 text-center">
-        <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-3" />
-        <p className="text-red-600 text-sm">{error}</p>
-      </div>
-    );
-  }
+  // 会社名の引き当て表
+  const orgNameById = new Map(orgRows.map((o) => [o.id, o.name]));
+
+  // ── ビューモデルに整形（client へ渡す用） ──
+  const orgs: OrgVM[] = orgRows.map((o) => ({
+    id: o.id,
+    name: o.name,
+    email: o.email,
+    plan: normalizePlanId(o.plan),
+    status: o.status,
+    created: jpDate(o.created_at),
+  }));
+
+  const sites: SiteVM[] = siteRows.map((s) => ({
+    id: s.id,
+    slug: s.slug,
+    status: s.status,
+    orgName: orgNameById.get(s.org_id) ?? "（会社不明）",
+    created: jpDate(s.created_at),
+    isLive: s.status === "live",
+  }));
+
+  const siteInfoById = new Map(
+    siteRows.map((s) => [s.id, { slug: s.slug, orgName: orgNameById.get(s.org_id) ?? "（会社不明）" }])
+  );
+
+  const requests: RequestVM[] = reqRows.map((r) => {
+    const info = siteInfoById.get(r.site_id);
+    return {
+      id: r.id,
+      kind: r.kind,
+      body: r.body,
+      status: (["pending", "working", "done", "rejected"].includes(r.status)
+        ? r.status
+        : "pending") as EditRequestStatus,
+      orgName: info?.orgName ?? "（会社不明）",
+      siteSlug: info?.slug ?? "—",
+      created: jpDate(r.created_at),
+    };
+  });
+
+  // ── 月次売上（active の会社をプラン別に集計）──
+  const activeOrgs = orgs.filter((o) => o.status === "active");
+  const breakdown = PLAN_ORDER.map((plan) => {
+    const count = activeOrgs.filter((o) => o.plan === plan).length;
+    return { plan, count, subtotal: count * planYen(plan) };
+  });
+  const mrr = breakdown.reduce((sum, b) => sum + b.subtotal, 0);
+  const contracts = activeOrgs.length;
+  const pendingRequests = requests.filter((r) => r.status === "pending").length;
+
+  const stats = [
+    { icon: Wallet, label: "月次売上", value: yen(mrr) },
+    { icon: FileEdit, label: "契約数", value: `${contracts}` },
+    { icon: Building2, label: "顧客総数", value: `${orgs.length}` },
+    { icon: Users, label: "未対応の依頼", value: `${pendingRequests}` },
+  ];
 
   return (
-    <div className="max-w-[1100px] mx-auto space-y-6">
-      <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}>
-        <h2 className="text-gray-800 text-xl font-bold mb-1">ダッシュボード</h2>
-        <p className="text-gray-400 text-sm">Madoの運営状況</p>
-      </motion.div>
+    <div className="flex flex-col gap-7">
+      <div>
+        <p className="text-xs font-medium tracking-wide text-ink3">管理</p>
+        <h1 className="mt-1 text-2xl font-bold">運営のようす</h1>
+      </div>
 
-      {/* Overview */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { icon: FileEdit, label: "未対応の依頼", value: `${data?.pendingCount || 0}件`, color: "text-orange-500", bg: "bg-orange-50" },
-          { icon: Users, label: "制作中", value: `${data?.pendingOrders?.length || 0}件`, color: "text-blue-500", bg: "bg-blue-50" },
-          { icon: DollarSign, label: "MRR", value: "—", color: "text-green-500", bg: "bg-green-50" },
-          { icon: TrendingUp, label: "今月の総PV", value: "—", color: "text-purple-500", bg: "bg-purple-50" },
-        ].map((s, i) => {
+      {/* サマリー（サーバー集計） */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {stats.map((s) => {
           const Icon = s.icon;
           return (
-            <motion.div key={i} className="bg-white rounded-2xl border border-gray-100 p-5" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}>
-              <div className={`w-10 h-10 rounded-xl ${s.bg} flex items-center justify-center mb-3`}>
-                <Icon className={`w-5 h-5 ${s.color}`} strokeWidth={1.5} />
+            <Card key={s.label} className="flex flex-col gap-2">
+              <div className="flex size-9 items-center justify-center rounded-md bg-accent-soft">
+                <Icon className="size-5 text-accent" aria-hidden />
               </div>
-              <p className="text-gray-800 text-2xl font-bold">{s.value}</p>
-              <p className="text-gray-400 text-xs mt-1">{s.label}</p>
-            </motion.div>
+              <p className="tnum text-2xl font-bold text-ink">{s.value}</p>
+              <p className="text-xs text-ink2">{s.label}</p>
+            </Card>
           );
         })}
       </div>
 
-      {/* Pending orders */}
-      <motion.div className="bg-white rounded-2xl border border-gray-100 overflow-hidden" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h3 className="text-gray-800 font-bold text-sm">制作中の注文</h3>
-            {data && data.pendingOrders.length > 0 && (
-              <span className="px-2 py-0.5 rounded-full bg-orange-50 text-orange-500 text-xs font-medium">{data.pendingOrders.length}件</span>
-            )}
+      {/* 月次売上の内訳 */}
+      <section className="flex flex-col gap-3">
+        <h2 className="text-sm font-semibold text-ink2">プラン別の内訳</h2>
+        <Card padded={false} className="overflow-hidden">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[22rem] text-sm">
+            <thead>
+              <tr className="border-b border-line text-left text-xs text-ink3">
+                <th className="px-4 py-2.5 font-medium sm:px-5">プラン</th>
+                <th className="px-4 py-2.5 text-right font-medium">契約数</th>
+                <th className="px-4 py-2.5 text-right font-medium sm:px-5">月額小計</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-line">
+              {breakdown.map((b) => (
+                <tr key={b.plan}>
+                  <td className="px-4 py-3 sm:px-5">
+                    <span className="font-medium text-ink">{PLAN_LABELS[b.plan]}</span>
+                    <span className="tnum ml-2 text-xs text-ink3">{PLAN_PRICES[b.plan]}／月</span>
+                  </td>
+                  <td className="tnum px-4 py-3 text-right text-ink">{b.count}</td>
+                  <td className="tnum px-4 py-3 text-right text-ink sm:px-5">{yen(b.subtotal)}</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr className="border-t border-line bg-surface2/50">
+                <td className="px-4 py-3 font-semibold text-ink sm:px-5">合計（月次売上）</td>
+                <td className="tnum px-4 py-3 text-right font-semibold text-ink">{contracts}</td>
+                <td className="tnum px-4 py-3 text-right font-bold text-ink sm:px-5">{yen(mrr)}</td>
+              </tr>
+            </tfoot>
+          </table>
           </div>
-          <Link href="/admin/accounts" className="text-purple-500 text-xs hover:underline">すべて見る →</Link>
-        </div>
-        {data && data.pendingOrders.length > 0 ? (
-          <div className="divide-y divide-gray-100">
-            {data.pendingOrders.map((order) => (
-              <div key={order.id} className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition-colors">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-gray-700 text-sm font-medium">{order.company || order.id}</span>
-                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${planColor[order.plan] || "text-gray-600 bg-gray-100"}`}>
-                      {planLabels[order.plan] || order.plan}
-                    </span>
-                  </div>
-                  <p className="text-gray-400 text-xs">{order.template} | {order.date}</p>
-                </div>
-                <ChevronRight className="w-4 h-4 text-gray-300" />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="p-8 text-center text-gray-400 text-sm">制作中の注文はありません</div>
-        )}
-      </motion.div>
+        </Card>
+      </section>
 
-      {/* Auto-approve score (placeholder) */}
-      <motion.div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 text-white" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-        <div className="flex items-center gap-2 mb-3">
-          <AlertCircle className="w-4 h-4 text-yellow-400" />
-          <h3 className="font-bold text-sm">自動承認スコア</h3>
-          <span className="text-gray-500 text-xs ml-auto">Coming soon</span>
-        </div>
-        <p className="text-gray-400 text-sm">
-          Claude APIによる自動編集の精度スコアを記録し、80点を超えたサイトは自動承認に移行します。
-        </p>
-      </motion.div>
+      {/* 顧客 / サイト / 編集依頼 */}
+      <AdminConsole orgs={orgs} sites={sites} requests={requests} initialTab={tab} />
     </div>
   );
 }
