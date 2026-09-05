@@ -1,10 +1,10 @@
 /**
  * 支払い・透明性 /app/billing
  *
- * SaaS決済憲章「透明性を第1級」: 今のプラン・次回の請求・今月の使用状況を
+ * SaaS決済憲章「透明性を第1級」: 今のプラン・月額・次回の請求・今月の使用状況を
  * その場で見せ、使う人が自分で管理できる状態にする。
- * 有料の会社は Stripe のカスタマーポータルへ直結（アップグレードも解約も同じ入口）。
- * 無料の会社はプランを上げる導線（今は /start）。
+ * プラン変更（無料↔有料・アップ/ダウン）は同じ手軽さで並べ（PlanChange）、
+ * お支払い方法の変更・解約・領収書は Stripe のカスタマーポータルへ寄せる。
  *
  * 未ログイン → /auth/login、会社がまだ無い → /start。権限は DB(RLS) が守る。
  */
@@ -13,7 +13,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getMyAccount } from "@/lib/auth";
 import { createServerSupabase } from "@/lib/supabase/ssr";
-import { getStripe } from "@/lib/stripe-server";
+import { getStripe, isStripeTestMode } from "@/lib/stripe-server";
 import {
   PLAN_LABELS,
   PLAN_PRICES,
@@ -22,14 +22,13 @@ import {
 } from "@/lib/stripe";
 import { Card, Badge } from "@/components/ui";
 import { BillingPortalButton } from "./BillingPortalButton";
-import { ArrowLeft, ArrowUpRight, Receipt, Gauge, Info } from "lucide-react";
+import { PlanChange } from "./PlanChange";
+import { ArrowLeft, Receipt, Gauge, CreditCard, LayoutGrid } from "lucide-react";
 
 export const metadata = { title: "支払い・プラン｜Mado" };
 
 const backLink =
   "inline-flex items-center gap-1.5 rounded-md text-sm text-ink2 outline-none transition hover:text-ink focus-visible:ring-2 focus-visible:ring-ring";
-const upgradeLink =
-  "inline-flex h-10 items-center justify-center gap-1.5 rounded-md bg-accent px-5 text-sm font-medium text-on-accent shadow-sh1 outline-none transition hover:brightness-105 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg active:translate-y-px";
 
 /** 今の期間キー（ai_edit_usage.period と同じ 'YYYY-MM'） */
 function currentPeriod(now = new Date()): { key: string; label: string } {
@@ -51,6 +50,7 @@ export default async function BillingPage() {
   const plan = normalizePlanId(org.plan);
   const limit = PLAN_EDIT_LIMITS[plan];
   const period = currentPeriod();
+  const testMode = isStripeTestMode();
 
   // 本人のセッション（RLS）で、Stripe連携の有無と今月の使用状況を引く
   const supabase = await createServerSupabase();
@@ -110,66 +110,34 @@ export default async function BillingPage() {
         <Link href="/app" className={backLink}>
           <ArrowLeft className="size-4" aria-hidden /> マイページに戻る
         </Link>
-        <h1 className="mt-3 text-2xl font-bold">支払い・プラン</h1>
+        <h1 className="mt-3 font-serif text-2xl font-bold">支払い・プラン</h1>
         <p className="mt-1 text-sm text-ink2">{org.name}</p>
       </div>
 
-      {/* 現在のプラン */}
+      {/* 現在のプラン（+ 次回の請求） */}
       <Card className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p className="text-sm text-ink2">現在のプラン</p>
             <p className="mt-1 flex items-baseline gap-2">
-              <span className="text-xl font-bold">{PLAN_LABELS[plan]}</span>
+              <span className="font-serif text-2xl font-bold">{PLAN_LABELS[plan]}</span>
               <span className="tnum text-sm text-ink2">{PLAN_PRICES[plan]}／月</span>
             </p>
           </div>
           <Badge tone={isPaid ? "success" : "neutral"}>{isPaid ? "お支払い中" : "無料プラン"}</Badge>
         </div>
 
-        <div className="border-t border-line pt-4">
-          {isPaid ? (
-            <div className="flex flex-col gap-2">
-              <BillingPortalButton />
-              <p className="flex items-start gap-1.5 text-xs text-ink3">
-                <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-                プランの変更（上げる・下げる）も、解約も、この画面から自分で行えます。
-              </p>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              <Link href="/start" className={upgradeLink}>
-                プランを上げる <ArrowUpRight className="size-4" aria-hidden />
-              </Link>
-              <p className="text-xs text-ink3">
-                有料プランにすると、AIでの編集や機能の追加ができるようになります。
-              </p>
-            </div>
-          )}
-        </div>
+        {isPaid && (
+          <div className="flex flex-wrap items-baseline justify-between gap-3 border-t border-line pt-4">
+            <p className="flex items-center gap-1.5 text-sm text-ink2">
+              <Receipt className="size-4" aria-hidden /> 次回の請求予定日
+            </p>
+            <p className="text-sm font-semibold text-ink">
+              {nextBillingDate ?? "お支払い画面でご確認いただけます"}
+            </p>
+          </div>
+        )}
       </Card>
-
-      {/* 次回の請求 */}
-      <section className="flex flex-col gap-3">
-        <h2 className="flex items-center gap-1.5 text-sm font-semibold text-ink2">
-          <Receipt className="size-4" aria-hidden /> 次回の請求
-        </h2>
-        <Card>
-          {!isPaid ? (
-            <p className="text-sm text-ink2">無料プランのため、請求はありません。</p>
-          ) : (
-            <div className="flex flex-wrap items-baseline justify-between gap-3">
-              <div>
-                <p className="text-sm text-ink2">請求予定日</p>
-                <p className="mt-1 text-base font-semibold text-ink">
-                  {nextBillingDate ?? "Stripe の管理画面でご確認ください"}
-                </p>
-              </div>
-              <p className="tnum text-lg font-bold text-ink">{PLAN_PRICES[plan]}</p>
-            </div>
-          )}
-        </Card>
-      </section>
 
       {/* 今月の AI 編集の使用状況（透明性を第1級に） */}
       <section className="flex flex-col gap-3">
@@ -221,6 +189,31 @@ export default async function BillingPage() {
           )}
         </Card>
       </section>
+
+      {/* プラン一覧（現行を強調・変更ボタン） */}
+      <section className="flex flex-col gap-3">
+        <h2 className="flex items-center gap-1.5 text-sm font-semibold text-ink2">
+          <LayoutGrid className="size-4" aria-hidden /> プランを選ぶ
+        </h2>
+        <PlanChange currentPlan={plan} testMode={testMode} />
+      </section>
+
+      {/* お支払い方法・解約（有料のみ。Stripe のポータルへ） */}
+      {isPaid && (
+        <section className="flex flex-col gap-3">
+          <h2 className="flex items-center gap-1.5 text-sm font-semibold text-ink2">
+            <CreditCard className="size-4" aria-hidden /> お支払い方法・解約
+          </h2>
+          <Card className="flex flex-col gap-3">
+            <p className="text-sm text-ink2">
+              カード情報の変更・領収書の確認・解約は、Stripe の安全な画面で行えます。
+            </p>
+            <div>
+              <BillingPortalButton />
+            </div>
+          </Card>
+        </section>
+      )}
     </div>
   );
 }

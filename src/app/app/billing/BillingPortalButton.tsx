@@ -39,7 +39,7 @@ export function BillingPortalButton() {
       onClick={handleClick}
       leftIcon={<CreditCard className="size-4" aria-hidden />}
     >
-      お支払い・プラン変更
+      お支払い方法・解約の管理
     </Button>
   );
 }

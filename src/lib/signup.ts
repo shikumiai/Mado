@@ -16,7 +16,7 @@
  */
 
 import { createServerSupabase } from "./supabase/ssr";
-import { getStripe, resolvePriceId } from "./stripe-server";
+import { getStripe, resolvePriceId, createSubscriptionCheckoutSession } from "./stripe-server";
 import { getPlanFromTemplateId, type Plan } from "./stripe";
 import { checkSlug } from "./resolve-site";
 import { isSlugAvailable } from "./site-repo";
@@ -226,30 +226,17 @@ export async function startPaidCheckout(input: SignupInput): Promise<PaidCheckou
   const base = process.env.NEXT_PUBLIC_BASE_URL || "https://mado.shikumiai.com";
 
   try {
-    const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
-      // payment_method_types は渡さない。
-      // Dashboard の Payment method configurations に決めさせることで、
-      // その顧客に出せる支払い方法（card / link など）が自動で選ばれる。
-      line_items: [{ price: priceId, quantity: 1 }],
-      // 旧設計の order 情報ではなく、押さえた org / site の ID を載せる。
-      // Webhook はこれを見て同じ行を active / live に上げる。
-      metadata: {
-        org_id: orgId,
-        site_id: siteId,
-        template_id: input.templateId,
-        plan,
-      },
-      subscription_data: {
-        metadata: {
-          org_id: orgId,
-          site_id: siteId,
-          plan,
-        },
-      },
-      customer_email: input.email,
-      success_url: `${base}/start/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${base}/start`,
+    // Checkout Session の組み立ては billing の changePlan（無料→有料）と共通化してある。
+    // metadata に org / site / plan を載せるので、webhook はこの行を active / live に上げられる。
+    const session = await createSubscriptionCheckoutSession(stripe, {
+      plan,
+      priceId,
+      orgId,
+      siteId,
+      templateId: input.templateId,
+      email: input.email,
+      successUrl: `${base}/start/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${base}/start`,
     });
 
     if (!session.url) {

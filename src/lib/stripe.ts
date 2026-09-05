@@ -122,3 +122,30 @@ export const PLAN_EDIT_LIMITS: Record<Plan, number> = {
   omakase: 3,         // 月3回
   "omakase-pro": 999, // 無制限
 };
+
+/**
+ * プランの並び順（無料→上位）。プラン変更で「上げる／下げる」を見分けるのに使う。
+ */
+export const PLAN_RANK: Record<Plan, number> = {
+  otameshi: 0,
+  omakase: 1,
+  "omakase-pro": 2,
+};
+
+/**
+ * プランの一言。金額の得は言葉で言わず、何ができるかを短く伝える（プラン一覧で使う）。
+ */
+export const PLAN_TAGLINES: Record<Plan, string> = {
+  otameshi: "まずは無料で、自分のサイトを持つ。",
+  omakase: "編集もおまかせ。育てていくサイトに。",
+  "omakase-pro": "予約もAIチャットも。本気で集客するなら。",
+};
+
+/**
+ * プランごとの主な内容（プラン一覧の箇条書き。stripe-setup.mjs の商品説明と揃える）。
+ */
+export const PLAN_FEATURES: Record<Plan, string[]> = {
+  otameshi: ["独自ドメインに対応", "自分で手動で編集", "AIでの編集はなし"],
+  omakase: ["独自ドメインに対応", "AIでの編集 月3回まで", "写真を送るだけでおまかせ"],
+  "omakase-pro": ["独自ドメインに対応", "AIでの編集 無制限", "予約・AIチャット・SEO設計つき"],
+};

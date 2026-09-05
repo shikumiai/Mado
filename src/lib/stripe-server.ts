@@ -63,3 +63,73 @@ export async function resolvePriceId(plan: Plan): Promise<string | null> {
 export function clearPriceIdCache() {
   priceIdCache.clear();
 }
+
+/**
+ * テスト／サンドボックス環境かどうか。
+ *
+ * STRIPE_SECRET_KEY が sk_test_ / rk_test_ で始まればテスト（Stripe のサンドボックスも
+ * テストモードの鍵を使うので、これで一緒に拾える）。本番の鍵（sk_live_ 等）では false。
+ * 画面に「テストカードで試せます」の注記を出してよいかの判定にだけ使う。
+ */
+export function isStripeTestMode(): boolean {
+  const key = process.env.STRIPE_SECRET_KEY ?? "";
+  return /^(sk|rk)_test_/.test(key);
+}
+
+/**
+ * サブスクの Checkout Session を作る共通処理。
+ *
+ * 新規申込（signup の startPaidCheckout）と、無料→有料の切り替え（billing の changePlan）で
+ * 使い回す。metadata に org_id / site_id / plan を必ず載せるので、webhook はどちらの経路でも
+ * 同じ1行を active / plan / live に更新できる。
+ *
+ * payment_method_types は渡さない。Dashboard の Payment method configurations に決めさせると、
+ * その顧客に出せる支払い方法（card / link など）が自動で選ばれる。
+ * 既存顧客（customerId）があればそれを使い回し、無ければ customer_email で作る（両方は渡せない）。
+ */
+export interface SubscriptionCheckoutParams {
+  plan: Plan;
+  priceId: string;
+  orgId: string;
+  siteId: string;
+  templateId?: string;
+  email?: string;
+  customerId?: string | null;
+  successUrl: string;
+  cancelUrl: string;
+}
+
+export async function createSubscriptionCheckoutSession(
+  stripe: Stripe,
+  params: SubscriptionCheckoutParams
+): Promise<Stripe.Checkout.Session> {
+  const metadata: Record<string, string> = {
+    org_id: params.orgId,
+    site_id: params.siteId,
+    plan: params.plan,
+  };
+  if (params.templateId) metadata.template_id = params.templateId;
+
+  const create: Stripe.Checkout.SessionCreateParams = {
+    mode: "subscription",
+    line_items: [{ price: params.priceId, quantity: 1 }],
+    metadata,
+    subscription_data: {
+      metadata: {
+        org_id: params.orgId,
+        site_id: params.siteId,
+        plan: params.plan,
+      },
+    },
+    success_url: params.successUrl,
+    cancel_url: params.cancelUrl,
+  };
+
+  if (params.customerId) {
+    create.customer = params.customerId;
+  } else if (params.email) {
+    create.customer_email = params.email;
+  }
+
+  return stripe.checkout.sessions.create(create);
+}
