@@ -26,6 +26,8 @@ export interface CompanyInfo {
   license?: string;           // 許認可
   capital?: string;           // 資本金
   employees?: string;         // 従業員数
+  business?: string;          // 事業内容（会社概要の表に出す。無ければ services から作る）
+  founded?: string;           // 設立（法人化の年月。無ければ since を使う）
   iso?: string;               // ISO認証
   domain: string;             // yamada-koumuten.jp
   ceoPhoto?: string;          // /images/ceo.jpg
@@ -133,6 +135,13 @@ export interface NewsItem {
   date: string;               // 2025.04.05
   category: string;           // 完成見学会 / お知らせ / メディア
   title: string;
+  // ── 一覧→詳細で使う（無くても一覧は成立する）──
+  id?: number;
+  slug?: string;              // spring-open-house（詳細ページURL用）
+  excerpt?: string;           // 一覧に出す短い前置き
+  body?: string;              // 本文（改行は\n\nで区切る）
+  image?: string;
+  link?: string;              // 外部記事へ飛ばす場合
 }
 
 /* ═══════════════════════════════════════
@@ -252,6 +261,16 @@ export interface FlowStep {
 export interface FAQItem {
   question: string;
   answer: string;
+  category?: string;          // 費用のこと / 工事のこと（分類タブで使う）
+}
+
+/* ═══════════════════════════════════════
+   沿革（会社概要の一部・日本の会社サイトの必須）
+   ═══════════════════════════════════════ */
+export interface HistoryEvent {
+  year: string;               // 1998
+  title: string;              // 松本市中央に工房を構える
+  description?: string;
 }
 
 /* ═══════════════════════════════════════
@@ -379,6 +398,7 @@ export interface SiteConfig {
   // luminos（フォトグラファー）用
   flow?: FlowStep[];            // 撮影フロー
   faq?: FAQItem[];              // よくある質問
+  history?: HistoryEvent[];     // 沿革（会社概要）
 
   // おまかせプロ
   bookingEvents?: BookingEvent[];

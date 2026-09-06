@@ -444,6 +444,237 @@ export function DishArt({ seed = 0, category, name }: { seed?: number; category?
 }
 
 /* ═══════════════════════════════════════
+   地図（access 用）
+   ═══════════════════════════════════════ */
+
+/**
+ * 地図の埋め込みが無いときの地図。
+ * 区画・道路・線路・川・目印を、図面の線で描く。真ん中に店の位置。
+ * 「地図が入る予定の空き地」ではなく、それだけで読める1枚にしてある。
+ */
+export function MapArt({ seed = 0, label }: { seed?: number; label?: string }) {
+  const p = useTplPalette();
+  const u = useUid("map");
+  const t1 = p.tones[seed % p.tones.length];
+  return (
+    <svg viewBox="0 0 480 360" preserveAspectRatio="xMidYMid slice" style={FIT} xmlns="http://www.w3.org/2000/svg" aria-hidden>
+      <defs>
+        <linearGradient id={`${u}bg`} x1="0" y1="0" x2="0.3" y2="1">
+          <stop offset="0%" stopColor={p.surface} />
+          <stop offset="100%" stopColor={p.bgDeep} />
+        </linearGradient>
+        <pattern id={`${u}grid`} width="24" height="24" patternUnits="userSpaceOnUse">
+          <path d="M24 0H0V24" fill="none" stroke={p.ink} strokeOpacity="0.05" strokeWidth="1" />
+        </pattern>
+        <radialGradient id={`${u}here`} cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor={p.primary} stopOpacity="0.3" />
+          <stop offset="100%" stopColor={p.primary} stopOpacity="0" />
+        </radialGradient>
+      </defs>
+
+      <rect width="480" height="360" fill={`url(#${u}bg)`} />
+      <rect width="480" height="360" fill={`url(#${u}grid)`} />
+
+      {/* 川 */}
+      <path d="M-10 300 q80 -40 150 -10 t150 -22 t200 -18" fill="none" stroke={p.sub2Soft} strokeWidth="22" strokeLinecap="round" opacity="0.75" />
+      <path d="M-10 300 q80 -40 150 -10 t150 -22 t200 -18" fill="none" stroke={p.ink} strokeOpacity="0.1" strokeWidth="22" strokeLinecap="round" />
+
+      {/* 区画（大通り・細道） */}
+      <g stroke={p.mutedFill} strokeLinecap="square">
+        <line x1="0" y1="150" x2="480" y2="150" strokeWidth="26" />
+        <line x1="196" y1="0" x2="196" y2="360" strokeWidth="20" />
+        <line x1="0" y1="66" x2="480" y2="66" strokeWidth="11" />
+        <line x1="352" y1="0" x2="352" y2="300" strokeWidth="11" />
+        <line x1="86" y1="66" x2="86" y2="290" strokeWidth="9" />
+      </g>
+      <g stroke={p.ink} strokeOpacity="0.14" strokeWidth="1.2">
+        <line x1="0" y1="137" x2="480" y2="137" />
+        <line x1="0" y1="163" x2="480" y2="163" />
+        <line x1="186" y1="0" x2="186" y2="360" />
+        <line x1="206" y1="0" x2="206" y2="360" />
+      </g>
+      <g stroke={p.surface} strokeWidth="2" strokeDasharray="10 12" opacity="0.9">
+        <line x1="0" y1="150" x2="480" y2="150" />
+        <line x1="196" y1="0" x2="196" y2="360" />
+      </g>
+
+      {/* 線路 */}
+      <g>
+        <line x1="0" y1="34" x2="480" y2="34" stroke={p.ink} strokeOpacity="0.4" strokeWidth="7" />
+        <line x1="0" y1="34" x2="480" y2="34" stroke={p.surface} strokeWidth="3" strokeDasharray="7 7" />
+        <rect x="228" y="18" width="60" height="32" rx="3" fill={p.surface} stroke={p.ink} strokeOpacity="0.45" strokeWidth="2" />
+        <circle cx="258" cy="34" r="5" fill={p.sub1} />
+      </g>
+
+      {/* 街区 */}
+      <g stroke={p.ink} strokeOpacity="0.18" strokeWidth="1.4">
+        <rect x="24" y="82" width="50" height="42" fill={p.bgDeep} />
+        <rect x="98" y="82" width="76" height="42" fill={p.bgDeep} />
+        <rect x="220" y="82" width="118" height="42" fill={p.bgDeep} />
+        <rect x="366" y="82" width="92" height="42" fill={p.bgDeep} />
+        <rect x="24" y="176" width="50" height="72" fill={p.bgDeep} />
+        <rect x="220" y="176" width="118" height="46" fill={p.bgDeep} />
+        <rect x="366" y="176" width="92" height="72" fill={p.bgDeep} />
+      </g>
+
+      {/* 目印（公園・駐車場） */}
+      <g>
+        <rect x="98" y="176" width="76" height="72" rx="3" fill={t1} fillOpacity="0.3" stroke={p.ink} strokeOpacity="0.18" strokeWidth="1.4" />
+        <circle cx="120" cy="204" r="11" fill={p.sub1} fillOpacity="0.5" />
+        <circle cx="150" cy="224" r="8" fill={p.sub1} fillOpacity="0.4" />
+        <rect x="366" y="264" width="52" height="34" rx="3" fill={p.surface} stroke={p.ink} strokeOpacity="0.3" strokeWidth="1.6" />
+        <text x="392" y="287" textAnchor="middle" fontSize="19" fontWeight="700" fill={p.ink} fillOpacity="0.42" fontFamily="serif">P</text>
+      </g>
+
+      {/* ここ */}
+      <circle cx="248" cy="196" r="52" fill={`url(#${u}here)`} />
+      <rect x="220" y="176" width="56" height="46" fill={p.primary} fillOpacity="0.16" />
+      <path d="M248 148 c-13 0 -23 10 -23 23 c0 17 23 41 23 41 s23 -24 23 -41 c0 -13 -10 -23 -23 -23 Z"
+        fill={p.primary} stroke={p.surface} strokeWidth="2.6" strokeLinejoin="round" />
+      <circle cx="248" cy="170" r="7.5" fill={p.surface} />
+      {label && (
+        <g>
+          <rect x="284" y="158" width={Math.min(168, label.length * 13 + 20)} height="26" rx="3"
+            fill={p.surface} stroke={p.ink} strokeOpacity="0.2" strokeWidth="1.4" />
+          <text x="294" y="176" fontSize="13" fontWeight="700" fill={p.ink} fontFamily="sans-serif">
+            {label.length > 12 ? label.slice(0, 12) : label}
+          </text>
+        </g>
+      )}
+
+      {/* 方位と縮尺 */}
+      <g transform="translate(438 300)">
+        <circle r="17" fill={p.surface} stroke={p.ink} strokeOpacity="0.25" strokeWidth="1.4" />
+        <path d="M0 -12 L5 4 L0 0 L-5 4 Z" fill={p.primary} />
+        <text y="-19" textAnchor="middle" fontSize="9" fontWeight="700" fill={p.ink} fillOpacity="0.6" fontFamily="sans-serif">N</text>
+      </g>
+      <g stroke={p.ink} strokeOpacity="0.35" strokeWidth="1.6">
+        <line x1="26" y1="332" x2="106" y2="332" />
+        <line x1="26" y1="327" x2="26" y2="337" />
+        <line x1="106" y1="327" x2="106" y2="337" />
+      </g>
+      <text x="66" y="348" textAnchor="middle" fontSize="10" fill={p.ink} fillOpacity="0.45" fontFamily="sans-serif">200m</text>
+
+      <rect x="6" y="6" width="468" height="348" rx="3" fill="none" stroke={p.ink} strokeOpacity="0.12" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+/* ═══════════════════════════════════════
+   お知らせ（news 用）
+   ═══════════════════════════════════════ */
+
+type NoticeKind = "event" | "closed" | "media" | "paper";
+
+function noticeKindOf(category?: string): NoticeKind {
+  const c = category || "";
+  if (/見学|イベント|体験|フェア|セール|入荷|催/.test(c)) return "event";
+  if (/休|年末|年始|臨時|営業時間/.test(c)) return "closed";
+  if (/メディア|掲載|取材|受賞|新聞|雑誌/.test(c)) return "media";
+  return "paper";
+}
+
+/** お知らせの絵。分類の言葉から、催し・休みの案内・掲載・お知らせを描き分ける */
+export function NoticeArt({ seed = 0, category }: { seed?: number; category?: string }) {
+  const p = useTplPalette();
+  const u = useUid("ntc");
+  const kind = noticeKindOf(category);
+  const t1 = p.tones[seed % p.tones.length];
+  return (
+    <svg viewBox="0 0 360 240" preserveAspectRatio="xMidYMid slice" style={FIT} xmlns="http://www.w3.org/2000/svg" aria-hidden>
+      <defs>
+        <linearGradient id={`${u}bg`} x1="0" y1="0" x2="0.35" y2="1">
+          <stop offset="0%" stopColor={p.surface} />
+          <stop offset="100%" stopColor={p.bgDeep} />
+        </linearGradient>
+        <radialGradient id={`${u}light`} cx="24%" cy="14%" r="66%">
+          <stop offset="0%" stopColor={p.glow1} stopOpacity="0.55" />
+          <stop offset="100%" stopColor={p.glow1} stopOpacity="0" />
+        </radialGradient>
+        <pattern id={`${u}grid`} width="18" height="18" patternUnits="userSpaceOnUse">
+          <path d="M18 0H0V18" fill="none" stroke={p.ink} strokeOpacity="0.045" strokeWidth="1" />
+        </pattern>
+      </defs>
+
+      <rect width="360" height="240" fill={`url(#${u}bg)`} />
+      <rect width="360" height="240" fill={`url(#${u}grid)`} />
+      <rect width="360" height="240" fill={`url(#${u}light)`} />
+
+      {kind === "paper" && (
+        <g stroke={p.ink} strokeOpacity="0.3" strokeWidth="2">
+          <rect x="94" y="40" width="150" height="168" rx="3" fill={p.surface} transform="rotate(-3 169 124)" />
+          <rect x="112" y="32" width="150" height="168" rx="3" fill={p.surface} />
+          <g stroke={p.ink} strokeOpacity="0.18" strokeWidth="1.6">
+            <line x1="130" y1="72" x2="244" y2="72" />
+            <line x1="130" y1="96" x2="244" y2="96" />
+            <line x1="130" y1="120" x2="212" y2="120" />
+            <line x1="130" y1="152" x2="244" y2="152" />
+            <line x1="130" y1="176" x2="196" y2="176" />
+          </g>
+          <rect x="130" y="50" width="58" height="10" rx="2" fill={p.primary} stroke="none" />
+          <circle cx="228" cy="176" r="17" fill={t1} fillOpacity="0.55" stroke={p.primary} strokeWidth="2" />
+        </g>
+      )}
+
+      {kind === "event" && (
+        <g stroke={p.ink} strokeOpacity="0.32" strokeWidth="2.2">
+          <line x1="86" y1="42" x2="86" y2="206" strokeWidth="4" strokeLinecap="round" />
+          <path d="M86 50 h150 l-26 30 l26 30 h-150 Z" fill={p.primary} stroke="none" />
+          <path d="M86 50 h150 l-26 30 l26 30 h-150 Z" fill="none" />
+          <path d="M108 128 h132 a10 10 0 0 1 10 10 v58 a10 10 0 0 1 -10 10 h-132 Z" fill={p.surface} />
+          <g stroke={p.ink} strokeOpacity="0.18" strokeWidth="1.6">
+            <line x1="124" y1="150" x2="232" y2="150" />
+            <line x1="124" y1="170" x2="208" y2="170" />
+          </g>
+          <circle cx="284" cy="76" r="20" fill={t1} fillOpacity="0.5" stroke="none" />
+          <circle cx="306" cy="118" r="12" fill={p.sub1} fillOpacity="0.45" stroke="none" />
+        </g>
+      )}
+
+      {kind === "closed" && (
+        <g stroke={p.ink} strokeOpacity="0.32" strokeWidth="2.2">
+          <rect x="94" y="46" width="172" height="156" rx="5" fill={p.surface} />
+          <rect x="94" y="46" width="172" height="34" rx="5" fill={p.primary} stroke="none" />
+          <line x1="94" y1="80" x2="266" y2="80" />
+          <line x1="126" y1="34" x2="126" y2="58" strokeWidth="5" strokeLinecap="round" />
+          <line x1="234" y1="34" x2="234" y2="58" strokeWidth="5" strokeLinecap="round" />
+          {Array.from({ length: 12 }).map((_, i) => {
+            const c = i % 4, r = Math.floor(i / 4);
+            const off = i === 5 || i === 6;
+            return (
+              <rect key={i} x={116 + c * 36} y={98 + r * 32} width="24" height="22" rx="2"
+                fill={off ? p.primarySoft : p.bgDeep} stroke={off ? p.primary : p.line}
+                strokeWidth={off ? 2 : 1.2} />
+            );
+          })}
+        </g>
+      )}
+
+      {kind === "media" && (
+        <g stroke={p.ink} strokeOpacity="0.3" strokeWidth="2">
+          <rect x="72" y="52" width="196" height="144" rx="3" fill={p.surface} />
+          <rect x="88" y="68" width="164" height="16" rx="2" fill={p.ink} fillOpacity="0.75" stroke="none" />
+          <rect x="88" y="96" width="76" height="58" rx="2" fill={t1} fillOpacity="0.5" />
+          <g stroke={p.ink} strokeOpacity="0.18" strokeWidth="1.5">
+            <line x1="176" y1="102" x2="252" y2="102" />
+            <line x1="176" y1="120" x2="252" y2="120" />
+            <line x1="176" y1="138" x2="230" y2="138" />
+            <line x1="88" y1="170" x2="252" y2="170" />
+          </g>
+          <g transform="translate(276 168)">
+            <circle r="26" fill={p.primary} />
+            <path d="M0 -13 l4.3 8.7 l9.6 1.4 l-7 6.8 l1.7 9.6 l-8.6 -4.5 l-8.6 4.5 l1.7 -9.6 l-7 -6.8 l9.6 -1.4 Z"
+              fill={p.onPrimary} stroke="none" />
+          </g>
+        </g>
+      )}
+
+      <rect x="6" y="6" width="348" height="228" rx="3" fill="none" stroke={p.ink} strokeOpacity="0.12" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+/* ═══════════════════════════════════════
    引用の地紋（voices 用）
    ═══════════════════════════════════════ */
 

@@ -8,7 +8,7 @@
 
 import type { SectionProps } from "../types";
 import { worksOf } from "../data";
-import { Base, F, Media, Styles, pad2 } from "../shared";
+import { Base, DetailLink, F, Media, Styles, pad2 } from "../shared";
 import { SceneArt } from "../art";
 
 const CSS = `
@@ -57,9 +57,11 @@ export default function WorksQuiet(p: SectionProps) {
             <div className="wqt-cap">
               <span className="wqt-no ms-num">{pad2(i)}</span>
               <div>
-                <F p={p} at={["items", i, "title"]} v={w.title}>
-                  <h3 className="wqt-title ms-serif">{w.titleEn || w.title}</h3>
-                </F>
+                <DetailLink section="works" item={w} index={i}>
+                  <F p={p} at={["items", i, "title"]} v={w.title}>
+                    <h3 className="wqt-title ms-serif">{w.titleEn || w.title}</h3>
+                  </F>
+                </DetailLink>
                 {w.description && (
                   <F p={p} at={["items", i, "description"]} v={w.description}>
                     <p className="wqt-sub">{w.description}</p>

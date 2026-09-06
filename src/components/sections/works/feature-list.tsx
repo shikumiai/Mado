@@ -8,7 +8,7 @@
 import { useState } from "react";
 import type { SectionProps } from "../types";
 import { worksOf } from "../data";
-import { Base, F, HeadStack, Media, Styles, pad2 } from "../shared";
+import { Base, DetailLink, F, HeadStack, Media, Styles, pad2 } from "../shared";
 import { SceneArt } from "../art";
 
 const CSS = `
@@ -66,9 +66,11 @@ export default function WorksFeatureList(p: SectionProps) {
           </F>
           <div className="wfl-cap">
             {cur.category && <span className="wfl-cat">{cur.category}</span>}
-            <F p={p} at={["items", i, "title"]} v={cur.title}>
-              <h3 className="wfl-title ms-serif">{cur.title}</h3>
-            </F>
+            <DetailLink section="works" item={cur} index={i}>
+              <F p={p} at={["items", i, "title"]} v={cur.title}>
+                <h3 className="wfl-title ms-serif">{cur.title}</h3>
+              </F>
+            </DetailLink>
             <F p={p} at={["items", i, "description"]} v={cur.description}>
               <p className="wfl-text">{cur.description}</p>
             </F>

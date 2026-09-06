@@ -8,7 +8,7 @@
 
 import type { SectionProps } from "../types";
 import { worksOf } from "../data";
-import { Base, F, HeadSplit, Media, Styles } from "../shared";
+import { Base, DetailLink, F, HeadSplit, Media, Styles } from "../shared";
 import { SceneArt } from "../art";
 
 const CSS = `
@@ -66,9 +66,11 @@ export default function WorksGrid(p: SectionProps) {
               {w.category && <span className="wgr-cat">{w.category}</span>}
             </div>
             <div className="wgr-body">
-              <F p={p} at={["items", i, "title"]} v={w.title}>
-                <h3 className="wgr-title ms-serif">{w.title}</h3>
-              </F>
+              <DetailLink section="works" item={w} index={i}>
+                <F p={p} at={["items", i, "title"]} v={w.title}>
+                  <h3 className="wgr-title ms-serif">{w.title}</h3>
+                </F>
+              </DetailLink>
               {w.specs && <p className="wgr-specs">{w.specs}</p>}
               <F p={p} at={["items", i, "description"]} v={w.description}>
                 <p className="wgr-text">{w.description}</p>

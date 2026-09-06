@@ -6,8 +6,8 @@
  *
  * 知らない見せ方を渡されたら、その機能の既定の見せ方に落とす（古い config でも必ず描ける）。
  *
- * 第2段a の対象は前半7機能。残り7機能（flow / faq / news / access / booking / contact / company）は
- * 第2段b でここに足す。
+ * 14機能 × 5変種 = 70部品。前半7（hero〜voices）が第2段a、
+ * 後半7（flow / faq / news / access / booking / contact / company）が第2段b。
  */
 
 import type { SectionComponent } from "./types";
@@ -53,6 +53,48 @@ import VoicesStatsBand from "./voices/stats-band";
 import VoicesQuotesList from "./voices/quotes-list";
 import VoicesFeature from "./voices/feature";
 import VoicesQuiet from "./voices/quiet";
+
+import FlowHorizontalSteps from "./flow/horizontal-steps";
+import FlowVerticalTimeline from "./flow/vertical-timeline";
+import FlowNumberedCards from "./flow/numbered-cards";
+import FlowBands from "./flow/bands";
+import FlowQuietLine from "./flow/quiet-line";
+
+import FaqAccordion from "./faq/accordion";
+import FaqTwoColumn from "./faq/two-column";
+import FaqList from "./faq/list";
+import FaqCategoryTabs from "./faq/category-tabs";
+import FaqQuiet from "./faq/quiet";
+
+import NewsCards from "./news/cards";
+import NewsListRows from "./news/list-rows";
+import NewsFeaturePlus from "./news/feature-plus";
+import NewsEditorial from "./news/editorial";
+import NewsQuiet from "./news/quiet";
+
+import AccessMapTable from "./access/map-table";
+import AccessTableOnly from "./access/table-only";
+import AccessPhotoInfo from "./access/photo-info";
+import AccessBand from "./access/band";
+import AccessQuiet from "./access/quiet";
+
+import BookingCtaBand from "./booking/cta-band";
+import BookingSlotsCards from "./booking/slots-cards";
+import BookingForm from "./booking/form";
+import BookingPhotoCta from "./booking/photo-cta";
+import BookingQuietLine from "./booking/quiet-line";
+
+import ContactFormInfo from "./contact/form-info";
+import ContactFormOnly from "./contact/form-only";
+import ContactInfoCardsCta from "./contact/info-cards-cta";
+import ContactBand from "./contact/band";
+import ContactQuiet from "./contact/quiet";
+
+import CompanyTableMessageHistory from "./company/table-message-history";
+import CompanyTableOnly from "./company/table-only";
+import CompanyMessageFeature from "./company/message-feature";
+import CompanyHistoryTimeline from "./company/history-timeline";
+import CompanyQuietTable from "./company/quiet-table";
 
 /* ═══════════════════════════════════════
    カタログ
@@ -172,6 +214,97 @@ export const SECTION_CATALOG: SectionTypeEntry[] = [
       { id: "quotes-list", label: "一覧引用", note: "声が多いときに上から読ませる", Component: VoicesQuotesList },
       { id: "feature", label: "主役1件＋小", note: "長い体験談が1本あるとき", Component: VoicesFeature },
       { id: "quiet", label: "静寂", note: "1文ずつ、間をあけて", Component: VoicesQuiet },
+    ],
+  },
+  {
+    type: "flow",
+    label: "ご利用の流れ",
+    role: "相談から完成まで・受診・入会の手順",
+    defaultVariant: "vertical-timeline",
+    variants: [
+      { id: "horizontal-steps", label: "横ステップ", note: "左から右へ。全体の長さが一目で分かる", Component: FlowHorizontalSteps },
+      { id: "vertical-timeline", label: "縦タイムライン", note: "所要が縦に揃う。いちばん外れが無い", Component: FlowVerticalTimeline },
+      { id: "numbered-cards", label: "番号カード", note: "段違いに置く。説明が長いときに", Component: FlowNumberedCards },
+      { id: "bands", label: "帯", note: "1手順ずつ全幅で。手順が商品の説明になる商売に", Component: FlowBands },
+      { id: "quiet-line", label: "静寂", note: "細い線と点だけでつなぐ", Component: FlowQuietLine },
+    ],
+  },
+  {
+    type: "faq",
+    label: "よくある質問",
+    role: "聞かれる前に答えて、問い合わせの手前を減らす",
+    defaultVariant: "accordion",
+    variants: [
+      { id: "accordion", label: "開閉", note: "押すと開く。数が多くても長くならない", Component: FaqAccordion },
+      { id: "two-column", label: "2列", note: "最初から全部見せる。10件くらいまで", Component: FaqTwoColumn },
+      { id: "list", label: "一覧", note: "左に質問、右に答え。上から潰していける", Component: FaqList },
+      { id: "category-tabs", label: "分類タブ", note: "分類で絞ってから読む。20件超に", Component: FaqCategoryTabs },
+      { id: "quiet", label: "静寂", note: "質問を明朝で大きく。5件前後のとき", Component: FaqQuiet },
+    ],
+  },
+  {
+    type: "news",
+    label: "お知らせ",
+    role: "更新・催し・入荷・休みの案内",
+    defaultVariant: "list-rows",
+    variants: [
+      { id: "cards", label: "写真カード", note: "先頭だけ横長の主役。催しが多い店に", Component: NewsCards },
+      { id: "list-rows", label: "一覧行", note: "日付・分類・見出しを1行に。会社サイトの標準", Component: NewsListRows },
+      { id: "feature-plus", label: "主役1件＋小", note: "今これを見てほしい1件があるとき", Component: NewsFeaturePlus },
+      { id: "editorial", label: "誌面", note: "年でまとめる。続けてきた長さが出る", Component: NewsEditorial },
+      { id: "quiet", label: "静寂", note: "日付と見出しだけ。月1本くらいの更新に", Component: NewsQuiet },
+    ],
+  },
+  {
+    type: "access",
+    label: "アクセス・店舗情報",
+    role: "場所・営業/診療時間・地図",
+    defaultVariant: "map-table",
+    variants: [
+      { id: "map-table", label: "地図＋表", note: "左に地図、右に情報。店舗・医院の標準", Component: AccessMapTable },
+      { id: "table-only", label: "表のみ", note: "曜日の時間表が主役。診療時間に", Component: AccessTableOnly },
+      { id: "photo-info", label: "写真＋情報", note: "外観を大きく。初めて来る人が迷わない", Component: AccessPhotoInfo },
+      { id: "band", label: "帯", note: "濃地の帯1本。ページの締めに置く", Component: AccessBand },
+      { id: "quiet", label: "静寂", note: "住所も時間も文章のように", Component: AccessQuiet },
+    ],
+  },
+  {
+    type: "booking",
+    label: "予約・申し込み",
+    role: "見学会・体験・相談の申し込み",
+    defaultVariant: "cta-band",
+    variants: [
+      { id: "cta-band", label: "大きなCTA帯", note: "次にすることを1つに絞る", Component: BookingCtaBand },
+      { id: "slots-cards", label: "日程カード", note: "開催日と残り枠を出す。見学会・体験に", Component: BookingSlotsCards },
+      { id: "form", label: "フォーム", note: "その場で希望を書いて送る", Component: BookingForm },
+      { id: "photo-cta", label: "写真＋CTA", note: "何が見られるかを絵で見せてから誘う", Component: BookingPhotoCta },
+      { id: "quiet-line", label: "静寂の1行", note: "1文と下線のリンクだけ", Component: BookingQuietLine },
+    ],
+  },
+  {
+    type: "contact",
+    label: "お問い合わせ",
+    role: "フォームと連絡先",
+    defaultVariant: "form-info",
+    variants: [
+      { id: "form-info", label: "フォーム＋情報", note: "左で書く、右は電話へ逃げられる", Component: ContactFormInfo },
+      { id: "form-only", label: "フォームのみ", note: "用紙のように1枚で。連絡先は別に出す構成で", Component: ContactFormOnly },
+      { id: "info-cards-cta", label: "連絡先＋CTA", note: "電話を大きく。フォームは別へ送る", Component: ContactInfoCardsCta },
+      { id: "band", label: "帯", note: "ページの終わりに1本。電話番号が主役", Component: ContactBand },
+      { id: "quiet", label: "静寂", note: "名刺のように連絡先だけ", Component: ContactQuiet },
+    ],
+  },
+  {
+    type: "company",
+    label: "会社概要",
+    role: "会社概要・代表あいさつ・沿革",
+    defaultVariant: "table-message-history",
+    variants: [
+      { id: "table-message-history", label: "表＋挨拶＋沿革", note: "日本の会社サイトの標準形", Component: CompanyTableMessageHistory },
+      { id: "table-only", label: "表のみ", note: "挨拶を別のセクションに置く構成で", Component: CompanyTableOnly },
+      { id: "message-feature", label: "挨拶主役", note: "誰がやっているかで選ばれる商売に", Component: CompanyMessageFeature },
+      { id: "history-timeline", label: "沿革主役", note: "続けてきた年数が信用になる会社に", Component: CompanyHistoryTimeline },
+      { id: "quiet-table", label: "静寂の表", note: "罫と余白だけ。白で見せるテンプレに", Component: CompanyQuietTable },
     ],
   },
 ];

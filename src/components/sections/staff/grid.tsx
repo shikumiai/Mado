@@ -8,7 +8,7 @@
 
 import type { SectionProps } from "../types";
 import { staffOf } from "../data";
-import { Base, F, HeadStack, Media, Styles } from "../shared";
+import { Base, DetailLink, F, HeadStack, Media, Styles } from "../shared";
 import { PortraitArt } from "../art";
 
 const CSS = `
@@ -62,12 +62,14 @@ export default function StaffGrid(p: SectionProps) {
             </F>
             <div className="tgr-body">
               <span className="tgr-role">{s.role}</span>
-              <F p={p} at={["items", i, "name"]} v={s.name}>
-                <h3 className="tgr-name ms-serif">
-                  {s.name}
-                  {s.experience && <small>{s.experience}</small>}
-                </h3>
-              </F>
+              <DetailLink section="staff" item={s} index={i}>
+                <F p={p} at={["items", i, "name"]} v={s.name}>
+                  <h3 className="tgr-name ms-serif">
+                    {s.name}
+                    {s.experience && <small>{s.experience}</small>}
+                  </h3>
+                </F>
+              </DetailLink>
               {s.bio && (
                 <F p={p} at={["items", i, "bio"]} v={s.bio}>
                   <p className="tgr-text">{s.bio}</p>

@@ -15,6 +15,7 @@ import { notFound } from "next/navigation";
 import { resolveSiteSlug } from "@/lib/resolve-site";
 import { getPublishedSite } from "@/lib/site-repo";
 import TemplateRenderer from "@/components/template-renderers/TemplateRenderer";
+import { SiteLinkProvider } from "@/components/sections/shared";
 
 type Params = { params: Promise<{ siteSlug: string }> };
 
@@ -47,5 +48,12 @@ export default async function CustomerSitePage({ params }: Params) {
   const site = await getPublishedSite(slug);
   if (!site) notFound();
 
-  return <TemplateRenderer templateId={site.templateId} config={site.config} />;
+  // 「今は公開中の顧客サイトの中だ」を部品に知らせる。
+  // これがあると一覧の項目が詳細ページへのリンクになり、フォームが本当に送信される。
+  // デモ・部品カタログ・エディタのプレビューでは包まないので、そちらは送信しない。
+  return (
+    <SiteLinkProvider value={{ slug, siteId: site.id }}>
+      <TemplateRenderer templateId={site.templateId} config={site.config} />
+    </SiteLinkProvider>
+  );
 }

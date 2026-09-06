@@ -8,7 +8,7 @@
 
 import type { SectionProps } from "../types";
 import { staffOf } from "../data";
-import { Base, F, Monogram, Styles } from "../shared";
+import { Base, DetailLink, F, Monogram, Styles } from "../shared";
 
 const CSS = `
 .tqt { background: var(--tpl-surface); padding-top: clamp(72px, 10vw, 128px);
@@ -48,9 +48,11 @@ export default function StaffQuiet(p: SectionProps) {
             <div key={s.id ?? i} className="tqt-item">
               <Monogram label={s.name} size={44} />
               <div>
-                <F p={p} at={["items", i, "name"]} v={s.name}>
-                  <h3 className="tqt-name ms-serif">{s.name}</h3>
-                </F>
+                <DetailLink section="staff" item={s} index={i}>
+                  <F p={p} at={["items", i, "name"]} v={s.name}>
+                    <h3 className="tqt-name ms-serif">{s.name}</h3>
+                  </F>
+                </DetailLink>
                 {(s.bio || s.specialty) && (
                   <F p={p} at={["items", i, "bio"]} v={s.bio || s.specialty || ""}>
                     <p className="tqt-text">{s.bio || s.specialty}</p>

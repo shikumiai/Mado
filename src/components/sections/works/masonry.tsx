@@ -8,7 +8,7 @@
 
 import type { SectionProps } from "../types";
 import { worksOf } from "../data";
-import { Base, F, HeadRule, Media, Styles, pad2 } from "../shared";
+import { Base, DetailLink, F, HeadRule, Media, Styles, pad2 } from "../shared";
 import { SceneArt } from "../art";
 
 const CSS = `
@@ -63,9 +63,11 @@ export default function WorksMasonry(p: SectionProps) {
                 </F>
                 <div className="wms-cap">
                   <span className="wms-no ms-num">{pad2(i)}</span>
-                  <F p={p} at={["items", i, "title"]} v={w.title}>
-                    <h3 className="wms-title ms-serif">{w.title}</h3>
-                  </F>
+                  <DetailLink section="works" item={w} index={i}>
+                    <F p={p} at={["items", i, "title"]} v={w.title}>
+                      <h3 className="wms-title ms-serif">{w.title}</h3>
+                    </F>
+                  </DetailLink>
                   <span className="wms-meta ms-num">{w.year}</span>
                 </div>
                 <F p={p} at={["items", i, "description"]} v={w.description}>

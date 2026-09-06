@@ -10,7 +10,7 @@ import { useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { SectionProps } from "../types";
 import { worksOf } from "../data";
-import { Base, F, Media, Styles, pad2 } from "../shared";
+import { Base, DetailLink, F, Media, Styles, pad2 } from "../shared";
 import { SceneArt } from "../art";
 
 const CSS = `
@@ -82,9 +82,11 @@ export default function WorksShowcase(p: SectionProps) {
             <span className="wsc-no ms-num">{pad2(i)} / {pad2(d.items.length - 1)}</span>
             <div className="wsc-body">
               <span className="wsc-cat">{w.category}</span>
-              <F p={p} at={["items", i, "title"]} v={w.title}>
-                <h3 className="wsc-title ms-serif">{w.title}</h3>
-              </F>
+              <DetailLink section="works" item={w} index={i}>
+                <F p={p} at={["items", i, "title"]} v={w.title}>
+                  <h3 className="wsc-title ms-serif">{w.title}</h3>
+                </F>
+              </DetailLink>
               <p className="wsc-meta ms-num">{[w.specs, w.year].filter(Boolean).join("　/　")}</p>
             </div>
           </article>

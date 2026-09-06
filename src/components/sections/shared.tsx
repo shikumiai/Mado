@@ -12,7 +12,7 @@
  * 色は全部 var(--tpl-*)。生の色コードはここにも部品にも書かない。
  */
 
-import type { ReactNode } from "react";
+import { createContext, useContext, type ReactNode } from "react";
 import {
   Award, BadgeCheck, Briefcase, Building2, Check, Clock, Coffee, Compass,
   Dumbbell, GraduationCap, Hammer, HardHat, Heart, Home, Leaf, MapPin,
@@ -92,6 +92,42 @@ export const BASE_CSS = `
 .ms-head-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px;
   align-items: end; margin-bottom: clamp(32px, 5vw, 52px); }
 .ms-head-split .ms-lead { margin-top: 0; }
+
+.ms-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.ms-table th, .ms-table td { text-align: left; padding: 14px 16px; line-height: 1.85;
+  border-bottom: 1px solid var(--tpl-line); vertical-align: top; }
+.ms-table th { width: 8.5em; font-weight: 600; color: var(--tpl-ink); background: var(--tpl-bg-deep);
+  white-space: nowrap; }
+.ms-table td { color: var(--tpl-ink2); }
+.ms-table tr:last-child th, .ms-table tr:last-child td { border-bottom: 0; }
+
+.ms-field { display: block; margin-bottom: 14px; }
+.ms-field > span { display: block; font-size: 12px; font-weight: 700; color: var(--tpl-ink2);
+  margin-bottom: 6px; letter-spacing: 0.04em; }
+.ms-req { color: var(--tpl-primary); margin-left: 5px; font-size: 11px; font-style: normal; }
+.ms-input, .ms-textarea, .ms-select { width: 100%; font-family: inherit; font-size: 14.5px;
+  color: var(--tpl-ink); background: var(--tpl-surface); border: 1px solid var(--tpl-line-strong);
+  border-radius: 5px; padding: 12px 14px; transition: border-color 0.2s, box-shadow 0.2s; }
+.ms-input:focus, .ms-textarea:focus, .ms-select:focus { outline: none; border-color: var(--tpl-primary);
+  box-shadow: 0 0 0 3px var(--tpl-primary-soft); }
+.ms-textarea { min-height: 130px; resize: vertical; line-height: 1.8; }
+.ms-select { appearance: none; cursor: pointer; }
+.ms-form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 16px; }
+.ms-form-msg { margin-top: 14px; font-size: 13px; line-height: 1.8; padding: 12px 14px;
+  border-radius: 5px; border: 1px solid var(--tpl-line-strong); background: var(--tpl-bg-deep);
+  color: var(--tpl-ink2); }
+.ms-form-msg-ok { border-color: var(--tpl-primary); background: var(--tpl-primary-soft);
+  color: var(--tpl-ink); }
+.ms-demo { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700;
+  color: var(--tpl-ink3); border: 1px dashed var(--tpl-line-strong); border-radius: 4px;
+  padding: 6px 10px; }
+@media (max-width: 640px) { .ms-form-row { grid-template-columns: 1fr; } }
+
+.ms-dlink { display: block; color: inherit; transition: color 0.2s; }
+a.ms-dlink:hover { color: var(--tpl-primary); }
+.ms-more { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700;
+  color: var(--tpl-primary); transition: gap 0.2s; }
+a.ms-dlink:hover .ms-more { gap: 10px; }
 
 .ms-edit { cursor: pointer; position: relative; border-radius: 4px; outline: 1px dashed transparent;
   transition: outline-color 0.15s; }
@@ -290,4 +326,73 @@ export function Monogram({ label, size = 44 }: { label: string; size?: number })
 /** 連番を "01" の形に */
 export function pad2(n: number): string {
   return String(n + 1).padStart(2, "0");
+}
+
+/* ═══════════════════════════════════════
+   公開サイトの中にいるか（一覧→詳細・フォーム送信の可否）
+   ═══════════════════════════════════════ */
+
+/**
+ * 部品は「今どこで描かれているか」を知らない。
+ * 公開中の顧客サイトの中だけ、ここに slug と site の id が入る。
+ * デモ・部品カタログ・エディタのプレビューでは null なので、
+ *   ・一覧の項目は詳細へのリンクにしない
+ *   ・フォームは送信しない（「デモのため送信されません」と出す）
+ * という分岐が、部品ごとに書かなくても同じ形で効く。
+ */
+export type SiteLink = { slug: string; siteId: string };
+
+const SiteLinkContext = createContext<SiteLink | null>(null);
+
+/** 公開サイトのページから、いちばん外側で包む */
+export function SiteLinkProvider({ value, children }: { value: SiteLink; children: ReactNode }) {
+  return <SiteLinkContext.Provider value={value}>{children}</SiteLinkContext.Provider>;
+}
+
+/** 公開サイトの中なら slug と id、そうでなければ null */
+export function useSiteLink(): SiteLink | null {
+  return useContext(SiteLinkContext);
+}
+
+/** 詳細ページを持てる機能 */
+export type DetailSection = "works" | "staff" | "menu" | "news";
+
+/** 一覧の1件を指す文字列。slug があればそれ、無ければ id、それも無ければ並び順 */
+export function itemKeyOf(item: { slug?: string; id?: number | string }, index: number): string {
+  const key = item.slug ?? item.id;
+  return String(key !== undefined && key !== "" ? key : index + 1);
+}
+
+/** 一覧の1件から詳細への行き先。公開サイトの外では null（リンクにしない） */
+export function detailHref(
+  site: SiteLink | null,
+  section: DetailSection,
+  key: string | number,
+): string | null {
+  if (!site?.slug) return null;
+  return `/${site.slug}/${section}/${encodeURIComponent(String(key))}`;
+}
+
+/**
+ * 行き先があればリンク、無ければ何も足さずにそのまま出す。
+ * 包むだけで済むので、一覧の部品は「今デモかどうか」を気にしなくてよい。
+ * リンクにならないときは要素そのものを作らないので、見た目は1ドットも変わらない。
+ */
+export function DetailLink({
+  section, item, index, className, children,
+}: {
+  section: DetailSection;
+  item: { slug?: string; id?: number | string };
+  index: number;
+  className?: string;
+  children: ReactNode;
+}) {
+  const site = useSiteLink();
+  const href = detailHref(site, section, itemKeyOf(item, index));
+  if (!href) return <>{children}</>;
+  return (
+    <a className={`ms-dlink${className ? ` ${className}` : ""}`} href={href}>
+      {children}
+    </a>
+  );
 }

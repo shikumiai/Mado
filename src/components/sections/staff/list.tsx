@@ -8,7 +8,7 @@
 
 import type { SectionProps } from "../types";
 import { staffOf } from "../data";
-import { Base, F, HeadRule, Media, Styles } from "../shared";
+import { Base, DetailLink, F, HeadRule, Media, Styles } from "../shared";
 import { PortraitArt } from "../art";
 
 const CSS = `
@@ -53,9 +53,11 @@ export default function StaffList(p: SectionProps) {
               <Media src={s.image} alt={s.name} art={<PortraitArt seed={i} />} className="tls-img" />
               <div>
                 <span className="tls-role">{s.role}</span>
-                <F p={p} at={["items", i, "name"]} v={s.name}>
-                  <h3 className="tls-name ms-serif">{s.name}</h3>
-                </F>
+                <DetailLink section="staff" item={s} index={i}>
+                  <F p={p} at={["items", i, "name"]} v={s.name}>
+                    <h3 className="tls-name ms-serif">{s.name}</h3>
+                  </F>
+                </DetailLink>
                 {s.experience && <p className="tls-exp">{s.experience}</p>}
               </div>
               <div>

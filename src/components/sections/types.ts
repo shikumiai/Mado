@@ -19,6 +19,11 @@ import type {
   StaffMember,
   Testimonial,
   Stat,
+  FlowStep,
+  FAQItem,
+  NewsItem,
+  BookingEvent,
+  HistoryEvent,
 } from "@/lib/site-config-schema";
 
 /** 編集できる項目の種類 */
@@ -129,4 +134,106 @@ export type VoicesData = {
   lead?: string;
   items?: Testimonial[];
   stats?: Stat[];
+};
+
+/** 表の1行（会社概要・店舗情報） */
+export type InfoRow = { label: string; value: string };
+
+/** 曜日ごとの営業・診療時間の表 */
+export type HoursTable = {
+  /** 見出しの行（左上の空欄を除いた曜日）。例 ["月","火","水","木","金","土","日"] */
+  head: string[];
+  /** 1行ぶん。cells は head と同じ数だけ並べる（"●" "／" "9:00-13:00" など） */
+  rows: { label: string; cells: string[] }[];
+  note?: string;
+};
+
+/** 8 flow — ご利用・相談・受診・入会の流れ */
+export type FlowData = {
+  eyebrow?: string;
+  heading?: string;
+  lead?: string;
+  note?: string;
+  items?: FlowStep[];
+};
+
+/** 9 faq — よくある質問 */
+export type FaqData = {
+  eyebrow?: string;
+  heading?: string;
+  lead?: string;
+  note?: string;
+  items?: FAQItem[];
+};
+
+/** 10 news — お知らせ・ブログ・入荷・休診案内 */
+export type NewsData = {
+  eyebrow?: string;
+  heading?: string;
+  lead?: string;
+  /** 「お知らせ一覧へ」のような、まとめて見る導線 */
+  moreCta?: Cta;
+  items?: NewsItem[];
+};
+
+/** 11 access — アクセス・店舗情報・営業/診療時間・地図 */
+export type AccessData = {
+  eyebrow?: string;
+  heading?: string;
+  lead?: string;
+  note?: string;
+  /** 外観・店内の写真 */
+  image?: string;
+  /** 地図の埋め込みURL。無ければ設計された地図の絵を出す */
+  mapEmbedUrl?: string;
+  /** 住所・電話などの表。省略すると company から作る */
+  rows?: InfoRow[];
+  /** 曜日ごとの時間表（診療時間・営業時間） */
+  hoursTable?: HoursTable;
+  /** 最寄り駅・駐車場などの短い案内 */
+  ways?: string[];
+};
+
+/** 12 booking — 予約・見学会・体験・相談申込 */
+export type BookingData = {
+  eyebrow?: string;
+  heading?: string;
+  lead?: string;
+  note?: string;
+  image?: string;
+  primaryCta?: Cta;
+  secondaryCta?: Cta;
+  /** 日程・枠 */
+  items?: BookingEvent[];
+  /** 予約の種類（フォームの選択肢） */
+  purposes?: string[];
+};
+
+/** 13 contact — お問い合わせフォーム＋連絡先 */
+export type ContactData = {
+  eyebrow?: string;
+  heading?: string;
+  lead?: string;
+  note?: string;
+  /** 相談内容の選択肢 */
+  purposes?: string[];
+  primaryCta?: Cta;
+  secondaryCta?: Cta;
+};
+
+/** 14 company — 会社概要・代表挨拶・沿革 */
+export type CompanyData = {
+  eyebrow?: string;
+  heading?: string;
+  lead?: string;
+  /** 会社概要の表。省略すると company から日本の必須項目で作る */
+  rows?: InfoRow[];
+  /** 代表挨拶 */
+  messageHeading?: string;
+  messageTitle?: string;
+  message?: string;
+  image?: string;
+  /** 沿革 */
+  historyHeading?: string;
+  history?: HistoryEvent[];
 };

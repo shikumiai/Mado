@@ -9,7 +9,7 @@
 import { Star } from "lucide-react";
 import type { SectionProps } from "../types";
 import { menuOf } from "../data";
-import { Base, F, HeadStack, Media, Styles } from "../shared";
+import { Base, DetailLink, F, HeadStack, Media, Styles } from "../shared";
 import { DishArt } from "../art";
 
 const CSS = `
@@ -73,9 +73,11 @@ export default function MenuPhotoCards(p: SectionProps) {
                   <Star size={11} fill="currentColor" /> おすすめ
                 </span>
               )}
-              <F p={p} at={["items", i, "name"]} v={m.name}>
-                <h3 className="mpc-name ms-serif">{m.name}</h3>
-              </F>
+              <DetailLink section="menu" item={m} index={i}>
+                <F p={p} at={["items", i, "name"]} v={m.name}>
+                  <h3 className="mpc-name ms-serif">{m.name}</h3>
+                </F>
+              </DetailLink>
               {m.description && (
                 <F p={p} at={["items", i, "description"]} v={m.description}>
                   <p className="mpc-text">{m.description}</p>
