@@ -31,6 +31,15 @@ const nextConfig: NextConfig = {
       { source: "/portfolio-templates/mosaic-bold", destination: "/start", permanent: true },
       { source: "/portfolio-templates/studio-white", destination: "/start", permanent: true },
       { source: "/portfolio-templates/watercolor-soft", destination: "/start", permanent: true },
+      // E3: 旧デモ4本 → テンプレート一覧（10業種の構成に作り直したため）
+      { source: "/portfolio-templates/lumiere", destination: "/portfolio-templates", permanent: true },
+      { source: "/portfolio-templates/lumiere/:path*", destination: "/portfolio-templates", permanent: true },
+      { source: "/portfolio-templates/luminos", destination: "/portfolio-templates/clean-arch", permanent: true },
+      { source: "/portfolio-templates/luminos/:path*", destination: "/portfolio-templates/clean-arch", permanent: true },
+      { source: "/portfolio-templates/nexus", destination: "/portfolio-templates/trust-navy", permanent: true },
+      { source: "/portfolio-templates/nexus/:path*", destination: "/portfolio-templates/trust-navy", permanent: true },
+      { source: "/portfolio-templates/prism", destination: "/portfolio-templates/credence", permanent: true },
+      { source: "/portfolio-templates/prism/:path*", destination: "/portfolio-templates/credence", permanent: true },
       // C6: /test → /（テストページ）
       { source: "/test", destination: "/", permanent: true },
     ];

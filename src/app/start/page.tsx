@@ -1,20 +1,21 @@
 "use client";
 
 /**
- * /start — 申し込みの入口（作り直し・rebuild-v2）
+ * /start — 申し込みの入口（v3）
  *
  * 落ち着いた、迷わないウィザード。1画面1決定・平易な日本語・その場フィードバック。
  * 認証は Supabase 一本。未ログインなら送信の直前に入力を退避して Google へ送り、
  * 戻ってきたら復元する。エラーは画面を飛ばさず、下のトーストにそっと出す。
  *
  * 流れ:
- *   0 色 → 1 雰囲気（テンプレの系統）→ 2 プラン → 3 会社の情報 → 4 サイトのアドレス → 5 確認して公開
+ *   0 色 → 1 業種（10） → 2 見せ方（選んだ色の実物 + 構成） → 3 プラン
+ *   → 4 会社の情報 → 5 サイトのアドレス → 6 確認して公開
  *
  * 色を最初に決めるのは、テンプレートを選ぶ時点で「自分の色になったサイト」を
  * 見比べてほしいから。選んだ色は見出し・地・帯・線・ボタン・イラストまで行き渡る。
  *
- * v1 は建築3系統（warm-craft / trust-navy / clean-arch）に集中する。
- * 業種レジストリ（35業種）はこの画面では使わない。
+ * 業種は10系統。細かい商売の名前（35業種）は src/lib/industry-registry.ts の
+ * 対応表から近い系統へ寄せる。構成の正は src/lib/templates/catalog.ts。
  */
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
@@ -29,8 +30,7 @@ import {
   Maximize2,
   Mail,
   AlertCircle,
-  Palette,
-  X,
+  Search,
 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { getBrowserClient } from "@/lib/supabase/client";
@@ -41,12 +41,13 @@ import { customerSiteLabel, SITE_URL_PREFIX } from "@/lib/resolve-site";
 import {
   type BrandColors,
   type Palette as TplPalette,
-  COLOR_SETS,
   buildPalette,
   normalizeHex,
   resolveBrand,
   templatePreviewUrl,
 } from "@/lib/palette";
+import { TEMPLATES, getTemplateOrDefault } from "@/lib/templates/catalog";
+import { industriesByTemplate, industryNamesFor, findIndustry } from "@/lib/industry-registry";
 import {
   Button,
   Card,
@@ -57,41 +58,18 @@ import {
   Mascot,
   useToast,
 } from "@/components/ui";
-import LazyIframe from "@/components/LazyIframe";
+import BrandPicker, {
+  BrandStrip,
+  PaletteBoard,
+  colorSetName,
+  type BrandChoice,
+} from "@/components/brand/BrandPicker";
+import StructureList from "@/components/templates/StructureList";
 import { WindowMark } from "@/components/marketing/WindowMark";
 
 /* ═══════════════════════════════════════
-   選べる系統・プラン（v1 は建築3系統）
+   プラン
    ═══════════════════════════════════════ */
-
-type Family = {
-  id: string;
-  name: string;
-  /** どんな人向けか（一言） */
-  for: string;
-  blurb: string;
-};
-
-const FAMILIES: Family[] = [
-  {
-    id: "warm-craft",
-    name: "ウォームクラフト",
-    for: "工務店・リフォーム",
-    blurb: "木のぬくもりが伝わる、地域に根ざしたあたたかいデザイン。",
-  },
-  {
-    id: "trust-navy",
-    name: "トラストネイビー",
-    for: "建設会社",
-    blurb: "濃い地の帯で、実績と規模をしっかり見せる構え。",
-  },
-  {
-    id: "clean-arch",
-    name: "クリーンアーチ",
-    for: "設計事務所",
-    blurb: "余白を生かしたミニマル。作品そのものを主役にする。",
-  },
-];
 
 type PlanCard = {
   id: Plan;
@@ -132,14 +110,7 @@ const PLANS: PlanCard[] = [
   },
 ];
 
-/** 系統ごとの業種（config 生成のため。レジストリは使わない） */
-const FAMILY_INDUSTRY: Record<string, string> = {
-  "warm-craft": "construction",
-  "trust-navy": "builder",
-  "clean-arch": "architect",
-};
-
-const STEP_LABELS = ["色", "雰囲気", "プラン", "会社情報", "アドレス", "確認"];
+const STEP_LABELS = ["色", "業種", "見せ方", "プラン", "会社情報", "アドレス", "確認"];
 const LAST_STEP = STEP_LABELS.length - 1;
 
 /** 系統 + プラン → テンプレートID（おまかせ=-mid / プロ=-pro / おためし=無印） */
@@ -243,193 +214,6 @@ function Choice<T extends { id: string }>({
 }
 
 /* ═══════════════════════════════════════
-   色まわりの小さな部品
-   ═══════════════════════════════════════ */
-
-/** 色の小片。名前を下に添えられる */
-function Chip({
-  color,
-  label,
-  wide = false,
-}: {
-  color: string;
-  label?: string;
-  wide?: boolean;
-}) {
-  return (
-    <div className="min-w-0">
-      <span
-        className={[
-          "block rounded-md border border-line",
-          wide ? "h-9" : "h-7",
-        ].join(" ")}
-        style={{ background: color }}
-      />
-      {label && <span className="mt-1 block truncate text-[10px] text-ink3">{label}</span>}
-    </div>
-  );
-}
-
-/** 選んだ色の3つ並び（どこにでも置ける小さな帯） */
-function BrandStrip({ palette, className = "" }: { palette: TplPalette; className?: string }) {
-  return (
-    <span className={`inline-flex items-center gap-1 ${className}`} aria-hidden>
-      <span className="size-3.5 rounded-sm border border-line" style={{ background: palette.primary }} />
-      <span className="size-3.5 rounded-sm border border-line" style={{ background: palette.sub1 }} />
-      <span className="size-3.5 rounded-sm border border-line" style={{ background: palette.sub2 }} />
-    </span>
-  );
-}
-
-/**
- * 選んだ色から作られる一式を並べて見せる帯。
- * 「代表カラーを決めると、地も見出しも線もこの色から作られる」を目で確かめてもらう。
- */
-function PaletteBoard({
-  palette,
-  chosen,
-  hasSubs,
-}: {
-  palette: TplPalette;
-  chosen: boolean;
-  hasSubs: boolean;
-}) {
-  return (
-    <Card padded={false} className="overflow-hidden">
-      <div className="flex items-stretch gap-3 border-b border-line p-4">
-        <div className="min-w-0 flex-[1.6]">
-          <span
-            className="block h-16 rounded-lg border border-line"
-            style={{ background: palette.primary }}
-          />
-          <p className="mt-1.5 text-xs font-medium text-ink">代表カラー</p>
-          <p className="tnum text-[11px] text-ink3">{palette.primary}</p>
-        </div>
-        <div className="min-w-0 flex-1">
-          <span
-            className="block h-16 rounded-lg border border-line"
-            style={{ background: palette.sub1 }}
-          />
-          <p className="mt-1.5 text-xs text-ink2">サブ 1</p>
-          <p className="tnum text-[11px] text-ink3">{palette.sub1}</p>
-        </div>
-        <div className="min-w-0 flex-1">
-          <span
-            className="block h-16 rounded-lg border border-line"
-            style={{ background: palette.sub2 }}
-          />
-          <p className="mt-1.5 text-xs text-ink2">サブ 2</p>
-          <p className="tnum text-[11px] text-ink3">{palette.sub2}</p>
-        </div>
-      </div>
-
-      <div className="p-4">
-        <p className="text-xs font-medium text-ink">この色から作られるもの</p>
-        <div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-7">
-          <Chip color={palette.primarySoft} label="淡い面" />
-          <Chip color={palette.primaryStrong} label="押した時" />
-          <Chip color={palette.bg} label="地" />
-          <Chip color={palette.bgDeep} label="ひとつ濃い段" />
-          <Chip color={palette.ink} label="見出し" />
-          <Chip color={palette.ink2} label="本文" />
-          <Chip color={palette.line} label="線" />
-        </div>
-        <p className="mt-3 text-xs leading-relaxed text-ink2">
-          {chosen
-            ? "この色でサイト全体が統一されます。文字は読みやすい濃さに自動で調整します。"
-            : "まだ色を選んでいないので、テンプレートのもとの色を出しています。"}
-          {chosen && !hasSubs && (
-            <>
-              <br />
-              サブカラーは、代表カラーになじむ色を自動で作りました。自分で選ぶこともできます。
-            </>
-          )}
-        </p>
-      </div>
-    </Card>
-  );
-}
-
-/** 色をひとつ入れる欄（色つまみ + 16進の文字入力） */
-function ColorInput({
-  id,
-  label,
-  value,
-  placeholder,
-  required = false,
-  onChange,
-  onClear,
-}: {
-  id: string;
-  label: string;
-  value: string | null;
-  placeholder: string;
-  required?: boolean;
-  onChange: (hex: string) => void;
-  onClear?: () => void;
-}) {
-  // 入力中の文字。null なら外から来た値をそのまま出す。
-  // 外の値が変わったら入力中の文字は捨てる（描画中に直す・React 推奨の書き方）。
-  const [typed, setTyped] = useState<string | null>(null);
-  const [seen, setSeen] = useState(value);
-  if (seen !== value) {
-    setSeen(value);
-    setTyped(null);
-  }
-  const text = typed ?? value ?? "";
-  const invalid = text.trim().length > 0 && normalizeHex(text) === null;
-
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-sm font-medium text-ink">
-        {label}
-        {required && <span className="ml-1 text-danger">*</span>}
-      </label>
-      <div className="flex items-center gap-2">
-        <input
-          type="color"
-          aria-label={`${label}を色見本から選ぶ`}
-          value={normalizeHex(value) ?? "#C05A2E"}
-          onChange={(e) => onChange(e.target.value)}
-          className="size-11 shrink-0 cursor-pointer rounded-md border border-line bg-surface p-1 outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        />
-        <input
-          id={id}
-          value={text}
-          onChange={(e) => {
-            setTyped(e.target.value);
-            const hex = normalizeHex(e.target.value);
-            if (hex) onChange(hex);
-          }}
-          placeholder={placeholder}
-          spellCheck={false}
-          autoCapitalize="none"
-          autoCorrect="off"
-          aria-invalid={invalid}
-          className="tnum h-11 min-w-0 flex-1 rounded-md border border-line bg-surface px-3 text-sm text-ink outline-none placeholder:text-ink3 focus-visible:ring-2 focus-visible:ring-ring"
-        />
-        {onClear && value && (
-          <button
-            type="button"
-            onClick={onClear}
-            className="shrink-0 rounded-md p-2 text-ink3 outline-none hover:text-ink focus-visible:ring-2 focus-visible:ring-ring"
-            aria-label={`${label}を使わない`}
-            title="使わない"
-          >
-            <X className="size-4" aria-hidden />
-          </button>
-        )}
-      </div>
-      {invalid && (
-        <p className="text-xs text-danger">
-          色の書き方が違います。#C05A2E のように入れてください。
-        </p>
-      )}
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════
    ライブプレビュー（選んだテンプレを、選んだ色そのままで出す）
    会社名を入れると iframe の中の名前がその場で入れ替わる。
    ═══════════════════════════════════════ */
@@ -439,12 +223,18 @@ function PreviewPanel({
   urlLabel,
   palette,
   note,
+  height = 360,
+  scale = 0.34,
 }: {
   src: string;
   displayName: string;
   urlLabel: string;
   palette: TplPalette;
   note?: string;
+  /** 窓の高さ（大きく見せたい画面では上げる） */
+  height?: number;
+  /** 中のサイトの縮尺 */
+  scale?: number;
 }) {
   const smallRef = useRef<HTMLIFrameElement>(null);
   const bigRef = useRef<HTMLIFrameElement>(null);
@@ -482,7 +272,7 @@ function PreviewPanel({
           </button>
         </div>
         {/* 縮小したサイト。key を src にして系統・プラン・色の変更で読み直す */}
-        <div className="relative h-[360px] overflow-hidden" style={{ background: palette.bg }}>
+        <div className="relative overflow-hidden" style={{ height, background: palette.bg }}>
           <iframe
             key={src}
             ref={smallRef}
@@ -494,8 +284,8 @@ function PreviewPanel({
             className="absolute left-0 top-0 origin-top-left border-0"
             style={{
               width: 1280,
-              height: 900,
-              transform: "scale(0.34)",
+              height: Math.round(height / scale),
+              transform: `scale(${scale})`,
               pointerEvents: "none",
             }}
           />
@@ -575,12 +365,14 @@ export default function StartPage() {
 
   // 入力
   const [step, setStep] = useState(0);
-  const [primary, setPrimary] = useState<string | null>(null);
-  const [sub1, setSub1] = useState<string | null>(null);
-  const [sub2, setSub2] = useState<string | null>(null);
-  const [colorSetId, setColorSetId] = useState<string | null>(null);
-  const [customOpen, setCustomOpen] = useState(false);
+  const [brandChoice, setBrandChoice] = useState<BrandChoice>({
+    primary: null,
+    sub1: null,
+    sub2: null,
+    setId: null,
+  });
   const [family, setFamily] = useState<string | null>(null);
+  const [industryId, setIndustryId] = useState<string | null>(null);
   const [plan, setPlan] = useState<Plan>("otameshi");
   const [companyName, setCompanyName] = useState("");
   const [email, setEmail] = useState("");
@@ -593,32 +385,32 @@ export default function StartPage() {
 
   const [submitting, setSubmitting] = useState(false);
 
+  const { primary, sub1, sub2, setId: colorSetId } = brandChoice;
+
   /* --- 選んだ色 --- */
   const brand: BrandColors | null = useMemo(
-    () =>
-      primary
-        ? { primary, sub1: sub1 ?? undefined, sub2: sub2 ?? undefined }
-        : null,
+    () => (primary ? { primary, sub1: sub1 ?? undefined, sub2: sub2 ?? undefined } : null),
     [primary, sub1, sub2],
   );
   // 色つまみを動かしている間はプレビューを読み直さない
   const settledBrand = useSettled(brand);
 
   const templateId = toTemplateId(family, plan);
-  const previewSrc = templateId ? templatePreviewUrl(templateId, settledBrand) : null;
   const displayName = companyName.trim();
   const previewUrlLabel = slug ? customerSiteLabel(slug) : `${SITE_URL_PREFIX}your-site`;
 
-  /** 色を決める画面の見本（まだ系統を選んでいなければ最初の系統で見せる） */
-  const sampleFamily = family ?? FAMILIES[0].id;
+  /** 色を決める画面の見本（まだ業種を選んでいなければ最初の業種で見せる） */
+  const sampleFamily = family ?? TEMPLATES[0].id;
+  // プレビューは系統そのもの + ?plan= で出す（-mid / -pro のページは建築3系統にしかない）
+  const previewSrc = templatePreviewUrl(sampleFamily, settledBrand, plan);
+
   const boardPalette = useMemo(
     () => buildPalette(resolveBrand(brand, sampleFamily)),
     [brand, sampleFamily],
   );
-  const previewPalette = useMemo(
-    () => buildPalette(resolveBrand(brand, family ?? sampleFamily)),
-    [brand, family, sampleFamily],
-  );
+
+  const template = family ? getTemplateOrDefault(family) : null;
+  const industryGroups = useMemo(() => industriesByTemplate(), []);
 
   /* --- ログイン状態を見張る --- */
   useEffect(() => {
@@ -649,17 +441,21 @@ export default function StartPage() {
           sub2?: string;
           colorSetId?: string;
           family?: string;
+          industryId?: string;
           plan?: string;
           companyName?: string;
           phone?: string;
           slug?: string;
           step?: number;
         };
-        if (normalizeHex(d.primary)) setPrimary(normalizeHex(d.primary));
-        if (normalizeHex(d.sub1)) setSub1(normalizeHex(d.sub1));
-        if (normalizeHex(d.sub2)) setSub2(normalizeHex(d.sub2));
-        if (typeof d.colorSetId === "string") setColorSetId(d.colorSetId);
+        setBrandChoice({
+          primary: normalizeHex(d.primary),
+          sub1: normalizeHex(d.sub1),
+          sub2: normalizeHex(d.sub2),
+          setId: typeof d.colorSetId === "string" ? d.colorSetId : null,
+        });
         if (typeof d.family === "string") setFamily(d.family);
+        if (typeof d.industryId === "string") setIndustryId(d.industryId);
         if (d.plan === "otameshi" || d.plan === "omakase" || d.plan === "omakase-pro") {
           setPlan(d.plan);
         }
@@ -709,14 +505,18 @@ export default function StartPage() {
     return () => clearTimeout(timer);
   }, [slug]);
 
-  /* --- 色の組を選ぶ / 自分で入れる --- */
-  const pickColorSet = useCallback((id: string) => {
-    const set = COLOR_SETS.find((c) => c.id === id);
-    if (!set) return;
-    setColorSetId(set.id);
-    setPrimary(set.primary);
-    setSub1(set.sub1);
-    setSub2(set.sub2);
+  /* --- 業種を選ぶ（カードは系統、選び直しで細目は外す） --- */
+  const pickFamily = useCallback((id: string) => {
+    setFamily(id);
+    setIndustryId((current) => (findIndustry(current)?.templateId === id ? current : null));
+  }, []);
+
+  /** 細かい業種名から選んだとき（対応表で近い系統へ寄せる） */
+  const pickIndustry = useCallback((id: string) => {
+    const found = findIndustry(id);
+    if (!found) return;
+    setIndustryId(found.id);
+    setFamily(found.templateId);
   }, []);
 
   /* --- Google ログイン。直前に入力を控える --- */
@@ -730,6 +530,7 @@ export default function StartPage() {
           sub2,
           colorSetId,
           family,
+          industryId,
           plan,
           companyName,
           phone,
@@ -749,7 +550,7 @@ export default function StartPage() {
       });
     }
     return r.ok;
-  }, [primary, sub1, sub2, colorSetId, family, plan, companyName, phone, slug, step, toast]);
+  }, [primary, sub1, sub2, colorSetId, family, industryId, plan, companyName, phone, slug, step, toast]);
 
   /* --- 送信（無料はその場で公開・有料は Stripe へ） --- */
   const submit = useCallback(async () => {
@@ -768,7 +569,7 @@ export default function StartPage() {
       companyName: companyName.trim(),
       email: (email || user.email || "").trim(),
       phone: phone.trim() || undefined,
-      industry: FAMILY_INDUSTRY[family] ?? "other",
+      industry: industryId ?? family,
       templateId,
       slug: slug.trim(),
       brand: brand ?? undefined,
@@ -800,7 +601,7 @@ export default function StartPage() {
       });
       setSubmitting(false);
     }
-  }, [templateId, family, user, companyName, email, phone, slug, plan, brand, goLogin, toast]);
+  }, [templateId, family, user, companyName, email, phone, industryId, slug, plan, brand, goLogin, toast]);
 
   /* --- 次へ進めるか --- */
   const canNext =
@@ -808,19 +609,19 @@ export default function StartPage() {
       ? !!primary
       : step === 1
         ? !!family
-        : step === 2
+        : step === 2 || step === 3
           ? true
-          : step === 3
+          : step === 4
             ? companyName.trim().length >= 1
-            : step === 4
+            : step === 5
               ? slugStatus === "ok"
               : false;
 
   const next = () => setStep((s) => Math.min(s + 1, LAST_STEP));
   const back = () => setStep((s) => Math.max(0, s - 1));
 
-  const familyName = family ? FAMILIES.find((f) => f.id === family)?.name ?? "" : "";
-  const colorName = colorSetId ? COLOR_SETS.find((c) => c.id === colorSetId)?.name ?? null : null;
+  const colorName = colorSetName(colorSetId);
+  const industryName = template ? template.industry : "";
   const ctaLabel = !user
     ? "Google でログインして進む"
     : plan === "otameshi"
@@ -829,12 +630,31 @@ export default function StartPage() {
 
   const nextLabel =
     step === 0
-      ? "次へ・デザインを見る"
+      ? "次へ・業種を選ぶ"
       : step === 1
-        ? "次へ・プランを選ぶ"
-        : step === 4
-          ? "次へ・確認する"
-          : "次へ";
+        ? "次へ・サイトを見る"
+        : step === 2
+          ? "次へ・プランを選ぶ"
+          : step === 5
+            ? "次へ・確認する"
+            : "次へ";
+
+  /** 選んだ色の控え（上に出す小さな帯） */
+  const colorBar = (
+    <div className="mb-5 flex flex-wrap items-center gap-3 rounded-lg border border-line bg-surface2 px-3.5 py-2.5">
+      <BrandStrip palette={boardPalette} />
+      <p className="min-w-0 flex-1 text-sm text-ink2">
+        {colorName ? `「${colorName}」の色` : "選んだ色"}で表示しています。
+      </p>
+      <button
+        type="button"
+        onClick={() => setStep(0)}
+        className="shrink-0 rounded text-xs font-medium text-accent outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        色を変える
+      </button>
+    </div>
+  );
 
   return (
     <MotionConfig reducedMotion="user">
@@ -893,108 +713,8 @@ export default function StartPage() {
                       この色から作られてサイト全体でそろいます。あとから変えられます。
                     </p>
 
-                    {/* 色の組から選ぶ */}
-                    <h2 className="mt-7 text-sm font-medium text-ink">選ぶだけの組み合わせ</h2>
-                    <p className="mt-1 text-xs text-ink3">
-                      代表カラーとサブカラー2つが、あらかじめ組んであります。
-                    </p>
-                    <Choice
-                      items={COLOR_SETS}
-                      value={colorSetId}
-                      onValueChange={pickColorSet}
-                      ariaLabel="色の組み合わせ"
-                      className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-4"
-                    >
-                      {(set, selected) => (
-                        <div
-                          className={[
-                            "overflow-hidden rounded-lg border bg-surface transition-[border-color,box-shadow] duration-200 ease-brand",
-                            selected
-                              ? "border-accent shadow-sh2"
-                              : "border-line shadow-sh1 hover:border-brand/40",
-                          ].join(" ")}
-                        >
-                          <div className="relative h-14" style={{ background: set.primary }}>
-                            <span className="absolute inset-x-0 bottom-0 flex h-3.5">
-                              <span className="flex-1" style={{ background: set.sub1 }} />
-                              <span className="w-1/3" style={{ background: set.sub2 }} />
-                            </span>
-                            {selected && (
-                              <span className="absolute right-1.5 top-1.5 grid size-5 place-items-center rounded-full bg-surface">
-                                <Check className="size-3 text-accent" aria-hidden />
-                              </span>
-                            )}
-                          </div>
-                          <div className="px-2.5 py-2">
-                            <p className="truncate text-xs font-medium text-ink">{set.name}</p>
-                            <p className="truncate text-[11px] text-ink3">{set.forWho}</p>
-                          </div>
-                        </div>
-                      )}
-                    </Choice>
-
-                    {/* 自分の色を入れる */}
-                    <div className="mt-6 rounded-xl border border-line bg-surface">
-                      <button
-                        type="button"
-                        onClick={() => setCustomOpen((v) => !v)}
-                        aria-expanded={customOpen}
-                        className="flex w-full items-center gap-2.5 rounded-xl px-4 py-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                      >
-                        <Palette className="size-4 shrink-0 text-accent" aria-hidden />
-                        <span className="flex-1 text-sm font-medium text-ink">
-                          自分の色を入れる
-                        </span>
-                        <span className="text-xs text-ink3">
-                          {customOpen ? "閉じる" : "会社のロゴの色などを直接指定"}
-                        </span>
-                      </button>
-                      {customOpen && (
-                        <div className="flex flex-col gap-4 border-t border-line p-4">
-                          <ColorInput
-                            id="brand-primary"
-                            label="代表カラー"
-                            required
-                            value={primary}
-                            placeholder="#C05A2E"
-                            onChange={(hex) => {
-                              setPrimary(hex);
-                              setColorSetId(null);
-                            }}
-                          />
-                          <ColorInput
-                            id="brand-sub1"
-                            label="サブカラー 1（任意）"
-                            value={sub1}
-                            placeholder="なくても大丈夫です"
-                            onChange={(hex) => {
-                              setSub1(hex);
-                              setColorSetId(null);
-                            }}
-                            onClear={() => {
-                              setSub1(null);
-                              setColorSetId(null);
-                            }}
-                          />
-                          <ColorInput
-                            id="brand-sub2"
-                            label="サブカラー 2（任意）"
-                            value={sub2}
-                            placeholder="なくても大丈夫です"
-                            onChange={(hex) => {
-                              setSub2(hex);
-                              setColorSetId(null);
-                            }}
-                            onClear={() => {
-                              setSub2(null);
-                              setColorSetId(null);
-                            }}
-                          />
-                          <p className="text-xs text-ink3">
-                            サブカラーは空のままでも大丈夫です。代表カラーになじむ色を自動で作ります。
-                          </p>
-                        </div>
-                      )}
+                    <div className="mt-7">
+                      <BrandPicker value={brandChoice} onChange={setBrandChoice} />
                     </div>
 
                     {/* 何が変わるかを見せる帯 */}
@@ -1023,7 +743,7 @@ export default function StartPage() {
                 </motion.div>
               </AnimatePresence>
             ) : step === 1 ? (
-              /* ── STEP 1: 雰囲気（選んだ色で塗られたテンプレを見比べる） ── */
+              /* ── STEP 1: 業種（10） ── */
               <AnimatePresence mode="wait">
                 <motion.div
                   key="step1"
@@ -1032,90 +752,93 @@ export default function StartPage() {
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.2 }}
                 >
-                  <div className="mb-5 flex flex-wrap items-center gap-3 rounded-lg border border-line bg-surface2 px-3.5 py-2.5">
-                    <BrandStrip palette={boardPalette} />
-                    <p className="min-w-0 flex-1 text-sm text-ink2">
-                      {colorName ? `「${colorName}」の色` : "選んだ色"}で表示しています。
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setStep(0)}
-                      className="shrink-0 rounded text-xs font-medium text-accent outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      色を変える
-                    </button>
-                  </div>
+                  {colorBar}
 
                   <h1 className="font-serif text-2xl font-bold text-ink sm:text-3xl">
-                    どんな雰囲気にしますか？
+                    どんな商売のサイトですか？
                   </h1>
                   <p className="mt-1.5 text-sm text-ink2">
-                    どれもあなたの色で塗ってあります。組み立て方だけが違います。
+                    業種を選ぶと、その商売に欠かせない内容が最初から並んだサイトになります。
                   </p>
 
                   <Choice
-                    items={FAMILIES}
+                    items={TEMPLATES}
                     value={family}
-                    onValueChange={setFamily}
-                    ariaLabel="サイトの雰囲気"
-                    className="mt-6 grid gap-4 sm:grid-cols-3"
+                    onValueChange={pickFamily}
+                    ariaLabel="業種"
+                    className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
                   >
-                    {(fam, selected) => {
-                      const famPalette = buildPalette(resolveBrand(brand, fam.id));
-                      return (
-                        <div
-                          className={[
-                            "flex h-full flex-col overflow-hidden rounded-xl border bg-surface transition-[border-color,box-shadow] duration-200 ease-brand",
-                            selected
-                              ? "border-accent shadow-sh2"
-                              : "border-line shadow-sh1 hover:border-brand/40",
-                          ].join(" ")}
-                        >
-                          <div className="relative">
-                            <LazyIframe
-                              key={templatePreviewUrl(fam.id, settledBrand)}
-                              src={templatePreviewUrl(fam.id, settledBrand)}
-                              title={`${fam.name}のプレビュー`}
-                              fallbackBg={famPalette.bg}
-                              fallbackColors={[famPalette.ink, famPalette.primary]}
-                              className="h-40"
-                              scale={0.26}
-                              iframeHeight={820}
-                            />
+                    {(t, selected) => (
+                      <div
+                        className={[
+                          "flex h-full flex-col overflow-hidden rounded-xl border bg-surface transition-[border-color,box-shadow] duration-200 ease-brand",
+                          selected
+                            ? "border-accent shadow-sh2"
+                            : "border-line shadow-sh1 hover:border-brand/40",
+                        ].join(" ")}
+                      >
+                        {/* その業種の初期パレット帯 */}
+                        <div className="flex h-2.5" aria-hidden>
+                          <span className="flex-[3]" style={{ background: t.palettePreset.primary }} />
+                          <span className="flex-1" style={{ background: t.palettePreset.sub1 }} />
+                          <span className="flex-1" style={{ background: t.palettePreset.sub2 }} />
+                        </div>
+                        <div className="flex flex-1 flex-col p-4">
+                          <div className="flex items-start justify-between gap-2">
+                            <h3 className="font-bold text-ink">{t.industry}</h3>
                             {selected && (
-                              <span className="absolute right-2 top-2">
-                                <Badge tone="accent">
-                                  <Check className="size-3" aria-hidden /> 選択中
-                                </Badge>
-                              </span>
+                              <Badge tone="accent">
+                                <Check className="size-3" aria-hidden /> 選択中
+                              </Badge>
                             )}
                           </div>
-                          <div className="p-4">
-                            <div className="flex items-baseline justify-between gap-2">
-                              <h3 className="font-bold text-ink">{fam.name}</h3>
-                              <span className="shrink-0 text-xs text-ink3">{fam.for}</span>
-                            </div>
-                            <p className="mt-1 text-sm text-ink2">{fam.blurb}</p>
-                            {/* この系統で、選んだ色がどう効くか */}
-                            <div className="mt-3 flex items-center gap-2">
-                              <span className="flex overflow-hidden rounded-sm border border-line">
-                                <span className="size-4" style={{ background: famPalette.primary }} />
-                                <span className="size-4" style={{ background: famPalette.sub1 }} />
-                                <span className="size-4" style={{ background: famPalette.ink }} />
-                                <span className="size-4" style={{ background: famPalette.bgDeep }} />
-                                <span className="size-4" style={{ background: famPalette.bg }} />
-                              </span>
-                              <span className="text-[11px] text-ink3">この色で全体がそろいます</span>
-                            </div>
-                          </div>
+                          <p className="mt-1 text-sm text-ink2">{t.tagline}</p>
+                          <p className="mt-auto pt-3 text-[11px] text-ink3">
+                            {industryNamesFor(t.id, 3).join("・")} など
+                          </p>
                         </div>
-                      );
-                    }}
+                      </div>
+                    )}
                   </Choice>
+
+                  {/* 細かい業種名から探す */}
+                  <div className="mt-6 rounded-xl border border-line bg-surface p-4">
+                    <label htmlFor="industry-detail" className="flex items-center gap-2 text-sm font-medium text-ink">
+                      <Search className="size-4 text-accent" aria-hidden />
+                      自分の商売が見つからないときは
+                    </label>
+                    <p className="mt-1 text-xs text-ink3">
+                      商売の名前を選ぶと、いちばん近い業種のサイトを用意します。
+                    </p>
+                    <select
+                      id="industry-detail"
+                      value={industryId ?? ""}
+                      onChange={(e) => pickIndustry(e.target.value)}
+                      className="mt-3 h-11 w-full rounded-md border border-line bg-surface px-3 text-sm text-ink outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <option value="">選んでください</option>
+                      {industryGroups.map((g) => (
+                        <optgroup key={g.templateId} label={g.label}>
+                          {g.items.map((i) => (
+                            <option key={i.id} value={i.id}>
+                              {i.name}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </select>
+                    {industryId && template && (
+                      <p className="mt-2 text-xs text-ink2">
+                        「{findIndustry(industryId)?.name}」は
+                        <span className="font-medium text-ink">{template.industry}</span>
+                        のサイトで作ります。
+                      </p>
+                    )}
+                  </div>
                 </motion.div>
               </AnimatePresence>
             ) : (
-              /* ── STEP 2〜5: 左が決めること・右にプレビュー ── */
+              /* ── STEP 2〜6: 左が決めること・右にプレビュー ── */
               <div className="grid gap-6 lg:grid-cols-[1fr_minmax(0,400px)]">
                 <div>
                   <AnimatePresence mode="wait">
@@ -1126,12 +849,12 @@ export default function StartPage() {
                       exit={{ opacity: 0, y: -8 }}
                       transition={{ duration: 0.2 }}
                     >
-                      {/* 選んだ色・系統・プランの控え（3以降） */}
+                      {/* 選んだ色・業種・プランの控え（3以降） */}
                       {step >= 3 && (
                         <div className="mb-5 flex items-center gap-3 rounded-lg border border-line bg-surface2 px-3.5 py-2.5">
-                          <BrandStrip palette={previewPalette} />
+                          <BrandStrip palette={boardPalette} />
                           <div className="min-w-0 flex-1 text-sm">
-                            <span className="font-medium text-ink">{familyName}</span>
+                            <span className="font-medium text-ink">{industryName}</span>
                             <span className="mx-1.5 text-ink3">·</span>
                             <span className="text-ink2">{PLAN_LABELS[plan]}</span>
                             <span className="tnum text-ink2"> {PLAN_PRICES[plan]}/月</span>
@@ -1146,12 +869,65 @@ export default function StartPage() {
                         </div>
                       )}
 
-                      {/* STEP 2: プラン */}
-                      {step === 2 && (
+                      {/* STEP 2: 見せ方（選んだ色の実物） */}
+                      {step === 2 && template && (
+                        <>
+                          {colorBar}
+                          <h1 className="font-serif text-2xl font-bold text-ink sm:text-3xl">
+                            {template.industry}のサイトは、こうなります
+                          </h1>
+                          <p className="mt-1.5 text-sm text-ink2">
+                            選んだ色で塗った実物です。{template.tagline}。
+                            中の文字や写真は、公開したあとで自由に差し替えられます。
+                          </p>
+
+                          {/* 大きく1枚 */}
+                          <div className="mt-6">
+                            <PreviewPanel
+                              src={previewSrc}
+                              displayName={displayName}
+                              urlLabel={previewUrlLabel}
+                              palette={boardPalette}
+                              height={520}
+                              scale={0.52}
+                              note={
+                                displayName ? `「${displayName}」で表示中` : "選んだ色で表示中"
+                              }
+                            />
+                          </div>
+
+                          {/* 別の業種も見る */}
+                          <div className="mt-5">
+                            <p className="text-xs font-medium text-ink2">別の業種の見せ方も見る</p>
+                            <div className="mt-2 flex flex-wrap gap-1.5">
+                              {TEMPLATES.map((t) => (
+                                <button
+                                  key={t.id}
+                                  type="button"
+                                  onClick={() => pickFamily(t.id)}
+                                  aria-pressed={t.id === family}
+                                  className={[
+                                    "rounded-pill px-3 py-1.5 text-xs font-medium outline-none transition focus-visible:ring-2 focus-visible:ring-ring",
+                                    t.id === family
+                                      ? "bg-accent-soft text-ink ring-1 ring-accent/50"
+                                      : "bg-surface2 text-ink2 hover:text-ink",
+                                  ].join(" ")}
+                                >
+                                  {t.industry}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </>
+                      )}
+
+                      {/* STEP 3: プラン */}
+                      {step === 3 && (
                         <>
                           <h1 className="font-serif text-2xl font-bold text-ink sm:text-3xl">プランを選びましょう</h1>
                           <p className="mt-1.5 text-sm text-ink2">
-                            まずは無料の「おためし」でも始められます。あとから変えられます。
+                            まずは無料の「おためし」でも始められます。プランを変えると、
+                            右の構成とプレビューもその場で変わります。
                           </p>
                           <Choice
                             items={PLANS}
@@ -1201,8 +977,8 @@ export default function StartPage() {
                         </>
                       )}
 
-                      {/* STEP 3: 会社の情報 */}
-                      {step === 3 && (
+                      {/* STEP 4: 会社の情報 */}
+                      {step === 4 && (
                         <>
                           <h1 className="font-serif text-2xl font-bold text-ink sm:text-3xl">
                             会社のことを教えてください
@@ -1246,8 +1022,8 @@ export default function StartPage() {
                         </>
                       )}
 
-                      {/* STEP 4: サイトのアドレス */}
-                      {step === 4 && (
+                      {/* STEP 5: サイトのアドレス */}
+                      {step === 5 && (
                         <>
                           <h1 className="font-serif text-2xl font-bold text-ink sm:text-3xl">
                             サイトのアドレスを決めましょう
@@ -1306,8 +1082,8 @@ export default function StartPage() {
                         </>
                       )}
 
-                      {/* STEP 5: 確認して公開 */}
-                      {step === 5 && (
+                      {/* STEP 6: 確認して公開 */}
+                      {step === 6 && (
                         <>
                           <h1 className="font-serif text-2xl font-bold text-ink sm:text-3xl">
                             内容を確認して公開しましょう
@@ -1319,11 +1095,18 @@ export default function StartPage() {
                           <dl className="mt-6 overflow-hidden rounded-xl border border-line bg-surface">
                             <SummaryRow label="色" first>
                               <span className="flex items-center justify-end gap-2">
-                                <BrandStrip palette={previewPalette} />
-                                <span>{colorName ?? previewPalette.primary}</span>
+                                <BrandStrip palette={boardPalette} />
+                                <span>{colorName ?? boardPalette.primary}</span>
                               </span>
                             </SummaryRow>
-                            <SummaryRow label="雰囲気">{familyName}</SummaryRow>
+                            <SummaryRow label="業種">
+                              {industryName}
+                              {industryId && (
+                                <span className="ml-1.5 text-ink2">
+                                  （{findIndustry(industryId)?.name}）
+                                </span>
+                              )}
+                            </SummaryRow>
                             <SummaryRow label="プラン">
                               {PLAN_LABELS[plan]}
                               <span className="tnum ml-1.5 text-ink2">{PLAN_PRICES[plan]}/月</span>
@@ -1380,14 +1163,14 @@ export default function StartPage() {
                   </AnimatePresence>
                 </div>
 
-                {/* 右のプレビュー（2〜5で出しっぱなし。色・系統・プラン変更で読み直す） */}
+                {/* 右：構成と（2以外では）プレビュー。色・業種・プランの変更で読み直す */}
                 <aside className="lg:sticky lg:top-6 h-fit">
-                  {previewSrc && (
+                  {step !== 2 && (
                     <PreviewPanel
                       src={previewSrc}
                       displayName={displayName}
                       urlLabel={previewUrlLabel}
-                      palette={previewPalette}
+                      palette={boardPalette}
                       note={
                         displayName
                           ? `「${displayName}」で表示中`
@@ -1396,6 +1179,11 @@ export default function StartPage() {
                             : "テンプレートのもとの色"
                       }
                     />
+                  )}
+                  {family && (
+                    <Card className={step === 2 ? "" : "mt-4"}>
+                      <StructureList templateId={family} plan={plan} />
+                    </Card>
                   )}
                 </aside>
               </div>

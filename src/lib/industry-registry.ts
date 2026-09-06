@@ -1,420 +1,137 @@
 /**
- * 業種・テンプレート登録レジストリ
+ * 業種の対応表（35業種 → 10テンプレート）。
  *
- * 新業種追加 = このファイルにエントリを足すだけ
- * /start、トップページ、管理ページ等はここから読む
+ * テンプレートは10系統しかない。けれど、お客さんは自分の商売の名前で探す。
+ * 「パン屋」で探した人が「小売・店舗」のテンプレートにたどり着けるように、
+ * 細かい業種名と、いちばん近いテンプレートの結びつきをここ1か所に書く。
+ *
+ * 構成・必須機能・初期色の正は src/lib/templates/catalog.ts。
+ * このファイルは「どの商売がどのテンプレートに寄るか」だけを持つ。
+ *
+ * 申し込み画面（/start）は10テンプレートを主に見せ、
+ * 見つからない人のために、ここの一覧から選べるようにしている。
  */
 
-/** テンプレートが1つ以上あれば表示、なければ非表示。statusは不要 */
+import { TEMPLATE_IDS, getTemplate } from "@/lib/templates/catalog";
 
-export interface TemplateEntry {
-  id: string;           // warm-craft, warm-craft-mid, warm-craft-pro
-  plan: "otameshi" | "omakase" | "omakase-pro";
-  name: string;         // ウォームクラフト（おまかせ）
-  description: string;  // 温もりのある、地域密着型の工務店に
-  previewPath: string;  // /portfolio-templates/warm-craft
-}
+/* ═══════════════════════════════════════
+   型
+   ═══════════════════════════════════════ */
 
 export interface IndustryEntry {
+  /** 業種の名前（申込の industry に入る値） */
   id: string;
-  category: string;     // 建築・不動産, 医療・健康, etc.
-  name: string;         // 工務店・リフォーム
-  description: string;  // 施工実績を魅力的に見せるサイト
-  icon: string;         // lucide-react icon name
-  templates: TemplateEntry[];  // 空なら非表示。テンプレ追加で自動的に表示される
+  /** 画面に出す名前 */
+  name: string;
+  /** 寄せ先のテンプレート（catalog.ts の id） */
+  templateId: string;
+  /** どんなサイトになるか（一言） */
+  note: string;
 }
 
 /* ═══════════════════════════════════════
-   業種カテゴリ
+   対応表
    ═══════════════════════════════════════ */
-export const INDUSTRY_CATEGORIES = [
-  "建築・不動産",
-  "医療・健康",
-  "美容",
-  "飲食",
-  "士業・専門",
-  "教育",
-  "クリエイター",
-  "IT・Web",
-  "小売・EC",
-  "サービス",
-  "フィットネス",
-  "宿泊・観光",
-  "自動車",
-  "農業・食品",
-  "無形商材",
-] as const;
 
-/* ═══════════════════════════════════════
-   全業種レジストリ
-   ═══════════════════════════════════════ */
 export const INDUSTRIES: IndustryEntry[] = [
-  // ─── 建築・不動産（完成済み） ───
-  {
-    id: "construction",
-    category: "建築・不動産",
-    name: "工務店・リフォーム",
-    description: "施工実績を魅力的に見せるサイト",
-    icon: "Building2",
-    templates: [
-      { id: "warm-craft", plan: "otameshi", name: "ウォームクラフト（おためし）", description: "温もりのある、地域密着型の工務店に", previewPath: "/portfolio-templates/warm-craft" },
-      { id: "warm-craft-mid", plan: "omakase", name: "ウォームクラフト（おまかせ）", description: "ブログ・お客様の声・Maps付き", previewPath: "/portfolio-templates/warm-craft-mid" },
-      { id: "warm-craft-pro", plan: "omakase-pro", name: "ウォームクラフト（おまかせプロ）", description: "AIチャット・予約システム搭載", previewPath: "/portfolio-templates/warm-craft-pro" },
-    ],
-  },
-  {
-    id: "builder",
-    category: "建築・不動産",
-    name: "建設会社",
-    description: "信頼と実績を伝えるコーポレートサイト",
-    icon: "Building2",
-    templates: [
-      { id: "trust-navy", plan: "otameshi", name: "トラストネイビー（おためし）", description: "信頼感のあるネイビー×ゴールド", previewPath: "/portfolio-templates/trust-navy" },
-      { id: "trust-navy-mid", plan: "omakase", name: "トラストネイビー（おまかせ）", description: "ニュース・実績詳細・Maps付き", previewPath: "/portfolio-templates/trust-navy-mid" },
-      { id: "trust-navy-pro", plan: "omakase-pro", name: "トラストネイビー（おまかせプロ）", description: "採用ページ・動画・AI搭載", previewPath: "/portfolio-templates/trust-navy-pro" },
-    ],
-  },
-  {
-    id: "architect",
-    category: "建築・不動産",
-    name: "設計事務所",
-    description: "作品が映えるミニマルなポートフォリオ",
-    icon: "Palette",
-    templates: [
-      { id: "clean-arch", plan: "otameshi", name: "クリーンアーチ（おためし）", description: "余白を活かしたミニマルデザイン", previewPath: "/portfolio-templates/clean-arch" },
-      { id: "clean-arch-mid", plan: "omakase", name: "クリーンアーチ（おまかせ）", description: "受賞歴・ニュース・詳細ページ付き", previewPath: "/portfolio-templates/clean-arch-mid" },
-      { id: "clean-arch-pro", plan: "omakase-pro", name: "クリーンアーチ（おまかせプロ）", description: "多言語・360°ビュー・PDF搭載", previewPath: "/portfolio-templates/clean-arch-pro" },
-    ],
-  },
-  {
-    id: "real-estate",
-    category: "建築・不動産",
-    name: "不動産",
-    description: "物件情報を効果的に見せるサイト",
-    icon: "Home",
-    templates: [],
-  },
+  /* ─── 工務店・リフォーム（warm-craft） ─── */
+  { id: "construction", name: "工務店・リフォーム", templateId: "warm-craft", note: "建てた家と、建てた人で選んでもらう" },
+  { id: "exterior", name: "外構・造園", templateId: "warm-craft", note: "施工の前後を並べて見せる" },
+  { id: "auto-repair", name: "自動車整備・板金", templateId: "warm-craft", note: "作業内容と料金を分かりやすく" },
+  { id: "cleaning", name: "ハウスクリーニング・清掃", templateId: "warm-craft", note: "作業の様子と対応エリアを見せる" },
 
-  // ─── 医療・健康 ───
-  {
-    id: "clinic",
-    category: "医療・健康",
-    name: "クリニック・病院",
-    description: "安心感と信頼を伝える医療機関サイト",
-    icon: "Heart",
-    templates: [
-      { id: "clarity", plan: "otameshi", name: "クラリティ（おためし）", description: "清潔感と安心感のクリニックサイト", previewPath: "/portfolio-templates/clarity" },
-    ],
-  },
-  {
-    id: "dental",
-    category: "医療・健康",
-    name: "歯科医院",
-    description: "予約しやすい歯科サイト",
-    icon: "Heart",
-    templates: [],
-  },
-  {
-    id: "chiropractic",
-    category: "医療・健康",
-    name: "整骨院・整体",
-    description: "施術内容と料金が伝わるサイト",
-    icon: "Heart",
-    templates: [],
-  },
-  {
-    id: "veterinary",
-    category: "医療・健康",
-    name: "動物病院",
-    description: "ペットオーナーに安心を届けるサイト",
-    icon: "Heart",
-    templates: [],
-  },
+  /* ─── 建設会社（trust-navy） ─── */
+  { id: "builder", name: "建設会社・土木", templateId: "trust-navy", note: "規模と実績を数字で示す" },
+  { id: "plumbing", name: "電気・設備工事", templateId: "trust-navy", note: "事業内容と施工実績を並べる" },
+  { id: "real-estate", name: "不動産", templateId: "trust-navy", note: "会社の姿と取扱物件を落ち着いて" },
+  { id: "manufacturing", name: "製造・工場", templateId: "trust-navy", note: "設備と製品、会社概要をきちんと" },
+  { id: "web-agency", name: "Web制作・システム開発", templateId: "trust-navy", note: "事業内容と制作実績を法人向けに" },
 
-  // ─── 美容 ───
-  {
-    id: "hair-salon",
-    category: "美容",
-    name: "美容室",
-    description: "スタイリストの技術が映えるサイト",
-    icon: "Scissors",
-    templates: [
-      { id: "velvet", plan: "otameshi", name: "ベルベット（おためし）", description: "大人の女性のためのプライベートサロンに", previewPath: "/portfolio-templates/velvet" },
-    ],
-  },
-  {
-    id: "nail-salon",
-    category: "美容",
-    name: "ネイルサロン",
-    description: "デザインギャラリーで魅せるサイト",
-    icon: "Sparkles",
-    templates: [],
-  },
-  {
-    id: "esthetic",
-    category: "美容",
-    name: "エステ・脱毛",
-    description: "メニューと料金がわかりやすいサイト",
-    icon: "Sparkles",
-    templates: [],
-  },
+  /* ─── 設計事務所（clean-arch） ─── */
+  { id: "architect", name: "設計事務所", templateId: "clean-arch", note: "作品と考え方だけで見せる" },
+  { id: "photographer", name: "写真家・映像制作", templateId: "clean-arch", note: "作品を大きく、余白のまま" },
+  { id: "designer", name: "デザイナー・イラストレーター", templateId: "clean-arch", note: "世界観を邪魔しない静かな並び" },
+  { id: "freelance-engineer", name: "フリーランス（技術職）", templateId: "clean-arch", note: "実績と考え方を1枚で" },
 
-  // ─── 飲食 ───
-  {
-    id: "restaurant",
-    category: "飲食",
-    name: "レストラン・カフェ",
-    description: "メニューと雰囲気が伝わるサイト",
-    icon: "UtensilsCrossed",
-    templates: [],  // サブページが膨大になるため除外
-  },
-  {
-    id: "izakaya",
-    category: "飲食",
-    name: "居酒屋・バー",
-    description: "お店の個性が光るサイト",
-    icon: "Wine",
-    templates: [],
-  },
-  {
-    id: "bakery",
-    category: "飲食",
-    name: "パン屋・ケーキ屋",
-    description: "商品写真が食欲をそそるサイト",
-    icon: "Cake",
-    templates: [],
-  },
+  /* ─── 飲食店（saveur） ─── */
+  { id: "restaurant", name: "レストラン・カフェ", templateId: "saveur", note: "品書きと店の空気で選ばれる" },
+  { id: "izakaya", name: "居酒屋・バー", templateId: "saveur", note: "お品書きと営業時間を先に" },
+  { id: "sushi", name: "寿司・割烹・和食", templateId: "saveur", note: "献立と席のご案内を静かに" },
+  { id: "hotel", name: "ホテル・旅館・民泊", templateId: "saveur", note: "部屋とご予約、アクセスをまとめて" },
 
-  // ─── 士業・専門 ───
-  {
-    id: "lawyer",
-    category: "士業・専門",
-    name: "弁護士・法律事務所",
-    description: "専門性と信頼を伝えるサイト",
-    icon: "Scale",
-    templates: [],
-  },
-  {
-    id: "tax-accountant",
-    category: "士業・専門",
-    name: "税理士・会計事務所",
-    description: "サービス内容が明確なサイト",
-    icon: "Calculator",
-    templates: [
-      { id: "credence", plan: "otameshi", name: "クレデンス（おためし）", description: "信頼と専門性を伝える税理士事務所に", previewPath: "/portfolio-templates/credence" },
-    ],
-  },
-  {
-    id: "consultant",
-    category: "士業・専門",
-    name: "コンサルティング",
-    description: "実績と専門性をアピールするサイト",
-    icon: "Briefcase",
-    templates: [],
-  },
+  /* ─── 美容・サロン（velvet） ─── */
+  { id: "hair-salon", name: "美容室・理容室", templateId: "velvet", note: "料金と担当者が先に分かる" },
+  { id: "nail-salon", name: "ネイル・まつげ", templateId: "velvet", note: "デザインとメニューを並べる" },
+  { id: "esthetic", name: "エステ・脱毛", templateId: "velvet", note: "コースと料金、予約まで一本道" },
+  { id: "pet-salon", name: "ペットサロン", templateId: "velvet", note: "仕上がりの写真とメニューで" },
 
-  // ─── 教育 ───
-  {
-    id: "cram-school",
-    category: "教育",
-    name: "学習塾・教室",
-    description: "合格実績と教育方針が伝わるサイト",
-    icon: "GraduationCap",
-    templates: [
-      { id: "beacon", plan: "otameshi", name: "ビーコン（おためし）", description: "合格実績と教育理念が伝わる塾サイト", previewPath: "/portfolio-templates/beacon" },
-    ],
-  },
-  {
-    id: "language-school",
-    category: "教育",
-    name: "英会話・語学教室",
-    description: "レッスン内容と講師紹介のサイト",
-    icon: "Globe",
-    templates: [],
-  },
+  /* ─── 医療・クリニック（clarity） ─── */
+  { id: "clinic", name: "クリニック・病院", templateId: "clarity", note: "診療時間と担当医が迷わず見つかる" },
+  { id: "dental", name: "歯科医院", templateId: "clarity", note: "診療内容と受診の流れを丁寧に" },
+  { id: "chiropractic", name: "整骨院・整体・鍼灸", templateId: "clarity", note: "施術内容と料金、予約まで" },
+  { id: "veterinary", name: "動物病院", templateId: "clarity", note: "診療案内と診療時間をはっきり" },
+  { id: "care", name: "介護・訪問看護", templateId: "clarity", note: "サービス内容と相談先を安心して読める形に" },
 
-  // ─── クリエイター ───
-  {
-    id: "photographer",
-    category: "クリエイター",
-    name: "写真家・映像制作",
-    description: "作品が主役のポートフォリオサイト",
-    icon: "Camera",
-    templates: [
-      { id: "luminos", plan: "otameshi", name: "ルミノス（おためし）", description: "作品が映えるミニマルポートフォリオ", previewPath: "/portfolio-templates/luminos" },
-    ],
-  },
-  {
-    id: "designer",
-    category: "クリエイター",
-    name: "デザイナー・イラストレーター",
-    description: "世界観を表現するポートフォリオ",
-    icon: "Palette",
-    templates: [],
-  },
-  {
-    id: "handmade",
-    category: "クリエイター",
-    name: "ハンドメイド作家",
-    description: "作品の魅力を伝えるショップサイト",
-    icon: "Scissors",
-    templates: [],
-  },
+  /* ─── 士業（credence） ─── */
+  { id: "tax-accountant", name: "税理士・会計事務所", templateId: "credence", note: "取扱分野と料金を先に出す" },
+  { id: "lawyer", name: "弁護士・司法書士", templateId: "credence", note: "扱う分野と相談の流れを明快に" },
+  { id: "administrative", name: "行政書士・社労士", templateId: "credence", note: "手続きの種類と費用を並べる" },
+  { id: "consultant", name: "コンサルティング・コーチング", templateId: "credence", note: "実績と進め方で選んでもらう" },
 
-  // ─── IT・Web ───
-  {
-    id: "web-agency",
-    category: "IT・Web",
-    name: "Web制作・システム開発",
-    description: "制作実績と技術力をアピールするサイト",
-    icon: "Code",
-    templates: [],  // 自作可能なため除外
-  },
-  {
-    id: "freelance-engineer",
-    category: "IT・Web",
-    name: "フリーランスエンジニア",
-    description: "スキルと実績をまとめたポートフォリオ",
-    icon: "Terminal",
-    templates: [],
-  },
+  /* ─── 教育・スクール（beacon） ─── */
+  { id: "cram-school", name: "学習塾・進学教室", templateId: "beacon", note: "コースと月謝と合格実績を並べる" },
+  { id: "language-school", name: "英会話・語学教室", templateId: "beacon", note: "レッスンと講師、体験申込まで" },
+  { id: "music-school", name: "音楽・アート教室", templateId: "beacon", note: "教室の様子とレッスン料を" },
+  { id: "seminar", name: "セミナー講師・研修", templateId: "beacon", note: "内容と受講者の声で信じてもらう" },
 
-  // ─── 小売・EC ───
-  {
-    id: "apparel",
-    category: "小売・EC",
-    name: "アパレル・雑貨",
-    description: "商品の世界観を伝えるサイト",
-    icon: "ShoppingBag",
-    templates: [],  // サブページが膨大になるため除外
-  },
-  {
-    id: "flower-shop",
-    category: "小売・EC",
-    name: "花屋",
-    description: "季節の花と店舗の雰囲気を伝えるサイト",
-    icon: "Flower2",
-    templates: [],
-  },
+  /* ─── フィットネス（forge） ─── */
+  { id: "gym", name: "ジム・パーソナルトレーニング", templateId: "forge", note: "プログラムと担当と料金を一度に" },
+  { id: "yoga", name: "ヨガ・ピラティス", templateId: "forge", note: "クラスと料金、体験申込まで" },
+  { id: "dojo", name: "武道・スポーツ教室", templateId: "forge", note: "指導内容と入会の流れを" },
 
-  // ─── サービス ───
-  {
-    id: "cleaning",
-    category: "サービス",
-    name: "クリーニング・清掃",
-    description: "サービスエリアと料金が明確なサイト",
-    icon: "Sparkles",
-    templates: [],
-  },
-  {
-    id: "pet-salon",
-    category: "サービス",
-    name: "ペットサロン",
-    description: "かわいい仕上がり写真で魅せるサイト",
-    icon: "Dog",
-    templates: [],
-  },
-
-  // ─── フィットネス ───
-  {
-    id: "gym",
-    category: "フィットネス",
-    name: "ジム・パーソナルトレーニング",
-    description: "ビフォーアフターで成果を見せるサイト",
-    icon: "Dumbbell",
-    templates: [
-      { id: "forge", plan: "otameshi", name: "フォージ（おためし）", description: "成果で選ばれるパーソナルジムに", previewPath: "/portfolio-templates/forge" },
-    ],
-  },
-  {
-    id: "yoga",
-    category: "フィットネス",
-    name: "ヨガ・ピラティス",
-    description: "心地よい空間を伝えるサイト",
-    icon: "Heart",
-    templates: [],
-  },
-
-  // ─── 宿泊・観光 ───
-  {
-    id: "hotel",
-    category: "宿泊・観光",
-    name: "ホテル・旅館・民泊",
-    description: "宿泊体験を魅力的に伝えるサイト",
-    icon: "Bed",
-    templates: [],
-  },
-
-  // ─── 自動車 ───
-  {
-    id: "auto-repair",
-    category: "自動車",
-    name: "自動車整備・中古車販売",
-    description: "在庫情報とサービスを伝えるサイト",
-    icon: "Car",
-    templates: [],
-  },
-
-  // ─── 農業・食品 ───
-  {
-    id: "farm",
-    category: "農業・食品",
-    name: "農園・直売所",
-    description: "生産者の顔が見えるサイト",
-    icon: "Leaf",
-    templates: [],
-  },
-
-  // ─── 無形商材 ───
-  {
-    id: "coaching",
-    category: "無形商材",
-    name: "コーチング・カウンセリング",
-    description: "信頼と実績で選ばれるサイト",
-    icon: "MessageCircle",
-    templates: [
-      { id: "prism", plan: "otameshi", name: "プリズム（おためし）", description: "信頼と実績で選ばれるコーチングサイト", previewPath: "/portfolio-templates/prism" },
-    ],
-  },
-  {
-    id: "seminar",
-    category: "無形商材",
-    name: "セミナー講師・研修",
-    description: "実績と受講者の声で魅せるサイト",
-    icon: "Presentation",
-    templates: [],
-  },
+  /* ─── 小売・店舗（marche） ─── */
+  { id: "retail", name: "雑貨・アパレル", templateId: "marche", note: "商品と入荷と地図で来店につなげる" },
+  { id: "bakery", name: "パン屋・洋菓子・和菓子", templateId: "marche", note: "商品写真と焼き上がりのお知らせ" },
+  { id: "flower-shop", name: "花屋", templateId: "marche", note: "季節の花と店内の様子を" },
+  { id: "farm", name: "農園・直売所", templateId: "marche", note: "作り手の顔と旬の入荷を" },
+  { id: "handmade", name: "ハンドメイド作家", templateId: "marche", note: "作品と取扱店、催しの案内を" },
 ];
 
 /* ═══════════════════════════════════════
-   ヘルパー関数
+   引き当て
    ═══════════════════════════════════════ */
 
-/** テンプレートがある（申込可能な）業種のみ取得 */
-export function getActiveIndustries(): IndustryEntry[] {
-  return INDUSTRIES.filter((i) => i.templates.length > 0);
+const BY_ID = new Map(INDUSTRIES.map((i) => [i.id, i]));
+
+/** 業種の細目を1つ引く */
+export function findIndustry(id: string | undefined | null): IndustryEntry | undefined {
+  return id ? BY_ID.get(id) : undefined;
 }
 
-/** カテゴリ別にグルーピング（テンプレありのみ） */
-export function getIndustriesByCategory(): Record<string, IndustryEntry[]> {
-  const result: Record<string, IndustryEntry[]> = {};
-  for (const ind of getActiveIndustries()) {
-    if (!result[ind.category]) result[ind.category] = [];
-    result[ind.category].push(ind);
-  }
-  return result;
+/** その業種に合うテンプレート。知らない業種なら null */
+export function templateForIndustry(id: string | undefined | null): string | null {
+  const entry = findIndustry(id);
+  if (!entry) return null;
+  return TEMPLATE_IDS.includes(entry.templateId) ? entry.templateId : null;
 }
 
-/** テンプレIDから業種を逆引き */
-export function getIndustryByTemplateId(templateId: string): IndustryEntry | undefined {
-  return INDUSTRIES.find((i) => i.templates.some((t) => t.id === templateId));
+/** そのテンプレートに寄せている業種の一覧（申込画面の「こんな商売に」） */
+export function industriesForTemplate(templateId: string): IndustryEntry[] {
+  return INDUSTRIES.filter((i) => i.templateId === templateId);
 }
 
-/** テンプレIDからテンプレ情報を取得 */
-export function getTemplateById(templateId: string): TemplateEntry | undefined {
-  for (const ind of INDUSTRIES) {
-    const tpl = ind.templates.find((t) => t.id === templateId);
-    if (tpl) return tpl;
-  }
-  return undefined;
+/** そのテンプレートの代表的な業種名（カードに出す3〜4語） */
+export function industryNamesFor(templateId: string, limit = 4): string[] {
+  return industriesForTemplate(templateId)
+    .slice(0, limit)
+    .map((i) => i.name);
+}
+
+/** テンプレートごとにまとめた対応表（見出しはテンプレートの業種名） */
+export function industriesByTemplate(): { templateId: string; label: string; items: IndustryEntry[] }[] {
+  return TEMPLATE_IDS.map((id) => ({
+    templateId: id,
+    label: getTemplate(id)?.industry ?? id,
+    items: industriesForTemplate(id),
+  })).filter((g) => g.items.length > 0);
 }

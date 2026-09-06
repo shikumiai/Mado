@@ -1,236 +1,265 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { useState } from "react";
-import {
-  Home,
-  Building2,
-  Compass,
-  Monitor,
-  Tablet,
-  Smartphone,
-  Columns2,
-  Columns3,
-  Square,
-  ExternalLink,
-  Star,
-  Utensils,
-  Scissors,
-  Stethoscope,
-  Scale,
-  GraduationCap,
-  Dumbbell,
-  ShoppingBag,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+/**
+ * テンプレート一覧（10業種）。
+ *
+ * 業種ごとに1つ。中身は本番と同じ描画（TemplateRenderer）なので、
+ * ここで見えているものが、そのまま公開されるサイトになる。
+ *
+ * 上のバーで色を変えると、並んでいる10枚が一斉にその色へ塗り替わる。
+ * 「色はお客のもの」を、説明でなく画面で見せるための一覧。
+ */
+
+import { useMemo, useState } from "react";
 import Link from "next/link";
+import { ExternalLink, Monitor, Smartphone, Star } from "lucide-react";
+import { TEMPLATES } from "@/lib/templates/catalog";
+import { industryNamesFor } from "@/lib/industry-registry";
+import {
+  COLOR_SETS,
+  buildPalette,
+  normalizeHex,
+  templatePreviewUrl,
+  type BrandColors,
+} from "@/lib/palette";
+import { PLAN_LABELS, type Plan } from "@/lib/stripe";
+import { WindowMark } from "@/components/marketing/WindowMark";
 
-/* ═══ テンプレート定義（建築9種のみ） ═══ */
-interface Template {
-  id: string;
-  name: string;
-  industry: string;
-  plan: string;
-  planBadge?: string;
-  icon: LucideIcon;
-  accentColor: string;
-  features: string[];
-}
+const PLANS: Plan[] = ["otameshi", "omakase", "omakase-pro"];
 
-const templates: Template[] = [
-  // 工務店
-  { id: "warm-craft", name: "Warm Craft", industry: "工務店", plan: "おためし", icon: Home, accentColor: "#7BA23F", features: ["施工実績", "会社概要", "問い合わせ"] },
-  { id: "warm-craft-mid", name: "Warm Craft Mid", industry: "工務店", plan: "おまかせ", planBadge: "おすすめ", icon: Home, accentColor: "#7BA23F", features: ["Before/After", "お客様の声", "SEO強化"] },
-  { id: "warm-craft-pro", name: "Warm Craft Pro", industry: "工務店", plan: "おまかせプロ", icon: Home, accentColor: "#7BA23F", features: ["AIチャット", "予約システム", "採用ページ"] },
-  // 建設会社
-  { id: "trust-navy", name: "Trust Navy", industry: "建設会社", plan: "おためし", icon: Building2, accentColor: "#1B3A5C", features: ["施工実績", "会社概要", "問い合わせ"] },
-  { id: "trust-navy-mid", name: "Trust Navy Mid", industry: "建設会社", plan: "おまかせ", planBadge: "おすすめ", icon: Building2, accentColor: "#1B3A5C", features: ["Before/After", "お客様の声", "SEO強化"] },
-  { id: "trust-navy-pro", name: "Trust Navy Pro", industry: "建設会社", plan: "おまかせプロ", icon: Building2, accentColor: "#1B3A5C", features: ["AIチャット", "採用ページ", "多言語"] },
-  // 設計事務所
-  { id: "clean-arch", name: "Clean Arch", industry: "設計事務所", plan: "おためし", icon: Compass, accentColor: "#2D3436", features: ["施工実績", "会社概要", "問い合わせ"] },
-  { id: "clean-arch-mid", name: "Clean Arch Mid", industry: "設計事務所", plan: "おまかせ", planBadge: "おすすめ", icon: Compass, accentColor: "#2D3436", features: ["Before/After", "ブログ", "SEO強化"] },
-  { id: "clean-arch-pro", name: "Clean Arch Pro", industry: "設計事務所", plan: "おまかせプロ", icon: Compass, accentColor: "#2D3436", features: ["AIチャット", "多言語", "360°ビューア"] },
-  // 建築以外の7業種（構成は src/lib/templates/catalog.ts）
-  { id: "saveur", name: "Saveur", industry: "飲食店", plan: "おまかせプロ", icon: Utensils, accentColor: "#B23A2E", features: ["お品書き", "営業時間・地図", "予約"] },
-  { id: "velvet", name: "Velvet", industry: "美容・サロン", plan: "おまかせプロ", icon: Scissors, accentColor: "#7A2E45", features: ["メニュー・料金", "スタッフ", "予約"] },
-  { id: "clarity", name: "Clarity", industry: "医療・クリニック", plan: "おまかせプロ", icon: Stethoscope, accentColor: "#2E7D8C", features: ["診療案内", "医師紹介", "診療時間"] },
-  { id: "credence", name: "Credence", industry: "士業", plan: "おまかせプロ", icon: Scale, accentColor: "#3A4652", features: ["取扱分野", "料金", "解決事例"] },
-  { id: "beacon", name: "Beacon", industry: "教育・スクール", plan: "おまかせプロ", icon: GraduationCap, accentColor: "#2C5F7C", features: ["コース・月謝", "合格実績", "体験申込"] },
-  { id: "forge", name: "Forge", industry: "フィットネス", plan: "おまかせプロ", icon: Dumbbell, accentColor: "#C7472B", features: ["プログラム", "トレーナー", "体験申込"] },
-  { id: "marche", name: "Marche", industry: "小売・店舗", plan: "おまかせプロ", icon: ShoppingBag, accentColor: "#C45B28", features: ["商品", "入荷・催し", "店舗案内"] },
-];
+/** 端末の見え方 */
+const DEVICES = {
+  desktop: { label: "パソコン", width: 1280, height: 760, scale: 0.34, icon: Monitor },
+  mobile: { label: "スマートフォン", width: 420, height: 760, scale: 0.52, icon: Smartphone },
+} as const;
 
-/* ═══ デバイス設定 ═══ */
-type DeviceSize = "mobile" | "tablet" | "desktop";
-type ColumnCount = 1 | 2 | 3;
+type DeviceId = keyof typeof DEVICES;
 
-const deviceConfig: Record<DeviceSize, { label: string; sublabel: string; width: string; height: string; icon: LucideIcon }> = {
-  mobile: { label: "スマートフォン", sublabel: "375 × 667", width: "375px", height: "667px", icon: Smartphone },
-  tablet: { label: "タブレット", sublabel: "768 × 1024", width: "768px", height: "800px", icon: Tablet },
-  desktop: { label: "デスクトップ", sublabel: "1280 × 800", width: "100%", height: "800px", icon: Monitor },
-};
-
-const columnIcons: Record<ColumnCount, { icon: LucideIcon; label: string }> = {
-  1: { icon: Square, label: "1列" },
-  2: { icon: Columns2, label: "2列" },
-  3: { icon: Columns3, label: "3列" },
-};
-
-const gradientText = "bg-gradient-to-r from-[#e84393] via-[#6c5ce7] to-[#f39c12] bg-clip-text text-transparent";
-const gradientBg = "bg-gradient-to-r from-[#e84393] via-[#6c5ce7] to-[#f39c12]";
-
-/* ═══ ページ ═══ */
 export default function PortfolioTemplatesPage() {
-  const [device, setDevice] = useState<DeviceSize>("desktop");
-  const [columns, setColumns] = useState<ColumnCount>(3);
-  const config = deviceConfig[device];
+  const [device, setDevice] = useState<DeviceId>("desktop");
+  const [plan, setPlan] = useState<Plan>("omakase-pro");
+  const [colorSetId, setColorSetId] = useState<string | null>(null);
+  const [custom, setCustom] = useState("");
 
-  const gridCols =
-    columns === 1 ? "grid-cols-1" : columns === 2 ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1 md:grid-cols-2 xl:grid-cols-3";
+  const brand: BrandColors | null = useMemo(() => {
+    const hex = normalizeHex(custom);
+    if (hex) return { primary: hex };
+    const set = COLOR_SETS.find((c) => c.id === colorSetId);
+    return set ? { primary: set.primary, sub1: set.sub1, sub2: set.sub2 } : null;
+  }, [colorSetId, custom]);
+
+  const d = DEVICES[device];
 
   return (
-    <div className="bg-gray-50 text-gray-800 min-h-screen">
-      {/* ===== ヘッダー ===== */}
-      <header className="fixed top-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm">
-        <div className="max-w-[1800px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className={`w-1 h-8 rounded-full ${gradientBg}`} />
-            <div className="flex flex-col leading-tight">
-              <span className="text-sm font-bold text-gray-800 tracking-wide">Mado</span>
-              <span className="text-[10px] tracking-[0.2em] text-gray-400 group-hover:text-[#e84393] transition-colors">by Lyo Vision</span>
+    <div className="min-h-screen bg-bg text-ink">
+      {/* ─── 上のバー ─── */}
+      <header className="sticky top-0 z-30 border-b border-line bg-surface/95 backdrop-blur">
+        <div className="mx-auto max-w-[1400px] px-5 py-3">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+            <Link href="/" className="flex items-center gap-2.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              <WindowMark className="size-7" />
+              <span className="font-serif text-lg font-bold tracking-tight">Mado</span>
+            </Link>
+
+            <div className="min-w-0">
+              <h1 className="font-serif text-base font-semibold text-ink">業種別テンプレート</h1>
+              <p className="text-xs text-ink3">
+                10業種ぶん。色とプランを変えると、下の見本がその場で変わります。
+              </p>
             </div>
-          </Link>
-          <Link href="/" className="text-xs text-gray-400 hover:text-[#6c5ce7] transition-colors tracking-wider">
-            ← トップに戻る
-          </Link>
+
+            <div className="ml-auto flex flex-wrap items-center gap-2">
+              {/* プラン */}
+              <div role="group" aria-label="プラン" className="inline-flex items-center gap-0.5 rounded-pill bg-surface2 p-0.5">
+                {PLANS.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    aria-pressed={plan === p}
+                    onClick={() => setPlan(p)}
+                    className={[
+                      "rounded-pill px-3 py-1.5 text-xs font-medium outline-none transition focus-visible:ring-2 focus-visible:ring-ring",
+                      plan === p ? "bg-surface text-ink shadow-sh1" : "text-ink3 hover:text-ink",
+                    ].join(" ")}
+                  >
+                    {PLAN_LABELS[p]}
+                  </button>
+                ))}
+              </div>
+
+              {/* 端末 */}
+              <div role="group" aria-label="画面の大きさ" className="inline-flex items-center gap-0.5 rounded-pill bg-surface2 p-0.5">
+                {(Object.keys(DEVICES) as DeviceId[]).map((id) => {
+                  const Icon = DEVICES[id].icon;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      aria-pressed={device === id}
+                      title={DEVICES[id].label}
+                      onClick={() => setDevice(id)}
+                      className={[
+                        "inline-flex size-7 items-center justify-center rounded-pill outline-none transition focus-visible:ring-2 focus-visible:ring-ring",
+                        device === id ? "bg-surface text-ink shadow-sh1" : "text-ink3 hover:text-ink",
+                      ].join(" ")}
+                    >
+                      <Icon className="size-4" aria-hidden />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* 色 */}
+          <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-line pt-3">
+            <span className="text-xs text-ink3">色で見比べる</span>
+            <button
+              type="button"
+              aria-pressed={!colorSetId && !normalizeHex(custom)}
+              onClick={() => {
+                setColorSetId(null);
+                setCustom("");
+              }}
+              className={[
+                "rounded-pill px-3 py-1.5 text-xs font-medium outline-none transition focus-visible:ring-2 focus-visible:ring-ring",
+                !colorSetId && !normalizeHex(custom)
+                  ? "bg-accent-soft text-ink ring-1 ring-accent/50"
+                  : "bg-surface2 text-ink2 hover:text-ink",
+              ].join(" ")}
+            >
+              業種ごとのもとの色
+            </button>
+            {COLOR_SETS.slice(0, 8).map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                aria-pressed={colorSetId === c.id}
+                title={c.forWho}
+                onClick={() => {
+                  setColorSetId(c.id);
+                  setCustom("");
+                }}
+                className={[
+                  "inline-flex items-center gap-1.5 rounded-pill px-2.5 py-1.5 text-xs outline-none transition focus-visible:ring-2 focus-visible:ring-ring",
+                  colorSetId === c.id && !normalizeHex(custom)
+                    ? "bg-accent-soft text-ink ring-1 ring-accent/50"
+                    : "bg-surface2 text-ink2 hover:text-ink",
+                ].join(" ")}
+              >
+                <span className="size-3 rounded-sm border border-line" style={{ background: c.primary }} />
+                {c.name}
+              </button>
+            ))}
+            <label className="ml-1 flex items-center gap-1.5 text-xs text-ink3">
+              自分の色
+              <input
+                type="color"
+                value={normalizeHex(custom) ?? "#C05A2E"}
+                onChange={(e) => setCustom(e.target.value)}
+                aria-label="自分の色を選ぶ"
+                className="size-8 cursor-pointer rounded-md border border-line bg-surface p-0.5"
+              />
+            </label>
+          </div>
         </div>
       </header>
 
-      <main className="pt-24 pb-16">
-        {/* ===== タイトル ===== */}
-        <section className="max-w-[1800px] mx-auto px-4 sm:px-6 mb-8">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="text-center mb-6">
-            <p className={`text-xs tracking-[0.3em] uppercase mb-2 font-medium ${gradientText}`}>業種別テンプレート一覧</p>
-            <h1 className="text-2xl sm:text-3xl text-gray-800 font-bold">業種別ホームページテンプレート</h1>
-            <p className="text-gray-500 text-sm mt-3 max-w-[540px] mx-auto leading-relaxed">
-              10業種ぶん。建築3業種はプラン違いも並べています。デバイス表示やレイアウトを切り替えて、実際の見え方をチェックしてください。
-            </p>
-          </motion.div>
+      {/* ─── 一覧 ─── */}
+      <main className="mx-auto max-w-[1400px] px-5 pb-20 pt-6">
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {TEMPLATES.map((t) => {
+            const palette = buildPalette(brand ?? t.palettePreset);
+            const src = templatePreviewUrl(t.id, brand, plan);
+            const required = t.sections.filter((s) => s.required);
+            return (
+              <article
+                key={t.id}
+                className="overflow-hidden rounded-xl border border-line bg-surface shadow-sh1 transition hover:shadow-sh2"
+              >
+                <div className="flex items-center gap-2.5 border-b border-line px-4 py-2.5">
+                  <span className="flex overflow-hidden rounded-sm border border-line" aria-hidden>
+                    <span className="size-3.5" style={{ background: palette.primary }} />
+                    <span className="size-3.5" style={{ background: palette.sub1 }} />
+                    <span className="size-3.5" style={{ background: palette.sub2 }} />
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink">{t.industry}</span>
+                  <Link
+                    href={src}
+                    target="_blank"
+                    className="inline-flex shrink-0 items-center gap-1 rounded-md border border-line px-2 py-1 text-[11px] text-ink2 outline-none transition hover:text-ink focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <ExternalLink className="size-3" aria-hidden />
+                    全画面
+                  </Link>
+                </div>
 
-          {/* ===== コントロールバー ===== */}
-          <motion.div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-gray-200">
-              <config.icon className="w-3.5 h-3.5 text-gray-400" />
-              <span className="text-[11px] text-gray-500">
-                {config.label}<span className="text-gray-400 ml-1.5">{config.sublabel}</span>
-              </span>
-            </div>
-
-            <div className="flex rounded-lg border border-gray-200 overflow-hidden bg-white">
-              {(Object.keys(deviceConfig) as DeviceSize[]).map((key) => {
-                const d = deviceConfig[key];
-                const Icon = d.icon;
-                const active = device === key;
-                return (
-                  <button key={key} onClick={() => setDevice(key)} className={`flex items-center gap-1.5 px-3 py-2 text-[11px] transition-all cursor-pointer ${active ? "bg-purple-50 text-[#6c5ce7] border-r border-gray-200" : "text-gray-400 hover:text-gray-600 hover:bg-gray-50 border-r border-gray-200"} last:border-r-0`}>
-                    <Icon className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">{d.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="hidden sm:block w-px h-6 bg-gray-200" />
-
-            <div className="flex rounded-lg border border-gray-200 overflow-hidden bg-white">
-              {([1, 2, 3] as ColumnCount[]).map((n) => {
-                const c = columnIcons[n];
-                const Icon = c.icon;
-                const active = columns === n;
-                return (
-                  <button key={n} onClick={() => setColumns(n)} className={`flex items-center gap-1.5 px-3 py-2 text-[11px] transition-all cursor-pointer ${active ? "bg-purple-50 text-[#6c5ce7] border-r border-gray-200" : "text-gray-400 hover:text-gray-600 hover:bg-gray-50 border-r border-gray-200"} last:border-r-0`}>
-                    <Icon className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">{c.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </motion.div>
-        </section>
-
-        {/* ===== テンプレートグリッド ===== */}
-        <section className="max-w-[1800px] mx-auto px-4 sm:px-6">
-          <div className={`grid ${gridCols} gap-5`}>
-            {templates.map((tpl, i) => {
-              const Icon = tpl.icon;
-              return (
-                <motion.div
-                  key={tpl.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: i * 0.06 }}
-                  className="rounded-2xl border border-gray-200 overflow-hidden bg-white hover:border-gray-300 hover:shadow-lg transition-all duration-300"
+                {/* 見本（本番と同じ描画） */}
+                <div
+                  className="relative overflow-hidden"
+                  style={{ height: 320, background: palette.bg }}
                 >
-                  {/* カードヘッダー */}
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50/50">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: tpl.accentColor }} />
-                      <Icon className="w-3.5 h-3.5 text-gray-400" strokeWidth={1.5} />
-                      <span className="text-gray-800 text-[13px] font-medium">{tpl.industry}</span>
-                      <span className={`text-[11px] px-2 py-0.5 rounded-full ${tpl.planBadge ? `${gradientBg} text-white font-bold` : "bg-gray-100 text-gray-500"}`}>
-                        {tpl.plan}
-                        {tpl.planBadge && <Star className="w-2.5 h-2.5 inline ml-0.5 -mt-0.5" fill="white" />}
+                  <iframe
+                    key={`${src}-${device}`}
+                    src={src}
+                    title={`${t.industry}のテンプレート`}
+                    loading="lazy"
+                    tabIndex={-1}
+                    className="absolute left-1/2 top-0 origin-top border-0"
+                    style={{
+                      width: d.width,
+                      height: Math.round(320 / d.scale),
+                      transform: `translateX(-50%) scale(${d.scale})`,
+                      transformOrigin: "top center",
+                      pointerEvents: "none",
+                    }}
+                  />
+                </div>
+
+                <div className="px-4 py-3">
+                  <p className="text-sm text-ink2">{t.tagline}</p>
+                  <div className="mt-2.5 flex flex-wrap gap-1.5">
+                    {required.map((s) => (
+                      <span
+                        key={s.id}
+                        className="inline-flex items-center gap-1 rounded-pill bg-accent-soft px-2 py-0.5 text-[10px] font-medium text-ink"
+                      >
+                        <Star className="size-2.5 text-accent" aria-hidden fill="currentColor" />
+                        {s.label}
                       </span>
-                    </div>
-                    <Link
-                      href={`/portfolio-templates/${tpl.id}`}
-                      target="_blank"
-                      className="flex items-center gap-1.5 text-[11px] text-[#6c5ce7] px-2.5 py-1 rounded-md border border-[#6c5ce7]/20 hover:bg-[#6c5ce7]/10 hover:border-[#6c5ce7]/40 transition-all duration-200"
-                    >
-                      <ExternalLink className="w-3 h-3" />
-                      全画面で見る
-                    </Link>
+                    ))}
                   </div>
+                  <p className="mt-2 text-[11px] text-ink3">
+                    {industryNamesFor(t.id, 4).join("・")} など
+                  </p>
+                </div>
+              </article>
+            );
+          })}
+        </div>
 
-                  {/* iframeプレビュー */}
-                  <div className="bg-gray-100 overflow-hidden" style={{ maxWidth: device === "desktop" ? "none" : config.width, margin: device === "desktop" ? "0" : "0 auto" }}>
-                    <iframe src={`/portfolio-templates/${tpl.id}`} style={{ height: config.height }} className="w-full border-0" loading="lazy" title={tpl.name} />
-                  </div>
-
-                  {/* カードフッター */}
-                  <div className="flex items-center justify-between px-4 py-2.5 border-t border-gray-100">
-                    <div className="flex gap-1.5 flex-wrap">
-                      {tpl.features.map((f) => (
-                        <span key={f} className="text-[10px] text-gray-500 px-2 py-0.5 border border-gray-200 rounded-full bg-gray-50">{f}</span>
-                      ))}
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })}
+        {/* ─── 締め ─── */}
+        <section className="mx-auto mt-16 max-w-xl text-center">
+          <h2 className="font-serif text-2xl font-bold text-ink">この見た目で、自分の会社のサイトを</h2>
+          <p className="mt-3 text-sm leading-relaxed text-ink2">
+            色を選んで、業種を選ぶだけ。制作費は0円、月額0円から持てます。
+          </p>
+          <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+            <Link
+              href="/start"
+              className="inline-flex h-11 items-center justify-center rounded-md bg-accent px-7 text-sm font-bold text-on-accent outline-none transition hover:bg-accent-strong focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              サイトをつくる
+            </Link>
+            <Link
+              href="/"
+              className="inline-flex h-11 items-center justify-center rounded-md border border-line px-7 text-sm text-ink2 outline-none transition hover:text-ink focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              トップに戻る
+            </Link>
           </div>
         </section>
-
-        {/* ===== CTA ===== */}
-        <section className="max-w-[700px] mx-auto px-6 text-center mt-20">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-            <h3 className="text-2xl sm:text-3xl text-gray-800 font-bold mb-4">ホームページを作りませんか？</h3>
-            <p className="text-gray-500 text-sm mb-8 leading-relaxed">写真を送るだけ。制作費0円、月額0円からホームページが完成します。</p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/start" className={`inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full ${gradientBg} text-white font-bold text-sm tracking-wider hover:opacity-90 transition-all shadow-lg shadow-purple-200/40`}>
-                今すぐサイトを作る →
-              </Link>
-              <Link href="/" className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full border border-gray-200 text-gray-500 text-sm tracking-wider hover:border-gray-300 hover:text-gray-700 transition-all">
-                トップに戻る
-              </Link>
-            </div>
-          </motion.div>
-        </section>
       </main>
-
-      <footer className="border-t border-gray-200 py-8 text-center bg-white">
-        <p className="text-gray-400 text-xs">&copy; 2026 Lyo Vision. All rights reserved.</p>
-      </footer>
     </div>
   );
 }

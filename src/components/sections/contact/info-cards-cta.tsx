@@ -42,10 +42,10 @@ a.cic-tel:hover { color: var(--tpl-primary); }
   font-weight: 600; line-height: 1.4; }
 .cic-cta p { font-size: 13px; line-height: 1.85; color: var(--tpl-on-dark-3); margin-top: 8px;
   max-width: 46ch; }
-.cic-btn { display: inline-flex; align-items: center; gap: 9px; background: var(--tpl-primary);
+.cic-btn, .ms a.cic-btn { display: inline-flex; align-items: center; gap: 9px; background: var(--tpl-primary);
   color: var(--tpl-on-primary); border-radius: 6px; padding: 15px 28px; font-size: 14.5px;
   font-weight: 700; transition: background 0.2s, gap 0.2s; white-space: nowrap; }
-.cic-btn:hover { background: var(--tpl-primary-strong); gap: 13px; }
+.cic-btn:hover, .ms a.cic-btn:hover { background: var(--tpl-primary-strong); color: var(--tpl-on-primary); gap: 13px; }
 @media (max-width: 860px) { .cic-grid { grid-template-columns: 1fr; } }
 `;
 

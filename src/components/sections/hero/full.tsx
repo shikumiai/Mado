@@ -28,8 +28,9 @@ const CSS = `
   margin: 22px 0 0; max-width: 20ch; text-shadow: 0 2px 24px var(--tpl-shadow-strong); }
 .hfl-lead { font-size: 15px; line-height: 2.05; color: var(--tpl-on-dark-2); margin: 20px 0 0; max-width: 48ch; }
 .hfl-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
-.hfl-ghost { border-color: var(--tpl-on-dark-line); color: var(--tpl-on-dark); }
-.hfl-ghost:hover { border-color: var(--tpl-on-dark); color: var(--tpl-on-dark); background: var(--tpl-on-dark-fill); }
+.hfl-ghost, .ms a.hfl-ghost { border-color: var(--tpl-on-dark-line); color: var(--tpl-on-dark); }
+.hfl-ghost:hover, .ms a.hfl-ghost:hover { border-color: var(--tpl-on-dark); color: var(--tpl-on-dark);
+  background: var(--tpl-on-dark-fill); }
 .hfl-facts { display: flex; flex-wrap: wrap; gap: 0 40px; margin-top: 40px; padding-top: 22px;
   border-top: 1px solid var(--tpl-on-dark-line); }
 .hfl-fact { font-size: 12px; color: var(--tpl-on-dark-3); }

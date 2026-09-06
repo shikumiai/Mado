@@ -28,28 +28,10 @@ import {
   findSectionDef,
   getTemplateOrDefault,
   planAllows,
+  LEGACY_SECTIONS as LEGACY,
 } from "@/lib/templates/catalog";
 import SiteChrome, { type ChromeNavItem } from "./SiteChrome";
 import { TplRoot } from "./TplPalette";
-
-/* ═══════════════════════════════════════
-   昔の種類名の読み替え
-   ═══════════════════════════════════════ */
-
-/**
- * v2 までの site.config.json はこの名前でセクションを持っている。
- * 保存されたままの config でも今の部品で描けるように、機能と見せ方へ読み替える。
- */
-const LEGACY: Record<string, { type: SectionType; variant: string }> = {
-  about: { type: "company", variant: "table-message-history" },
-  stats: { type: "voices", variant: "stats-band" },
-  testimonials: { type: "voices", variant: "bubbles" },
-  awards: { type: "voices", variant: "quotes-list" },
-  recruit: { type: "staff", variant: "list" },
-  gallery: { type: "works", variant: "masonry" },
-  pricing: { type: "menu", variant: "price-table" },
-  info: { type: "access", variant: "map-table" },
-};
 
 /* ═══════════════════════════════════════
    描くものを決める

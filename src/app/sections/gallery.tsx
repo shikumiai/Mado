@@ -3,7 +3,9 @@
 /**
  * 部品カタログの中身。
  *
- * 上のバーで色を変えると、下に並んだ70個の部品が一斉に塗り替わる。
+ * 上のバーで機能を選ぶと、その機能の5つの見せ方だけを描く。
+ * 70個を一度に描くと重いので、見るのは1機能ずつにしてある。
+ * 色を変えると、出ている部品が一斉に塗り替わる。
  * 「色はお客のもの」「機能ごとに5つの見せ方」の2つを、その場で目で確かめるための画面。
  */
 
@@ -44,6 +46,7 @@ const SWATCHES: [string, string][] = [
 
 export default function SectionsGallery() {
   const [presetId, setPresetId] = useState("warm-craft");
+  const [typeId, setTypeId] = useState(SECTION_CATALOG[0].type);
   const [custom, setCustom] = useState<BrandColors>({ primary: "", sub1: "", sub2: "" });
 
   const brand: BrandColors = useMemo(() => {
@@ -62,6 +65,7 @@ export default function SectionsGallery() {
     setCustom((c) => ({ ...c, [key]: e.target.value }));
 
   const total = SECTION_CATALOG.reduce((n, t) => n + t.variants.length, 0);
+  const active = SECTION_CATALOG.find((t) => t.type === typeId) ?? SECTION_CATALOG[0];
 
   return (
     <div className="min-h-screen bg-bg">
@@ -72,7 +76,8 @@ export default function SectionsGallery() {
             <div>
               <h1 className="font-serif text-xl font-semibold text-ink">部品カタログ</h1>
               <p className="mt-1 text-xs text-ink3">
-                機能 {SECTION_CATALOG.length} 種 × 見せ方5つ = {total} 部品。色を変えると全部が一度に変わります。
+                機能 {SECTION_CATALOG.length} 種 × 見せ方5つ = {total} 部品。
+                下のボタンで機能を選ぶと、その5つだけを描きます。
               </p>
             </div>
 
@@ -148,55 +153,71 @@ export default function SectionsGallery() {
             ))}
           </div>
 
-          {/* 機能への飛び先 */}
-          <nav className="mt-3 flex flex-wrap gap-x-4 gap-y-1 border-t border-line pt-3 text-xs">
-            {SECTION_CATALOG.map((t) => (
-              <a key={t.type} href={`#cat-${t.type}`} className="text-ink2 hover:text-accent">
-                {t.label}
-                <span className="tnum ml-1 text-ink3">{t.type}</span>
-              </a>
-            ))}
-          </nav>
+          {/* 見る機能を選ぶ */}
+          <div
+            role="radiogroup"
+            aria-label="見る機能"
+            className="mt-3 flex flex-wrap gap-1.5 border-t border-line pt-3"
+          >
+            {SECTION_CATALOG.map((t) => {
+              const on = t.type === active.type;
+              return (
+                <button
+                  key={t.type}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  onClick={() => setTypeId(t.type)}
+                  className={`rounded-sm border px-2.5 py-1.5 text-xs font-semibold transition ${
+                    on
+                      ? "border-accent bg-accent text-on-accent"
+                      : "border-line bg-surface text-ink2 hover:border-accent hover:text-ink"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </header>
 
-      {/* ─── 部品 ─── */}
+      {/* ─── 部品（選んだ機能の5つだけ） ─── */}
       <main className="mx-auto max-w-[1240px] px-5 pb-24">
-        {SECTION_CATALOG.map((t) => (
-          <section key={t.type} id={`cat-${t.type}`} className="scroll-mt-40 pt-12">
-            <div className="border-b-2 border-ink pb-3">
-              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                <h2 className="font-serif text-2xl font-semibold text-ink">{t.label}</h2>
-                <span className="tnum text-sm text-ink3">{t.type}</span>
-                <span className="ml-auto text-xs text-ink3">見本：{SAMPLE_INDUSTRY[t.type]}</span>
-              </div>
-              <p className="mt-1.5 text-sm text-ink2">{t.role}</p>
+        <section key={active.type} className="pt-10">
+          <div className="border-b-2 border-ink pb-3">
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <h2 className="font-serif text-2xl font-semibold text-ink">{active.label}</h2>
+              <span className="tnum text-sm text-ink3">{active.type}</span>
+              <span className="ml-auto text-xs text-ink3">見本：{SAMPLE_INDUSTRY[active.type]}</span>
             </div>
+            <p className="mt-1.5 text-sm text-ink2">{active.role}</p>
+          </div>
 
-            {t.variants.map((v) => (
-              <article key={v.id} className="mt-8">
-                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 pb-2">
-                  <span className="tnum rounded-sm bg-surface2 px-2 py-1 text-xs font-semibold text-ink">
-                    {t.type}/{v.id}
+          {active.variants.map((v) => (
+            <article key={v.id} className="mt-8">
+              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 pb-2">
+                <span className="tnum rounded-sm bg-surface2 px-2 py-1 text-xs font-semibold text-ink">
+                  {active.type}/{v.id}
+                </span>
+                <h3 className="font-serif text-base font-semibold text-ink">{v.label}</h3>
+                <span className="text-xs text-ink3">{v.note}</span>
+                {v.id === active.defaultVariant && (
+                  <span className="rounded-sm border border-accent px-2 py-0.5 text-[10px] font-semibold text-accent">
+                    既定
                   </span>
-                  <h3 className="font-serif text-base font-semibold text-ink">{v.label}</h3>
-                  <span className="text-xs text-ink3">{v.note}</span>
-                  {v.id === t.defaultVariant && (
-                    <span className="rounded-sm border border-accent px-2 py-0.5 text-[10px] font-semibold text-accent">
-                      既定
-                    </span>
-                  )}
-                </div>
-                <div className="overflow-hidden rounded-md border border-line shadow-sh1">
-                  <TplRoot palette={palette} className="mado-section-demo">
-                    <v.Component config={DEMO_CONFIG} data={SAMPLE_BY_TYPE[t.type]} />
-                  </TplRoot>
-                </div>
-              </article>
-            ))}
-          </section>
-        ))}
+                )}
+              </div>
+              <div className="overflow-hidden rounded-md border border-line shadow-sh1">
+                <TplRoot palette={palette} className="mado-section-demo">
+                  <v.Component config={DEMO_CONFIG} data={SAMPLE_BY_TYPE[active.type]} />
+                </TplRoot>
+              </div>
+            </article>
+          ))}
+        </section>
       </main>
+
     </div>
   );
 }

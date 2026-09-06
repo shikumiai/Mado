@@ -4,10 +4,11 @@
  * 業種に依存しない
  */
 
-import { type SiteConfig, type StyleConfig, DEFAULT_STYLE } from "./site-config-schema";
-import { getPlanFromTemplateId, getBaseTemplateId, type Plan } from "./stripe";
+import { type SiteConfig, DEFAULT_STYLE } from "./site-config-schema";
+import { getPlanFromTemplateId, getBaseTemplateId } from "./stripe";
 import { customerSiteUrl, customerSiteLabel } from "./resolve-site";
-import { type BrandColors, buildPalette, normalizeHex } from "./palette";
+import { type BrandColors, styleWithBrand } from "./palette";
+import { defaultSectionsFor } from "./templates/catalog";
 
 interface OrderFormData {
   orderId: string;
@@ -27,41 +28,13 @@ interface OrderFormData {
 }
 
 /**
- * 選んだ色を style に書き込む。
- * 正（テンプレートが読むところ）は style.brand。
- * style.colors は前からある項目なので、同じ色から作った値で埋めて食い違わせない。
- * 色が選ばれていなければ何も足さない＝テンプレートの初期色で描かれる。
- */
-function applyBrand(base: StyleConfig, brand: Partial<BrandColors> | undefined): StyleConfig {
-  const primary = normalizeHex(brand?.primary);
-  if (!primary) return base;
-
-  const sub1 = normalizeHex(brand?.sub1) || undefined;
-  const sub2 = normalizeHex(brand?.sub2) || undefined;
-  const p = buildPalette({ primary, sub1, sub2 });
-
-  return {
-    ...base,
-    brand: { primary, ...(sub1 ? { sub1 } : {}), ...(sub2 ? { sub2 } : {}) },
-    colors: {
-      primary: p.primary,
-      accent: p.sub1,
-      background: p.bg,
-      text: p.ink,
-      textMuted: p.ink2,
-      border: p.line,
-    },
-  };
-}
-
-/**
  * フォームデータからsite.config.jsonの内容を生成
  * 初期状態では最低限の情報のみ。顧客が管理ページから後で追加・編集する
  */
 export function generateSiteConfig(formData: OrderFormData): SiteConfig {
   const plan = getPlanFromTemplateId(formData.templateId);
   const baseTemplate = getBaseTemplateId(formData.templateId);
-  const style = applyBrand(
+  const style = styleWithBrand(
     DEFAULT_STYLE[baseTemplate] || DEFAULT_STYLE["warm-craft"],
     formData.brand,
   );
@@ -75,6 +48,11 @@ export function generateSiteConfig(formData: OrderFormData): SiteConfig {
     plan,
     orderId: formData.orderId,
     siteUrl,
+
+    // その業種・そのプランの構成をはじめから書いておく。
+    // 書かなければ描く側が既定に落としてくれるが、書いておけば
+    // 編集画面の「ページの構成」と公開サイトが最初から同じものを指す。
+    sections: defaultSectionsFor(formData.templateId, plan),
 
     company: {
       name: formData.companyName,

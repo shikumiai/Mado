@@ -33,12 +33,17 @@ export default async function TemplateDemo({
   searchParams: DemoSearchParams;
 }) {
   const base = config as SiteConfig;
-  const brand = brandFromQuery(await searchParams);
+  const query = await searchParams;
+  const brand = brandFromQuery(query);
+
+  // ?plan=omakase を付けると、そのプランで見えるセクションだけになる。
+  // 申し込み画面がプランを切り替えたときに、構成の違いをその場で見せるために使う。
+  const askedPlan = Array.isArray(query.plan) ? query.plan[0] : query.plan;
 
   const shown: SiteConfig = {
     ...base,
     templateId: templateId ?? base.templateId,
-    plan: normalizePlanId(plan ?? base.plan ?? "otameshi"),
+    plan: normalizePlanId(askedPlan ?? plan ?? base.plan ?? "otameshi"),
     style: brand ? { ...base.style, brand } : base.style,
   };
 

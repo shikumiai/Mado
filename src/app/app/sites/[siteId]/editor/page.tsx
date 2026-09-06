@@ -19,7 +19,7 @@ import dynamic from "next/dynamic";
 import {
   Eye, Pencil, Bot, Smartphone, Monitor, Check, Lock,
   Camera, LayoutList, History, Type as TypeIcon, ArrowLeft,
-  Sparkles, RotateCcw, Crop, ExternalLink, Loader2,
+  Sparkles, RotateCcw, Crop, ExternalLink, Loader2, Palette,
 } from "lucide-react";
 
 import type { SiteConfig, Section } from "@/lib/site-config-schema";
@@ -30,8 +30,11 @@ import {
   listSiteHistory, getSiteVersion, type HistoryEntry, type LoadResult,
 } from "@/lib/site-editor";
 import { customerSiteUrl, customerSiteLabel } from "@/lib/resolve-site";
+import { resolveFieldTarget } from "@/lib/editor/field-target";
+import { buildPalette, resolveBrand, styleWithBrand, COLOR_SETS, normalizeHex } from "@/lib/palette";
 
 import SectionPanel from "@/components/editor/SectionPanel";
+import BrandPicker, { PaletteBoard, type BrandChoice } from "@/components/brand/BrandPicker";
 import TemplateRenderer from "@/components/template-renderers/TemplateRenderer";
 import { Button, Card, Badge, Field, Skeleton, Tabs, Sheet, useToast } from "@/components/ui";
 
@@ -107,20 +110,6 @@ const AI_FIELD_LABELS: Record<string, string> = {
    ═══════════════════════════════════════ */
 
 /** 設定の入れ子パスに値を書き込む（"company.tagline" など） */
-/**
- * 部品が付ける項目の名前（sections.2.items.0.title）を、設定の中の実際の場所に直す。
- *
- * 部品は「自分が何番目のセクションか」までしか知らないので sections.2 から書き始めるが、
- * 中身は sections[2].data の下にある。ここで data を1つはさむ。
- * company.name のような、セクションに属さない項目はそのまま。
- */
-function toConfigPath(path: string): string {
-  const m = /^sections\.(\d+)\.(.+)$/.exec(path);
-  if (!m) return path;
-  if (m[2].startsWith("data.")) return path;
-  return `sections.${m[1]}.data.${m[2]}`;
-}
-
 function setNestedValue(obj: Record<string, unknown>, path: string, value: unknown): void {
   const keys = path.split(".");
   let current: Record<string, unknown> = obj;
@@ -129,6 +118,28 @@ function setNestedValue(obj: Record<string, unknown>, path: string, value: unkno
     current = current[keys[i]] as Record<string, unknown>;
   }
   current[keys[keys.length - 1]] = value;
+}
+
+/* ═══════════════════════════════════════
+   色（代表カラー＋サブ2）
+   ═══════════════════════════════════════ */
+
+/** 色を選ぶ部品の値 → palette に渡す形。代表カラーが無ければ null */
+function brandToColors(b: BrandChoice) {
+  return b.primary
+    ? { primary: b.primary, sub1: b.sub1 ?? undefined, sub2: b.sub2 ?? undefined }
+    : null;
+}
+
+/** 保存されている色 → 色を選ぶ部品の値（あらかじめ組んである色と一致すればその名前も） */
+function brandFromConfig(config: SiteConfig): BrandChoice {
+  const primary = normalizeHex(config.style?.brand?.primary);
+  const sub1 = normalizeHex(config.style?.brand?.sub1);
+  const sub2 = normalizeHex(config.style?.brand?.sub2);
+  const set = primary
+    ? COLOR_SETS.find((c) => c.primary === primary && c.sub1 === sub1 && c.sub2 === sub2)
+    : undefined;
+  return { primary, sub1, sub2, setId: set?.id ?? null };
 }
 
 /** フィールドのパスを、なるべく分かりやすい日本語ラベルにする（表示用のみ） */
@@ -415,6 +426,11 @@ export default function EditorPage() {
   const [sectionsChanged, setSectionsChanged] = useState(false);
   const [initialSectionsJson, setInitialSectionsJson] = useState("");
 
+  // 色（代表カラー＋サブ2）。変えるとその場で全体が塗り替わる
+  const [brand, setBrand] = useState<BrandChoice>({ primary: null, sub1: null, sub2: null, setId: null });
+  const [brandChanged, setBrandChanged] = useState(false);
+  const [initialBrandJson, setInitialBrandJson] = useState("");
+
   // 表示の設定
   const [selectedFont, setSelectedFont] = useState(FONTS[0]);
   const [showFontMenu, setShowFontMenu] = useState(false);
@@ -423,6 +439,7 @@ export default function EditorPage() {
   // モードとパネル
   const [mode, setMode] = useState<"view" | "edit" | "ai">("edit");
   const [sectionsOpen, setSectionsOpen] = useState(false);
+  const [brandOpen, setBrandOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [applying, setApplying] = useState(false);
@@ -432,7 +449,11 @@ export default function EditorPage() {
   const [activeFieldValue, setActiveFieldValue] = useState("");
   const [activeFieldType, setActiveFieldType] = useState<"text" | "image">("text");
   const [editText, setEditText] = useState("");
-  const [changes, setChanges] = useState<Map<string, { label: string; oldValue: string; newValue: string }>>(new Map());
+  // 直した項目。path は「設定のどこに書くか」で、直した時点で決めてしまう
+  // （あとでセクションを並び替えても宛先がずれない）
+  const [changes, setChanges] = useState<
+    Map<string, { label: string; oldValue: string; newValue: string; path: string }>
+  >(new Map());
 
   // 履歴
   const [history, setHistory] = useState<HistoryEntry[]>([]);
@@ -448,21 +469,29 @@ export default function EditorPage() {
 
   const aiLocked = plan === "otameshi";
   const changedFieldSet = new Set(changes.keys());
-  const totalChanges = changes.size + (sectionsChanged ? 1 : 0);
+  const totalChanges = changes.size + (sectionsChanged ? 1 : 0) + (brandChanged ? 1 : 0);
 
   /* ── 読み込み ───────────────────────── */
   const applyLoaded = useCallback((res: Extract<LoadResult, { ok: true }>) => {
-    setSiteConfig(res.config);
+    // 構成は必ず手元に取り出しておく。config に書かれていなくてもテンプレートの既定が入るので、
+    // 編集の宛先（sections.2.…）と実際に描かれるサイトの並びが必ず一致する。
+    // プランは DB の行が正。config 側が古くても、構成の出し分けはこちらに合わせる
+    const loadedPlan = normalizePlanId(res.plan || res.config.plan || "otameshi");
+    const initialSections = getSections({ ...res.config, plan: loadedPlan });
+    setSiteConfig({ ...res.config, plan: loadedPlan, sections: initialSections });
     setTemplateId(res.templateId || "warm-craft");
-    setPlan(normalizePlanId(res.plan || "otameshi"));
+    setPlan(loadedPlan);
     setSlug(res.slug);
     setVersion(res.version);
-    const initialSections = getSections(res.config);
     setSections(initialSections);
     setInitialSectionsJson(JSON.stringify(initialSections));
+    const initialBrand = brandFromConfig(res.config);
+    setBrand(initialBrand);
+    setInitialBrandJson(JSON.stringify(initialBrand));
     // 編集中の状態はまっさらに戻す
     setChanges(new Map());
     setSectionsChanged(false);
+    setBrandChanged(false);
     setActiveFieldId(null);
     setNeedsReload(false);
   }, []);
@@ -507,6 +536,7 @@ export default function EditorPage() {
 
   const closePanels = useCallback(() => {
     setSectionsOpen(false);
+    setBrandOpen(false);
     setHistoryOpen(false);
     setShowFontMenu(false);
   }, []);
@@ -532,10 +562,20 @@ export default function EditorPage() {
     if (siteConfig) setSiteConfig({ ...siteConfig, sections: newSections });
   }, [siteConfig, initialSectionsJson]);
 
+  /* ── 色の変更 → 即プレビュー反映 ── */
+  const handleBrandChange = useCallback((next: BrandChoice) => {
+    setBrand(next);
+    setBrandChanged(JSON.stringify(next) !== initialBrandJson);
+    if (siteConfig) {
+      setSiteConfig({ ...siteConfig, style: styleWithBrand(siteConfig.style, brandToColors(next)) });
+    }
+  }, [siteConfig, initialBrandJson]);
+
   /* ── フィールドのクリック → 編集パネル ── */
   const handleFieldClick = useCallback((fieldId: string, currentValue: string, fieldType: "text" | "image") => {
     if (mode !== "edit") return;
     setSectionsOpen(false);
+    setBrandOpen(false);
     setHistoryOpen(false);
     setActiveFieldId(fieldId);
     setActiveFieldValue(currentValue);
@@ -544,18 +584,27 @@ export default function EditorPage() {
   }, [mode, changes]);
 
   const confirmEdit = useCallback(() => {
-    if (!activeFieldId) return;
+    if (!activeFieldId || !siteConfig) return;
     if (editText !== activeFieldValue) {
+      // 保存先はここで決める。一覧の中身は config の一番上の配列（詳細ページが読む側）へ。
+      const t = resolveFieldTarget(siteConfig, activeFieldId);
+      const stored = t.toStored ? t.toStored(editText) : editText;
+
       setChanges((prev) => {
         const next = new Map(prev);
-        next.set(activeFieldId, { label: activeFieldId, oldValue: activeFieldValue, newValue: editText });
+        next.set(activeFieldId, {
+          label: activeFieldId,
+          oldValue: activeFieldValue,
+          newValue: stored,
+          path: t.path,
+        });
         return next;
       });
-      if (siteConfig) {
-        const updated = JSON.parse(JSON.stringify(siteConfig));
-        setNestedValue(updated, activeFieldId, editText);
-        setSiteConfig(updated);
-      }
+
+      // プレビューも同じ場所を書く（映るところと保存するところを1本にする）
+      const updated = JSON.parse(JSON.stringify(siteConfig));
+      setNestedValue(updated, t.path, stored);
+      setSiteConfig(updated);
     }
     setActiveFieldId(null);
     setEditText("");
@@ -581,22 +630,28 @@ export default function EditorPage() {
       const failed: Array<{ field: string; error: string }> = [];
       let applied = 0;
 
-      for (const [fieldId, c] of changes.entries()) {
+      for (const c of changes.values()) {
         if (c.newValue.startsWith("data:image/")) {
           const up = await uploadDataUrl(siteId, c.newValue);
           if (!up.ok) {
             failed.push({ field: fieldLabel(c.label), error: up.message });
             continue;
           }
-          setNestedValue(target, toConfigPath(fieldId), up.url);
+          setNestedValue(target, c.path, up.url);
         } else {
-          setNestedValue(target, toConfigPath(fieldId), c.newValue);
+          setNestedValue(target, c.path, c.newValue);
         }
         applied++;
       }
 
       if (sectionsChanged) {
         next.sections = sections;
+        applied++;
+      }
+
+      if (brandChanged) {
+        // 色は style.brand が正。style.colors も同じ色から作り直して食い違わせない
+        next.style = styleWithBrand(next.style, brandToColors(brand));
         applied++;
       }
 
@@ -608,6 +663,10 @@ export default function EditorPage() {
         setChanges(new Map());
         setSectionsChanged(false);
         setInitialSectionsJson(JSON.stringify(getSections(next)));
+        const savedBrand = brandFromConfig(next);
+        setBrand(savedBrand);
+        setInitialBrandJson(JSON.stringify(savedBrand));
+        setBrandChanged(false);
         setReviewing(false);
         if (failed.length) {
           toast({
@@ -645,7 +704,7 @@ export default function EditorPage() {
     }
     // refreshHistory / toast は依存に含めない（関数は下で安定）
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [changes, siteId, version, siteConfig, sectionsChanged, sections]);
+  }, [changes, siteId, version, siteConfig, sectionsChanged, sections, brandChanged, brand]);
 
   /* ── 履歴 ───────────────────────────── */
   function openHistory() {
@@ -671,8 +730,12 @@ export default function EditorPage() {
         const s = getSections(cfg);
         setSections(s);
         setInitialSectionsJson(JSON.stringify(s));
+        const restoredBrand = brandFromConfig(cfg);
+        setBrand(restoredBrand);
+        setInitialBrandJson(JSON.stringify(restoredBrand));
         setChanges(new Map());
         setSectionsChanged(false);
+        setBrandChanged(false);
         setHistoryOpen(false);
         toast({ title: "元に戻しました", description: `v${v} の内容をサイトに反映しました。`, tone: "success" });
         void refreshHistory();
@@ -826,7 +889,7 @@ export default function EditorPage() {
             <div className="hidden items-center gap-1 sm:flex">
               <button
                 type="button"
-                onClick={() => { cancelEdit(); setHistoryOpen(false); setShowFontMenu(false); setSectionsOpen((v) => !v); }}
+                onClick={() => { cancelEdit(); closePanels(); setSectionsOpen(true); }}
                 aria-pressed={sectionsOpen}
                 className={[
                   "inline-flex h-8 items-center gap-1.5 rounded-pill px-3 text-sm font-medium outline-none transition focus-visible:ring-2 focus-visible:ring-ring",
@@ -834,6 +897,17 @@ export default function EditorPage() {
                 ].join(" ")}
               >
                 <LayoutList className="size-4" aria-hidden /> 構成
+              </button>
+              <button
+                type="button"
+                onClick={() => { cancelEdit(); closePanels(); setBrandOpen(true); }}
+                aria-pressed={brandOpen}
+                className={[
+                  "inline-flex h-8 items-center gap-1.5 rounded-pill px-3 text-sm font-medium outline-none transition focus-visible:ring-2 focus-visible:ring-ring",
+                  brandOpen ? "bg-accent-soft text-ink" : "text-ink2 hover:bg-surface2 hover:text-ink",
+                ].join(" ")}
+              >
+                <Palette className="size-4" aria-hidden /> 色
               </button>
               <button
                 type="button"
@@ -1015,9 +1089,35 @@ export default function EditorPage() {
         onClose={() => setSectionsOpen(false)}
         side="right"
         title="ページの構成"
-        description="表示する内容と並び順を決めます。変更はすぐプレビューに映ります。"
+        description="表示する内容・並び順・見せ方を決めます。変更はすぐプレビューに映ります。"
       >
-        <SectionPanel sections={sections} onChange={handleSectionsChange} />
+        <SectionPanel
+          sections={sections}
+          onChange={handleSectionsChange}
+          templateId={templateId}
+          plan={plan}
+        />
+      </Sheet>
+
+      {/* ── 色（右から） ── */}
+      <Sheet
+        open={brandOpen && mode === "edit"}
+        onClose={() => setBrandOpen(false)}
+        side="right"
+        title="サイトの色"
+        description="代表カラーを決めると、見出し・地の色・線・ボタンまでこの色から作られます。"
+      >
+        <div className="flex flex-col gap-5">
+          <BrandPicker value={brand} onChange={handleBrandChange} columns="grid-cols-2 gap-2.5" />
+          <PaletteBoard
+            palette={buildPalette(resolveBrand(brandToColors(brand), templateId))}
+            chosen={!!brand.primary}
+            hasSubs={!!brand.sub1 || !!brand.sub2}
+          />
+          <p className="text-xs text-ink3">
+            変更はプレビューにすぐ映ります。サイトへ反映するには、右上の「反映する」を押してください。
+          </p>
+        </div>
       </Sheet>
 
       {/* ── 履歴（右から） ── */}
@@ -1097,7 +1197,20 @@ export default function EditorPage() {
                 <Check className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden />
                 <div>
                   <p className="text-sm font-medium">ページの構成</p>
-                  <p className="text-xs text-ink2">→ 並び順・表示の変更</p>
+                  <p className="text-xs text-ink2">→ 並び順・表示・見せ方の変更</p>
+                </div>
+              </li>
+            )}
+            {brandChanged && (
+              <li className="flex items-start gap-2 p-3">
+                <Check className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">サイトの色</p>
+                  <p className="flex items-center gap-1.5 text-xs text-ink2">
+                    →
+                    <span className="inline-block size-3 rounded-sm border border-line" style={{ background: brand.primary ?? "transparent" }} />
+                    <span className="tnum">{brand.primary}</span>
+                  </p>
                 </div>
               </li>
             )}

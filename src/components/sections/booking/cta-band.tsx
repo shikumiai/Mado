@@ -26,14 +26,14 @@ const CSS = `
   max-width: 50ch; }
 .bcb-acts { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px;
   margin-top: clamp(28px, 4vw, 40px); }
-.bcb-main { background: var(--tpl-primary); color: var(--tpl-on-primary); border-radius: 6px;
+.bcb-main, .ms a.bcb-main { background: var(--tpl-primary); color: var(--tpl-on-primary); border-radius: 6px;
   padding: 17px 34px; font-size: 15.5px; font-weight: 700; display: inline-flex; align-items: center;
   gap: 10px; transition: background 0.2s, gap 0.2s; }
-.bcb-main:hover { background: var(--tpl-primary-strong); gap: 14px; }
-.bcb-tel { display: inline-flex; align-items: center; gap: 10px; padding: 16px 28px; border-radius: 6px;
+.bcb-main:hover, .ms a.bcb-main:hover { background: var(--tpl-primary-strong); color: var(--tpl-on-primary); gap: 14px; }
+.bcb-tel, .ms a.bcb-tel { display: inline-flex; align-items: center; gap: 10px; padding: 16px 28px; border-radius: 6px;
   border: 1px solid var(--tpl-on-dark-line); color: var(--tpl-on-dark); font-size: 17px;
   font-weight: 600; transition: border-color 0.2s, background 0.2s; }
-.bcb-tel:hover { border-color: var(--tpl-primary-tint); background: var(--tpl-on-dark-fill); }
+.bcb-tel:hover, .ms a.bcb-tel:hover { border-color: var(--tpl-primary-tint); background: var(--tpl-on-dark-fill); }
 .bcb-note { font-size: 12.5px; line-height: 1.9; color: var(--tpl-on-dark-3); margin: 22px auto 0;
   max-width: 46ch; }
 `;

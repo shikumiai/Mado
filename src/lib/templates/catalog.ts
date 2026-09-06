@@ -20,6 +20,7 @@
 
 import type { Section, SectionType } from "@/lib/site-config-schema";
 import { normalizePlanId, type Plan } from "@/lib/stripe";
+import { TEMPLATE_BRAND_PRESETS } from "@/lib/palette";
 
 /* ═══════════════════════════════════════
    型
@@ -86,6 +87,16 @@ export function planAllows(plan: string | undefined | null, needs?: PlanId): boo
 }
 
 /* ═══════════════════════════════════════
+   初期色（正は src/lib/palette.ts）
+   ═══════════════════════════════════════ */
+
+/** テンプレートの初期色を palette.ts から引く（色の表は1か所に置く） */
+function preset(id: string): TemplatePalettePreset {
+  const b = TEMPLATE_BRAND_PRESETS[id] ?? TEMPLATE_BRAND_PRESETS["warm-craft"];
+  return { primary: b.primary, sub1: b.sub1 ?? b.primary, sub2: b.sub2 ?? b.primary };
+}
+
+/* ═══════════════════════════════════════
    10業種
    ═══════════════════════════════════════ */
 
@@ -96,8 +107,7 @@ export const TEMPLATES: TemplateDef[] = [
     name: "Warm Craft",
     industry: "工務店・リフォーム",
     tagline: "建てた家と、建てた人の顔で選んでもらう",
-    // クリーム × ブラウン × テラコッタ
-    palettePreset: { primary: "#BE5F38", sub1: "#A9764C", sub2: "#C77A46" },
+    palettePreset: preset("warm-craft"),
     sections: [
       { type: "hero", variant: "split", label: "メインビジュアル", id: "home" },
       { type: "strengths", variant: "cards", label: "選ばれる理由", id: "strengths" },
@@ -118,8 +128,7 @@ export const TEMPLATES: TemplateDef[] = [
     name: "Trust Navy",
     industry: "建設会社",
     tagline: "規模と実績を、数字と会社の姿で示す",
-    // ネイビー × ゴールド
-    palettePreset: { primary: "#1B3A5C", sub1: "#C8A96E", sub2: "#5C82AE" },
+    palettePreset: preset("trust-navy"),
     sections: [
       { type: "hero", variant: "full", label: "メインビジュアル", id: "home" },
       { type: "services", variant: "grid", label: "事業内容", id: "services", required: true },
@@ -139,8 +148,7 @@ export const TEMPLATES: TemplateDef[] = [
     name: "Clean Arch",
     industry: "設計事務所",
     tagline: "作品と考え方だけで、余白のまま見せる",
-    // 白 × ストーン × 黒
-    palettePreset: { primary: "#2B2B2B", sub1: "#C3BCAD", sub2: "#D8D3C8" },
+    palettePreset: preset("clean-arch"),
     sections: [
       { type: "hero", variant: "quiet", label: "メインビジュアル", id: "home" },
       { type: "works", variant: "quiet", label: "作品", id: "works", required: true },
@@ -158,8 +166,7 @@ export const TEMPLATES: TemplateDef[] = [
     name: "Saveur",
     industry: "飲食店",
     tagline: "品書きと店の空気で、今夜の一軒に選ばれる",
-    // 食欲を減退させない暖色（あたたかい朱 × 山吹 × こげ茶）
-    palettePreset: { primary: "#B23A2E", sub1: "#D9A441", sub2: "#7A5C3E" },
+    palettePreset: preset("saveur"),
     sections: [
       { type: "hero", variant: "full", label: "メインビジュアル", id: "home" },
       { type: "menu", variant: "tabs", label: "お品書き", id: "menu", required: true },
@@ -179,8 +186,7 @@ export const TEMPLATES: TemplateDef[] = [
     name: "Velvet",
     industry: "美容・サロン",
     tagline: "料金と担当者が先に分かるから、初めてでも入れる",
-    // 上品・落ち着き（ワイン × 生成りブラウン × 藤鼠）
-    palettePreset: { primary: "#7A2E45", sub1: "#C08A6A", sub2: "#A8899B" },
+    palettePreset: preset("velvet"),
     sections: [
       { type: "hero", variant: "statement", label: "メインビジュアル", id: "home" },
       { type: "menu", variant: "price-table", label: "メニュー・料金", id: "menu", required: true },
@@ -200,8 +206,7 @@ export const TEMPLATES: TemplateDef[] = [
     name: "Clarity",
     industry: "医療・クリニック",
     tagline: "診療時間と担当医が、迷わず見つかる",
-    // 清潔・信頼（青緑 × water × 砂金）
-    palettePreset: { primary: "#2E7D8C", sub1: "#6FB3BF", sub2: "#C6A15B" },
+    palettePreset: preset("clarity"),
     sections: [
       { type: "hero", variant: "split", label: "メインビジュアル", id: "home" },
       { type: "services", variant: "tabs", label: "診療案内", id: "departments", required: true },
@@ -221,8 +226,7 @@ export const TEMPLATES: TemplateDef[] = [
     name: "Credence",
     industry: "士業（税理士・行政書士ほか）",
     tagline: "扱う分野と料金を先に出して、相談の一歩を軽くする",
-    // 深色・堅実（都会のグレー × 金 × 錫）
-    palettePreset: { primary: "#3A4652", sub1: "#C9A227", sub2: "#7B8794" },
+    palettePreset: preset("credence"),
     sections: [
       { type: "hero", variant: "quiet", label: "メインビジュアル", id: "home" },
       { type: "services", variant: "list", label: "取扱分野", id: "services", required: true },
@@ -244,8 +248,7 @@ export const TEMPLATES: TemplateDef[] = [
     name: "Beacon",
     industry: "教育・スクール",
     tagline: "コースと月謝と合格実績を、そのまま並べる",
-    // 明るい信頼（青 × 陽だまりのオレンジ × 空）
-    palettePreset: { primary: "#2C5F7C", sub1: "#E8963A", sub2: "#7FA6C0" },
+    palettePreset: preset("beacon"),
     sections: [
       { type: "hero", variant: "statement", label: "メインビジュアル", id: "home" },
       { type: "menu", variant: "price-table", label: "コース", id: "courses", required: true },
@@ -267,8 +270,7 @@ export const TEMPLATES: TemplateDef[] = [
     name: "Forge",
     industry: "フィットネス・ジム",
     tagline: "プログラムと担当と料金を、一度に見せて体験へ運ぶ",
-    // 活力（朱 × 鉄紺 × 山吹）
-    palettePreset: { primary: "#C7472B", sub1: "#2A3138", sub2: "#E0A23C" },
+    palettePreset: preset("forge"),
     sections: [
       { type: "hero", variant: "window", label: "メインビジュアル", id: "home" },
       { type: "menu", variant: "price-table", label: "プログラム", id: "programs", required: true },
@@ -289,8 +291,7 @@ export const TEMPLATES: TemplateDef[] = [
     name: "Marche",
     industry: "小売・店舗",
     tagline: "商品と入荷と地図で、今日そこへ行く理由をつくる",
-    // 温かい市場（柿 × 若竹 × 山吹）
-    palettePreset: { primary: "#C45B28", sub1: "#2E6B4A", sub2: "#D9A441" },
+    palettePreset: preset("marche"),
     sections: [
       { type: "hero", variant: "window", label: "メインビジュアル", id: "home" },
       { type: "menu", variant: "photo-cards", label: "商品", id: "items", required: true },
@@ -372,4 +373,29 @@ export function findSectionDef(
 /** その業種で欠かせない機能（設計書の★）の一覧 */
 export function requiredSectionsOf(templateId: string | undefined | null): TemplateSectionDef[] {
   return getTemplateOrDefault(templateId).sections.filter((s) => s.required);
+}
+
+/* ═══════════════════════════════════════
+   昔の種類名の読み替え
+   ═══════════════════════════════════════ */
+
+/**
+ * v2 までの site.config.json はこの名前でセクションを持っている。
+ * 保存されたままの config でも今の部品で描けるように、機能と見せ方へ読み替える。
+ * 描画（SectionsRenderer）と編集（保存先の割り出し）の両方がここを見る。
+ */
+export const LEGACY_SECTIONS: Record<string, { type: SectionType; variant: string }> = {
+  about: { type: "company", variant: "table-message-history" },
+  stats: { type: "voices", variant: "stats-band" },
+  testimonials: { type: "voices", variant: "bubbles" },
+  awards: { type: "voices", variant: "quotes-list" },
+  recruit: { type: "staff", variant: "list" },
+  gallery: { type: "works", variant: "masonry" },
+  pricing: { type: "menu", variant: "price-table" },
+  info: { type: "access", variant: "map-table" },
+};
+
+/** 昔の種類名を今の機能名に直す */
+export function normalizeSectionType(type: string): SectionType {
+  return (LEGACY_SECTIONS[type]?.type ?? type) as SectionType;
 }

@@ -24,17 +24,17 @@ const CSS = `
 .cbd-h { font-size: clamp(1.4rem, 3.4vw, 2.3rem); line-height: 1.3; color: var(--tpl-on-dark); margin: 0; }
 .cbd-lead { font-size: 14.5px; line-height: 2; color: var(--tpl-on-dark-2); margin: 16px 0 0; max-width: 46ch; }
 .cbd-acts { display: grid; gap: 14px; justify-items: stretch; min-width: min(320px, 100%); }
-.cbd-tel { display: flex; align-items: center; gap: 12px; padding: 18px 24px; border-radius: 6px;
+.cbd-tel, .ms a.cbd-tel { display: flex; align-items: center; gap: 12px; padding: 18px 24px; border-radius: 6px;
   border: 1px solid var(--tpl-on-dark-line); background: var(--tpl-on-dark-fill);
   color: var(--tpl-on-dark); transition: border-color 0.2s, background 0.2s; }
-.cbd-tel:hover { border-color: var(--tpl-primary-tint); background: var(--tpl-on-dark-fill-2); }
+.cbd-tel:hover, .ms a.cbd-tel:hover { border-color: var(--tpl-primary-tint); background: var(--tpl-on-dark-fill-2); }
 .cbd-tel small { display: block; font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em;
   color: var(--tpl-on-dark-3); margin-bottom: 4px; }
 .cbd-tel b { font-size: 21px; font-weight: 600; letter-spacing: 0.01em; }
-.cbd-btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+.cbd-btn, .ms a.cbd-btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px;
   background: var(--tpl-primary); color: var(--tpl-on-primary); border-radius: 6px; padding: 17px 28px;
   font-size: 15px; font-weight: 700; transition: background 0.2s, gap 0.2s; }
-.cbd-btn:hover { background: var(--tpl-primary-strong); gap: 14px; }
+.cbd-btn:hover, .ms a.cbd-btn:hover { background: var(--tpl-primary-strong); color: var(--tpl-on-primary); gap: 14px; }
 .cbd-mail { font-size: 12.5px; color: var(--tpl-on-dark-3); display: flex; align-items: center; gap: 8px;
   justify-content: center; }
 .cbd-mail a { color: var(--tpl-on-dark-2); border-bottom: 1px solid var(--tpl-on-dark-line); }

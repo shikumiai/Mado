@@ -431,10 +431,31 @@ export function paletteToCssVars(p: Palette): Record<string, string> {
    テンプレートの初期色（お客さんが色を選んでいないときはこれ）
    ═══════════════════════════════════════ */
 
+/**
+ * 10業種テンプレートの初期色。ここが色の正で、
+ * src/lib/templates/catalog.ts の palettePreset はこの表を引いている。
+ */
 export const TEMPLATE_BRAND_PRESETS: Record<string, BrandColors> = {
+  // クリーム × ブラウン × テラコッタ
   "warm-craft": { primary: "#BE5F38", sub1: "#A9764C", sub2: "#C77A46" },
+  // ネイビー × ゴールド
   "trust-navy": { primary: "#1B3A5C", sub1: "#C8A96E", sub2: "#5C82AE" },
+  // 白 × ストーン × 黒
   "clean-arch": { primary: "#2B2B2B", sub1: "#C3BCAD", sub2: "#D8D3C8" },
+  // 食欲を減退させない暖色（あたたかい朱 × 山吹 × こげ茶）
+  saveur: { primary: "#B23A2E", sub1: "#D9A441", sub2: "#7A5C3E" },
+  // 上品・落ち着き（ワイン × 生成りブラウン × 藤鼠）
+  velvet: { primary: "#7A2E45", sub1: "#C08A6A", sub2: "#A8899B" },
+  // 清潔・信頼（青緑 × water × 砂金）
+  clarity: { primary: "#2E7D8C", sub1: "#6FB3BF", sub2: "#C6A15B" },
+  // 深色・堅実（都会のグレー × 金 × 錫）
+  credence: { primary: "#3A4652", sub1: "#C9A227", sub2: "#7B8794" },
+  // 明るい信頼（青 × 陽だまりのオレンジ × 空）
+  beacon: { primary: "#2C5F7C", sub1: "#E8963A", sub2: "#7FA6C0" },
+  // 活力（朱 × 鉄紺 × 山吹）
+  forge: { primary: "#C7472B", sub1: "#2A3138", sub2: "#E0A23C" },
+  // 温かい市場（柿 × 若竹 × 山吹）
+  marche: { primary: "#C45B28", sub1: "#2E6B4A", sub2: "#D9A441" },
 };
 
 /** warm-craft-pro → warm-craft のように系統名へ丸める */
@@ -464,6 +485,43 @@ export function resolveBrand(
     sub1: normalizeHex(brand?.sub1) || undefined,
     sub2: normalizeHex(brand?.sub2) || undefined,
   };
+}
+
+/* ═══════════════════════════════════════
+   選んだ色を style に書き込む
+   ═══════════════════════════════════════ */
+
+/**
+ * site.config.json の style に、選んだ色を入れて返す。
+ * 正（テンプレートが読むところ）は style.brand。style.colors は前からある項目なので、
+ * 同じ色から作った値で埋めて食い違わせない。
+ * 代表カラーが無ければ何も足さない＝テンプレートの初期色のまま。
+ *
+ * 申し込み（generateSiteConfig）と編集画面の「色を変える」で同じものを使う。
+ */
+export function styleWithBrand<T extends object>(
+  style: T,
+  brand: Partial<BrandColors> | null | undefined,
+): T {
+  const primary = normalizeHex(brand?.primary);
+  if (!primary) return style;
+
+  const sub1 = normalizeHex(brand?.sub1) || undefined;
+  const sub2 = normalizeHex(brand?.sub2) || undefined;
+  const p = buildPalette({ primary, sub1, sub2 });
+
+  return {
+    ...style,
+    brand: { primary, ...(sub1 ? { sub1 } : {}), ...(sub2 ? { sub2 } : {}) },
+    colors: {
+      primary: p.primary,
+      accent: p.sub1,
+      background: p.bg,
+      text: p.ink,
+      textMuted: p.ink2,
+      border: p.line,
+    },
+  } as T;
 }
 
 /* ═══════════════════════════════════════
@@ -504,12 +562,16 @@ export function brandToQuery(brand: Partial<BrandColors> | null | undefined): st
   return parts.join("&");
 }
 
-/** テンプレートのプレビューURL（色つき） */
+/**
+ * テンプレートのプレビューURL（色つき・プランつき）。
+ * plan を渡すと、そのプランで見えるセクションだけのサイトが出る。
+ */
 export function templatePreviewUrl(
   templateId: string,
   brand?: Partial<BrandColors> | null,
+  plan?: string | null,
 ): string {
-  const q = brandToQuery(brand);
+  const q = [brandToQuery(brand), plan ? `plan=${plan}` : ""].filter(Boolean).join("&");
   return `/portfolio-templates/${templateId}${q ? `?${q}` : ""}`;
 }
 

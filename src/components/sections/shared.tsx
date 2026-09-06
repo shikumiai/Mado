@@ -39,7 +39,10 @@ export const BASE_CSS = `
   font-family: var(--font-sans), "Noto Sans JP", system-ui, sans-serif; color: var(--tpl-ink2);
   background: var(--tpl-bg); }
 .ms *, .ms *::before, .ms *::after { box-sizing: border-box; }
-.ms a { color: inherit; text-decoration: none; }
+/* リンクの既定色は文章に合わせる。:where() で重みを持たせないので、
+   ボタンなど自分で色を持つ部品の指定が必ず勝つ（塗りと同系色の文字にならない） */
+.ms :where(a) { color: inherit; }
+.ms a { text-decoration: none; }
 .ms :focus-visible { outline: 2px solid var(--tpl-primary); outline-offset: 3px; border-radius: 3px; }
 .ms img { max-width: 100%; }
 .ms p { margin: 0; }
@@ -61,10 +64,12 @@ export const BASE_CSS = `
 .ms-btn { display: inline-flex; align-items: center; gap: 8px; padding: 14px 26px; border-radius: 6px;
   font-size: 14px; font-weight: 700; border: 1px solid transparent; cursor: pointer; font-family: inherit;
   transition: background 0.2s, color 0.2s, border-color 0.2s, gap 0.2s; }
-.ms-btn-fill { background: var(--tpl-primary); color: var(--tpl-on-primary); }
-.ms-btn-fill:hover { background: var(--tpl-primary-strong); }
-.ms-btn-line { border-color: var(--tpl-line-strong); color: var(--tpl-ink); background: transparent; }
-.ms-btn-line:hover { border-color: var(--tpl-primary); color: var(--tpl-primary); }
+/* 主色で塗るボタン。文字は必ず var(--tpl-on-primary)（塗りの上で読める色）。
+   a 要素にも同じ色が乗るよう、リンク用の指定も並べて書く。hover は塗りだけ変える */
+.ms-btn-fill, .ms a.ms-btn-fill { background: var(--tpl-primary); color: var(--tpl-on-primary); }
+.ms-btn-fill:hover, .ms a.ms-btn-fill:hover { background: var(--tpl-primary-strong); color: var(--tpl-on-primary); }
+.ms-btn-line, .ms a.ms-btn-line { border-color: var(--tpl-line-strong); color: var(--tpl-ink); background: transparent; }
+.ms-btn-line:hover, .ms a.ms-btn-line:hover { border-color: var(--tpl-primary); color: var(--tpl-primary); }
 .ms-btn-text { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700;
   color: var(--tpl-primary); background: none; border: 0; padding: 0; cursor: pointer; font-family: inherit;
   transition: gap 0.2s; }

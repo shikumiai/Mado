@@ -36,10 +36,10 @@ const CSS = `
 .bsc-open { background: var(--tpl-primary-soft); color: var(--tpl-primary); }
 .bsc-few { background: var(--tpl-sub1-soft); color: var(--tpl-sub1); }
 .bsc-full { background: var(--tpl-muted-fill); color: var(--tpl-ink3); }
-.bsc-apply { display: inline-flex; align-items: center; gap: 7px; padding: 11px 20px; border-radius: 5px;
+.bsc-apply, .ms a.bsc-apply { display: inline-flex; align-items: center; gap: 7px; padding: 11px 20px; border-radius: 5px;
   background: var(--tpl-primary); color: var(--tpl-on-primary); font-size: 13.5px; font-weight: 700;
   white-space: nowrap; transition: background 0.2s, gap 0.2s; }
-.bsc-apply:hover { background: var(--tpl-primary-strong); gap: 11px; }
+.bsc-apply:hover, .ms a.bsc-apply:hover { background: var(--tpl-primary-strong); color: var(--tpl-on-primary); gap: 11px; }
 .bsc-foot { max-width: 1000px; margin: clamp(24px, 3vw, 34px) auto 0; padding-top: 16px;
   border-top: 1px solid var(--tpl-line); display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
 .bsc-foot .ms-note { margin-right: auto; max-width: 52ch; }
