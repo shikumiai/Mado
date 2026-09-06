@@ -838,7 +838,7 @@ export default function StartPage() {
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="min-h-screen bg-bg text-ink">
+      <div data-mado-marketing className="min-h-screen bg-bg text-ink">
         {/* ヘッダー */}
         <header className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-4">
           <Link href="/" aria-label="トップへ" className="flex items-center gap-2.5 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring">

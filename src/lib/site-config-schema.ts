@@ -279,12 +279,31 @@ export type SectionType =
   | "staff"          // スタッフ紹介（美容・医療等）
   | "pricing"        // 料金表（士業・サービス業等）
   | "info"           // 店舗情報・地図（店舗型ビジネス）
-  | "contact";       // お問い合わせ
+  | "contact"        // お問い合わせ
+  // ── v3 の機能カタログで足した種類（旧い名前もそのまま残す） ──
+  | "voices"         // お客様の声・実績数値（旧 testimonials / stats）
+  | "flow"           // ご利用・相談・受診の流れ
+  | "faq"            // よくある質問
+  | "access"         // アクセス・営業/診療時間・地図（旧 info）
+  | "company";       // 会社概要・代表挨拶・沿革（旧 about）
 
 export interface Section {
   type: SectionType;
   visible: boolean;
   label: string;              // エディタ表示名（「施工実績」「会社案内」等）
+  /**
+   * 見せ方。同じ機能でもレイアウトの型を選べる（v3）。
+   * 例: works の "grid" / "masonry" / "feature-list" / "showcase" / "quiet"。
+   * 未指定・知らない名前なら、その機能の既定の見せ方で描く。
+   */
+  variant?: string;
+  /**
+   * そのセクションのデータ。無ければ config の同じ項目（projects / strengths …）を使う。
+   * 中身の形は src/components/sections/types.ts の *Data を参照。
+   */
+  data?: Record<string, unknown>;
+  /** アンカー。ページ内リンクの飛び先（未指定なら type を使う） */
+  id?: string;
 }
 
 /* ═══════════════════════════════════════
