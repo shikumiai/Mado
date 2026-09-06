@@ -290,7 +290,20 @@ export interface Section {
 /* ═══════════════════════════════════════
    スタイル設定
    ═══════════════════════════════════════ */
+/**
+ * お客さんが選んだ色。代表カラー1つ＋サブ最大2つ。
+ * ここが空なら、テンプレートの初期色で描く（古い config でも壊れない）。
+ * 実際に使う色一式は src/lib/palette.ts がここから組み立てる。
+ */
+export interface BrandStyle {
+  primary: string;            // 代表カラー #C05A2E
+  sub1?: string;              // サブ1
+  sub2?: string;              // サブ2
+}
+
 export interface StyleConfig {
+  /** 選んだ色（無ければテンプレートの初期色） */
+  brand?: BrandStyle;
   colors: {
     primary: string;          // #7BA23F
     accent: string;           // #D4A76A

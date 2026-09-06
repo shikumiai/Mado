@@ -33,6 +33,8 @@ export interface SignupInput {
   industry?: string;
   templateId: string;
   slug: string;
+  /** 申し込み画面で選んだ色（代表カラー＋サブ最大2つ）。無ければテンプレートの初期色 */
+  brand?: { primary?: string; sub1?: string; sub2?: string };
 }
 
 export type SlugAvailability =
@@ -120,6 +122,7 @@ export async function createFreeSite(input: SignupInput): Promise<CreateFreeResu
     industry: input.industry || "other",
     templateId: input.templateId,
     siteSlug: check.slug,
+    brand: input.brand,
   });
 
   // ログイン中の本人として呼ぶ。関数の中で auth.uid() が効く
@@ -189,6 +192,7 @@ export async function startPaidCheckout(input: SignupInput): Promise<PaidCheckou
     industry: input.industry || "other",
     templateId: input.templateId,
     siteSlug: check.slug,
+    brand: input.brand,
   });
 
   // 枠を pending / draft で先に押さえる

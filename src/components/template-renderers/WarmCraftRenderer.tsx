@@ -7,30 +7,46 @@ import {
 } from "lucide-react";
 import type { SiteConfig } from "@/lib/site-config-schema";
 import { getSections } from "@/lib/site-config-schema";
+import { TplRoot, useConfigPalette, useTplPalette } from "./TplPalette";
 
 /**
  * warm-craft テンプレートの描画コンポーネント（工務店・リフォーム向け）
  *
- * 木のぬくもり（クリーム × ブラウン × テラコッタ）の固定パレット。
- * sections配列の順序でセクションを描く。色はテンプレート内で固定し、
- * アプリのダークモードに引きずられない。会社情報は全て config から差し込む。
+ * 色はお客さんが選んだ代表カラー＋サブから作る（src/lib/palette.ts）。
+ * 選んでいなければ、木のぬくもり（クリーム × ブラウン × テラコッタ）の初期色。
+ * 地・見出し・帯・線・ボタン・SVG の絵まで、全部その1組の色から塗るので、
+ * 色をひとつ変えるとページ全体が同じ雰囲気のまま塗り替わる。
+ * sections配列の順序でセクションを描く。会社情報は全て config から差し込む。
  */
 
-/* ─── 固定パレット ─── */
-const CREAM = "#FBF7F0";
-const CREAM_DEEP = "#F3EADD";
-const BROWN = "#453222";
-const BROWN_MID = "#7A6752";
-const TERRA = "#BE5F38";
-const WOOD = "#A07850";
-const INK_FOOT = "#332417";
+/**
+ * このテンプレートでの色の割り当て。
+ * 昔の固定パレットと同じ名前にして、絵や文字の描き方は変えていない。
+ */
+function useWc() {
+  const p = useTplPalette();
+  return {
+    CREAM: p.bg,             // 地
+    CREAM_DEEP: p.bgDeep,    // ひとつ濃い段
+    BROWN: p.ink,            // 見出し・線
+    BROWN_MID: p.ink2,       // 本文
+    TERRA: p.primary,        // 代表カラー（CTA・差し色）
+    WOOD: p.inkSoft,         // 装飾の中間色
+    SURFACE: p.surface,      // 面（カード・壁）
+    LINE: p.line,
+    LINE_STRONG: p.lineStrong,
+    MUTED: p.mutedFill,
+    GLOW1: p.glow1,          // 窓あかり（明）
+    GLOW2: p.glow2,          // 窓あかり（暗）
+    SUB1: p.sub1,
+    TINT: p.primaryTint,   // 濃地の上に置く淡い差し色
+    ROOF_TONES: p.tones,     // 屋根の描き分け
+  };
+}
 
 const ICON_MAP: Record<string, typeof Home> = {
   Home, Hammer, Shield, Users, Ruler, HardHat, Leaf, Heart,
 };
-
-/* 施工写真の枠に使う屋根トーン（実写が来たら差し替わる。木・土の暖色） */
-const ROOF_TONES = ["#C0603A", "#B0542E", "#A9764C", "#C77A46"];
 
 /* 見出しフォント（温かみ重視＝Zen Kaku Gothic。未読込でも安全にフォールバック） */
 const HEAD = "var(--font-gothic-zen), 'Zen Kaku Gothic New', 'Noto Sans JP', sans-serif";
@@ -90,18 +106,19 @@ function Eyebrow({ en, ja }: { en: string; ja: string }) {
 
 /* ─── 施工写真の枠（実写が来るまで、暖色の建築ラインアートで“完成”させる） ─── */
 function HouseArt({ seed, category }: { seed: number; category?: string }) {
+  const { CREAM_DEEP, BROWN, TERRA, WOOD, SURFACE, LINE, MUTED, GLOW1, GLOW2, ROOF_TONES } = useWc();
   const u = `wcw${seed}`;
   const reform = (category || "").includes("リフォーム") || (category || "").includes("改装");
   const roof = ROOF_TONES[seed % ROOF_TONES.length];
   const lit = seed % 3 !== 0; // 窓に灯りを入れるか
-  const winFill = lit ? `url(#${u}win)` : "#DCE6E4";
+  const winFill = lit ? `url(#${u}win)` : MUTED;
   return (
     <svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" style={{ width: "100%", height: "100%", display: "block" }} xmlns="http://www.w3.org/2000/svg" aria-hidden>
       <defs>
         <linearGradient id={`${u}bg`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#FCF7EE" />
+          <stop offset="0%" stopColor={SURFACE} />
           <stop offset="58%" stopColor={CREAM_DEEP} />
-          <stop offset="100%" stopColor="#E9DDC8" />
+          <stop offset="100%" stopColor={LINE} />
         </linearGradient>
         <radialGradient id={`${u}sun`} cx="78%" cy="16%" r="60%">
           <stop offset="0%" stopColor={TERRA} stopOpacity="0.26" />
@@ -109,8 +126,8 @@ function HouseArt({ seed, category }: { seed: number; category?: string }) {
           <stop offset="100%" stopColor={TERRA} stopOpacity="0" />
         </radialGradient>
         <radialGradient id={`${u}win`} cx="50%" cy="38%" r="72%">
-          <stop offset="0%" stopColor="#FDDDA6" />
-          <stop offset="100%" stopColor="#E9A85C" />
+          <stop offset="0%" stopColor={GLOW1} />
+          <stop offset="100%" stopColor={GLOW2} />
         </radialGradient>
         <pattern id={`${u}grid`} width="25" height="25" patternUnits="userSpaceOnUse">
           <path d="M25 0H0V25" fill="none" stroke={BROWN} strokeOpacity="0.055" strokeWidth="1" />
@@ -145,7 +162,7 @@ function HouseArt({ seed, category }: { seed: number; category?: string }) {
       {/* 屋根 */}
       <polygon points="138,152 225,98 312,152" fill={roof} fillOpacity="0.92" stroke={BROWN} strokeWidth="2.6" strokeLinejoin="round" />
       {/* 壁 */}
-      <rect x="152" y="152" width="146" height="114" fill="#FFFDF8" fillOpacity="0.94" stroke={BROWN} strokeWidth="2.6" />
+      <rect x="152" y="152" width="146" height="114" fill={SURFACE} fillOpacity="0.94" stroke={BROWN} strokeWidth="2.6" />
       {/* 上階の窓 */}
       <g stroke={BROWN} strokeWidth="2">
         <rect x="168" y="168" width="42" height="34" rx="2" fill={winFill} />
@@ -156,7 +173,7 @@ function HouseArt({ seed, category }: { seed: number; category?: string }) {
       {/* 掃き出し窓・ドア */}
       <rect x="164" y="220" width="34" height="46" rx="2" fill={winFill} stroke={BROWN} strokeWidth="2" />
       <rect x="207" y="214" width="36" height="52" rx="2" fill={TERRA} fillOpacity="0.88" stroke={BROWN} strokeWidth="2" />
-      <circle cx="236" cy="242" r="2.6" fill="#FFFDF8" />
+      <circle cx="236" cy="242" r="2.6" fill={SURFACE} />
       <rect x="252" y="220" width="34" height="46" rx="2" fill={winFill} stroke={BROWN} strokeWidth="2" />
       {/* 額縁（枠として成立させる） */}
       <rect x="6" y="6" width="388" height="288" rx="4" fill="none" stroke={BROWN} strokeOpacity="0.14" strokeWidth="1.5" />
@@ -168,6 +185,7 @@ function HouseArt({ seed, category }: { seed: number; category?: string }) {
    Hero
    ═══════════════════════════════════════ */
 function HeroSection({ config, ep }: { config: SiteConfig; ep: EP }) {
+  const { CREAM_DEEP, BROWN, TERRA, WOOD, SURFACE, LINE, GLOW1, GLOW2 } = useWc();
   const c = config.company;
   return (
     <section className="wc-hero">
@@ -188,18 +206,18 @@ function HeroSection({ config, ep }: { config: SiteConfig; ep: EP }) {
         <svg viewBox="0 0 500 460" preserveAspectRatio="xMidYMid slice" style={{ width: "100%", height: "100%", display: "block" }} xmlns="http://www.w3.org/2000/svg" aria-hidden>
           <defs>
             <linearGradient id="wcHeroBg" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#FDF8EF" />
+              <stop offset="0%" stopColor={SURFACE} />
               <stop offset="55%" stopColor={CREAM_DEEP} />
-              <stop offset="100%" stopColor="#E7DBC5" />
+              <stop offset="100%" stopColor={LINE} />
             </linearGradient>
             <radialGradient id="wcHeroSun" cx="26%" cy="20%" r="52%">
-              <stop offset="0%" stopColor="#FBE3B4" stopOpacity="0.85" />
+              <stop offset="0%" stopColor={GLOW1} stopOpacity="0.85" />
               <stop offset="45%" stopColor={TERRA} stopOpacity="0.12" />
               <stop offset="100%" stopColor={TERRA} stopOpacity="0" />
             </radialGradient>
             <radialGradient id="wcHeroWin" cx="50%" cy="40%" r="72%">
-              <stop offset="0%" stopColor="#FDDDA6" />
-              <stop offset="100%" stopColor="#E9A85C" />
+              <stop offset="0%" stopColor={GLOW1} />
+              <stop offset="100%" stopColor={GLOW2} />
             </radialGradient>
             <pattern id="wcHeroGrid" width="28" height="28" patternUnits="userSpaceOnUse">
               <path d="M28 0H0V28" fill="none" stroke={BROWN} strokeOpacity="0.05" strokeWidth="1" />
@@ -210,8 +228,8 @@ function HeroSection({ config, ep }: { config: SiteConfig; ep: EP }) {
           <rect width="500" height="460" fill="url(#wcHeroSun)" />
           {/* 窓から差す光 */}
           <g opacity="0.5">
-            <polygon points="70,0 150,0 90,300 40,300" fill="#FBE3B4" opacity="0.35" />
-            <polygon points="150,0 200,0 150,300 110,300" fill="#FBE3B4" opacity="0.22" />
+            <polygon points="70,0 150,0 90,300 40,300" fill={GLOW1} opacity="0.35" />
+            <polygon points="150,0 200,0 150,300 110,300" fill={GLOW1} opacity="0.22" />
           </g>
           {/* 遠景の丘 */}
           <path d="M0 330 Q140 292 300 320 T500 306 V460 H0 Z" fill={WOOD} opacity="0.16" />
@@ -225,7 +243,7 @@ function HeroSection({ config, ep }: { config: SiteConfig; ep: EP }) {
           {/* 家 */}
           <rect x="248" y="150" width="30" height="60" fill={TERRA} stroke={BROWN} strokeWidth="3" />
           <polygon points="196,214 320,120 444,214" fill={TERRA} fillOpacity="0.9" stroke={BROWN} strokeWidth="3.2" strokeLinejoin="round" />
-          <rect x="214" y="214" width="208" height="158" fill="#FFFDF8" fillOpacity="0.95" stroke={BROWN} strokeWidth="3.2" />
+          <rect x="214" y="214" width="208" height="158" fill={SURFACE} fillOpacity="0.95" stroke={BROWN} strokeWidth="3.2" />
           <g stroke={BROWN} strokeWidth="2.4">
             <rect x="236" y="238" width="56" height="46" rx="2" fill="url(#wcHeroWin)" />
             <line x1="264" y1="238" x2="264" y2="284" strokeWidth="1.6" />
@@ -235,7 +253,7 @@ function HeroSection({ config, ep }: { config: SiteConfig; ep: EP }) {
             <line x1="344" y1="261" x2="400" y2="261" strokeWidth="1.6" />
           </g>
           <rect x="296" y="300" width="44" height="72" rx="2" fill={TERRA} fillOpacity="0.88" stroke={BROWN} strokeWidth="2.6" />
-          <circle cx="332" cy="338" r="3.2" fill="#FFFDF8" />
+          <circle cx="332" cy="338" r="3.2" fill={SURFACE} />
           {/* 前景の草 */}
           <g stroke={WOOD} strokeOpacity="0.55" strokeWidth="2.4" strokeLinecap="round">
             <line x1="120" y1="400" x2="120" y2="384" /><line x1="130" y1="400" x2="134" y2="386" /><line x1="110" y1="400" x2="106" y2="388" />
@@ -252,6 +270,7 @@ function HeroSection({ config, ep }: { config: SiteConfig; ep: EP }) {
    Works（施工実績）
    ═══════════════════════════════════════ */
 function WorksSection({ config, ep }: { config: SiteConfig; ep: EP }) {
+  const { CREAM } = useWc();
   const projects = config.projects || [];
   if (projects.length === 0) return null;
   return (
@@ -291,6 +310,7 @@ function WorksSection({ config, ep }: { config: SiteConfig; ep: EP }) {
    Strengths（私たちの強み）
    ═══════════════════════════════════════ */
 function StrengthsSection({ config, ep }: { config: SiteConfig; ep: EP }) {
+  const { CREAM_DEEP } = useWc();
   const strengths = config.strengths || [];
   if (strengths.length === 0) return null;
   return (
@@ -320,6 +340,7 @@ function StrengthsSection({ config, ep }: { config: SiteConfig; ep: EP }) {
    About（会社案内 / 代表挨拶）
    ═══════════════════════════════════════ */
 function AboutSection({ config, ep }: { config: SiteConfig; ep: EP }) {
+  const { CREAM, CREAM_DEEP, BROWN, WOOD, SURFACE, GLOW1 } = useWc();
   const c = config.company;
   return (
     <section id="about" className="wc-sec" style={{ background: CREAM }}>
@@ -333,17 +354,17 @@ function AboutSection({ config, ep }: { config: SiteConfig; ep: EP }) {
                   <svg viewBox="0 0 320 380" preserveAspectRatio="xMidYMid slice" style={{ width: "100%", height: "100%", display: "block" }} xmlns="http://www.w3.org/2000/svg" aria-hidden>
                     <defs>
                       <linearGradient id="wcCeoBg" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#FBF3E7" />
+                        <stop offset="0%" stopColor={SURFACE} />
                         <stop offset="100%" stopColor={CREAM_DEEP} />
                       </linearGradient>
                       <radialGradient id="wcCeoLight" cx="64%" cy="28%" r="62%">
-                        <stop offset="0%" stopColor="#FBE3B4" stopOpacity="0.7" />
-                        <stop offset="100%" stopColor="#FBE3B4" stopOpacity="0" />
+                        <stop offset="0%" stopColor={GLOW1} stopOpacity="0.7" />
+                        <stop offset="100%" stopColor={GLOW1} stopOpacity="0" />
                       </radialGradient>
                     </defs>
                     <rect width="320" height="380" fill="url(#wcCeoBg)" />
                     {/* 背景の窓 */}
-                    <rect x="186" y="42" width="98" height="122" rx="3" fill="#FFFDF8" fillOpacity="0.6" stroke={BROWN} strokeOpacity="0.15" strokeWidth="2" />
+                    <rect x="186" y="42" width="98" height="122" rx="3" fill={SURFACE} fillOpacity="0.6" stroke={BROWN} strokeOpacity="0.15" strokeWidth="2" />
                     <line x1="235" y1="42" x2="235" y2="164" stroke={BROWN} strokeOpacity="0.12" strokeWidth="1.5" />
                     <line x1="186" y1="103" x2="284" y2="103" stroke={BROWN} strokeOpacity="0.12" strokeWidth="1.5" />
                     <rect width="320" height="380" fill="url(#wcCeoLight)" />
@@ -388,6 +409,7 @@ function AboutSection({ config, ep }: { config: SiteConfig; ep: EP }) {
    Testimonials（お客様の声）
    ═══════════════════════════════════════ */
 function TestimonialsSection({ config, ep }: { config: SiteConfig; ep: EP }) {
+  const { CREAM_DEEP, TERRA, LINE_STRONG } = useWc();
   const items = config.testimonials || [];
   if (items.length === 0) return null;
   return (
@@ -400,7 +422,7 @@ function TestimonialsSection({ config, ep }: { config: SiteConfig; ep: EP }) {
               <div className="wc-voice-card">
                 <div className="wc-stars">
                   {Array.from({ length: 5 }).map((_, s) => (
-                    <Star key={s} size={15} fill={s < (t.rating || 5) ? TERRA : "none"} color={s < (t.rating || 5) ? TERRA : "#D8CBBB"} />
+                    <Star key={s} size={15} fill={s < (t.rating || 5) ? TERRA : "none"} color={s < (t.rating || 5) ? TERRA : LINE_STRONG} />
                   ))}
                 </div>
                 <p className="wc-voice-text">「{t.text}」</p>
@@ -418,6 +440,7 @@ function TestimonialsSection({ config, ep }: { config: SiteConfig; ep: EP }) {
    News（お知らせ）
    ═══════════════════════════════════════ */
 function NewsSection({ config, ep }: { config: SiteConfig; ep: EP }) {
+  const { CREAM } = useWc();
   const news = config.news || [];
   if (news.length === 0) return null;
   return (
@@ -444,6 +467,7 @@ function NewsSection({ config, ep }: { config: SiteConfig; ep: EP }) {
    Booking（見学会・イベント予約）
    ═══════════════════════════════════════ */
 function BookingSection({ config }: { config: SiteConfig; ep: EP }) {
+  const { CREAM_DEEP } = useWc();
   const events = config.bookingEvents || [];
   if (events.length === 0) return null;
   return (
@@ -475,13 +499,14 @@ function BookingSection({ config }: { config: SiteConfig; ep: EP }) {
    Contact（お問い合わせ）
    ═══════════════════════════════════════ */
 function ContactSection({ config, ep }: { config: SiteConfig; ep: EP }) {
+  const { TERRA, TINT } = useWc();
   const c = config.company;
   const [sent, setSent] = useState(false);
   return (
     <section id="contact" className="wc-sec wc-contact">
       <div className="wc-wrap" style={{ maxWidth: 760 }}>
         <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <p className="wc-eyebrow-en" style={{ color: "#E8C4AE" }}>CONTACT</p>
+          <p className="wc-eyebrow-en" style={{ color: TINT }}>CONTACT</p>
           <h2 className="wc-contact-title">お気軽にご相談ください</h2>
           <p className="wc-contact-sub">お見積もり・ご相談は無料です。小さなことでもお問い合わせください。</p>
         </div>
@@ -497,7 +522,7 @@ function ContactSection({ config, ep }: { config: SiteConfig; ep: EP }) {
           <div className="wc-thanks">
             <div className="wc-thanks-icon"><Check size={22} color={TERRA} /></div>
             <p className="wc-thanks-title">ありがとうございます</p>
-            <p className="wc-contact-sub" style={{ color: "rgba(255,255,255,0.7)" }}>2〜3営業日以内にご連絡いたします。</p>
+            <p className="wc-contact-sub" style={{ color: "var(--tpl-on-dark-2)" }}>2〜3営業日以内にご連絡いたします。</p>
           </div>
         ) : (
           <form className="wc-form" onSubmit={(e) => { e.preventDefault(); setSent(true); }}>
@@ -532,12 +557,12 @@ const SECTION_COMPONENTS: Record<string, (props: { config: SiteConfig; ep: EP })
    スコープCSS
    ═══════════════════════════════════════ */
 const STYLES = `
-.wc-root { font-family: 'Noto Sans JP', system-ui, sans-serif; color: ${BROWN}; background: ${CREAM}; }
+.wc-root { font-family: 'Noto Sans JP', system-ui, sans-serif; color: var(--tpl-ink); background: var(--tpl-bg); }
 .wc-root * { box-sizing: border-box; }
 .wc-root img { max-width: 100%; }
 .wc-wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
 .wc-sec { padding: 76px 0; }
-.wc-body { font-size: 14px; line-height: 1.9; color: ${BROWN_MID}; }
+.wc-body { font-size: 14px; line-height: 1.9; color: var(--tpl-ink2); }
 .wc-grid { display: grid; gap: 22px; }
 .wc-grid-works { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
 .wc-grid-strength { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
@@ -545,110 +570,110 @@ const STYLES = `
 .wc-grid-booking { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
 
 .wc-eyebrow { display: flex; align-items: center; gap: 14px; margin-bottom: 34px; }
-.wc-eyebrow-line { width: 32px; height: 3px; border-radius: 2px; background: ${TERRA}; flex-shrink: 0; }
-.wc-eyebrow-en { font-size: 12px; letter-spacing: 0.25em; color: ${TERRA}; font-weight: 700; margin: 0 0 2px; }
-.wc-eyebrow-ja { font-family: ${HEAD}; font-size: clamp(1.4rem, 3.5vw, 1.9rem); font-weight: 700; color: ${BROWN}; margin: 0; }
+.wc-eyebrow-line { width: 32px; height: 3px; border-radius: 2px; background: var(--tpl-primary); flex-shrink: 0; }
+.wc-eyebrow-en { font-size: 12px; letter-spacing: 0.25em; color: var(--tpl-primary); font-weight: 700; margin: 0 0 2px; }
+.wc-eyebrow-ja { font-family: ${HEAD}; font-size: clamp(1.4rem, 3.5vw, 1.9rem); font-weight: 700; color: var(--tpl-ink); margin: 0; }
 
 /* Header */
-.wc-head { position: sticky; top: 0; z-index: 50; background: rgba(251,247,240,0.92); backdrop-filter: blur(8px); border-bottom: 1px solid ${CREAM_DEEP}; }
+.wc-head { position: sticky; top: 0; z-index: 50; background: var(--tpl-bg-veil); backdrop-filter: blur(8px); border-bottom: 1px solid var(--tpl-bg-deep); }
 .wc-head.wc-head-static { position: relative; }
 .wc-head-inner { max-width: 1120px; margin: 0 auto; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.wc-head-name { font-weight: 700; font-size: 17px; color: ${BROWN}; }
+.wc-head-name { font-weight: 700; font-size: 17px; color: var(--tpl-ink); }
 .wc-head-nav { display: flex; align-items: center; gap: 22px; }
-.wc-head-nav a { color: ${BROWN_MID}; font-size: 13px; text-decoration: none; transition: color 0.2s; }
-.wc-head-nav a:hover { color: ${TERRA}; }
-.wc-head-tel { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: ${TERRA}; color: #fff; font-size: 13px; font-weight: 700; border-radius: 999px; text-decoration: none; }
+.wc-head-nav a { color: var(--tpl-ink2); font-size: 13px; text-decoration: none; transition: color 0.2s; }
+.wc-head-nav a:hover { color: var(--tpl-primary); }
+.wc-head-tel { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: var(--tpl-primary); color: var(--tpl-on-primary); font-size: 13px; font-weight: 700; border-radius: 999px; text-decoration: none; }
 
 /* Hero */
 .wc-hero { display: grid; grid-template-columns: 1.05fr 0.95fr; align-items: stretch; min-height: 540px; }
 .wc-hero-text { display: flex; flex-direction: column; justify-content: center; padding: 64px clamp(24px, 5vw, 72px); }
-.wc-hero-badge { display: inline-flex; align-items: center; gap: 7px; align-self: flex-start; padding: 6px 14px; border-radius: 999px; background: ${CREAM_DEEP}; color: ${WOOD}; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; margin-bottom: 20px; }
-.wc-hero-title { font-family: ${HEAD}; font-size: clamp(1.9rem, 4.6vw, 3rem); font-weight: 700; line-height: 1.4; color: ${BROWN}; margin: 0 0 18px; }
-.wc-hero-desc { font-size: 15px; line-height: 2; color: ${BROWN_MID}; margin: 0 0 30px; max-width: 480px; }
+.wc-hero-badge { display: inline-flex; align-items: center; gap: 7px; align-self: flex-start; padding: 6px 14px; border-radius: 999px; background: var(--tpl-bg-deep); color: var(--tpl-ink-soft); font-size: 12px; font-weight: 700; letter-spacing: 0.08em; margin-bottom: 20px; }
+.wc-hero-title { font-family: ${HEAD}; font-size: clamp(1.9rem, 4.6vw, 3rem); font-weight: 700; line-height: 1.4; color: var(--tpl-ink); margin: 0 0 18px; }
+.wc-hero-desc { font-size: 15px; line-height: 2; color: var(--tpl-ink2); margin: 0 0 30px; max-width: 480px; }
 .wc-hero-cta { display: flex; flex-wrap: wrap; gap: 12px; }
 .wc-hero-art { position: relative; min-height: 320px; }
 .wc-btn { display: inline-flex; align-items: center; gap: 8px; padding: 13px 28px; font-size: 14px; font-weight: 700; text-decoration: none; border-radius: 999px; border: none; cursor: pointer; transition: all 0.2s; }
-.wc-btn-terra { background: ${TERRA}; color: #fff; }
-.wc-btn-terra:hover { background: #a94e2c; transform: translateY(-1px); }
-.wc-btn-line { background: transparent; color: ${BROWN}; border: 1.5px solid ${WOOD}; }
-.wc-btn-line:hover { background: ${CREAM_DEEP}; }
+.wc-btn-terra { background: var(--tpl-primary); color: var(--tpl-on-primary); }
+.wc-btn-terra:hover { background: var(--tpl-primary-strong); transform: translateY(-1px); }
+.wc-btn-line { background: transparent; color: var(--tpl-ink); border: 1.5px solid var(--tpl-ink-soft); }
+.wc-btn-line:hover { background: var(--tpl-bg-deep); }
 
 /* Works */
-.wc-work-card { background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px rgba(69,50,34,0.07); transition: transform 0.25s, box-shadow 0.25s; }
-.wc-work-card:hover { transform: translateY(-4px); box-shadow: 0 14px 30px rgba(69,50,34,0.12); }
+.wc-work-card { background: var(--tpl-surface); border-radius: 16px; overflow: hidden; box-shadow: 0 4px 16px var(--tpl-shadow-weak); transition: transform 0.25s, box-shadow 0.25s; }
+.wc-work-card:hover { transform: translateY(-4px); box-shadow: 0 14px 30px var(--tpl-shadow-strong); }
 .wc-work-img { height: 190px; overflow: hidden; }
 .wc-work-body { padding: 20px; }
-.wc-work-cat { display: inline-block; font-size: 11px; font-weight: 700; color: ${TERRA}; background: ${CREAM_DEEP}; padding: 3px 10px; border-radius: 999px; margin-bottom: 10px; }
-.wc-work-title { font-size: 17px; font-weight: 700; color: ${BROWN}; margin: 0 0 6px; }
-.wc-work-specs { font-size: 12px; color: ${WOOD}; margin: 0 0 8px; }
-.wc-work-year { font-size: 12px; color: #b3a68f; margin: 12px 0 0; }
+.wc-work-cat { display: inline-block; font-size: 11px; font-weight: 700; color: var(--tpl-primary); background: var(--tpl-bg-deep); padding: 3px 10px; border-radius: 999px; margin-bottom: 10px; }
+.wc-work-title { font-size: 17px; font-weight: 700; color: var(--tpl-ink); margin: 0 0 6px; }
+.wc-work-specs { font-size: 12px; color: var(--tpl-ink-soft); margin: 0 0 8px; }
+.wc-work-year { font-size: 12px; color: var(--tpl-ink3); margin: 12px 0 0; }
 
 /* Strengths */
-.wc-strength-card { background: #fff; border-radius: 16px; padding: 30px 24px; text-align: center; height: 100%; box-shadow: 0 3px 12px rgba(69,50,34,0.06); }
-.wc-strength-icon { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; background: ${CREAM_DEEP}; color: ${TERRA}; }
-.wc-strength-title { font-size: 16px; font-weight: 700; color: ${BROWN}; margin: 0 0 10px; }
+.wc-strength-card { background: var(--tpl-surface); border-radius: 16px; padding: 30px 24px; text-align: center; height: 100%; box-shadow: 0 3px 12px var(--tpl-shadow-weak); }
+.wc-strength-icon { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; background: var(--tpl-bg-deep); color: var(--tpl-primary); }
+.wc-strength-title { font-size: 16px; font-weight: 700; color: var(--tpl-ink); margin: 0 0 10px; }
 
 /* About */
 .wc-about { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 48px; align-items: center; }
 .wc-about-media { display: flex; flex-direction: column; }
-.wc-about-photo { border-radius: 16px; overflow: hidden; aspect-ratio: 4/5; box-shadow: 0 10px 30px rgba(69,50,34,0.12); }
+.wc-about-photo { border-radius: 16px; overflow: hidden; aspect-ratio: 4/5; box-shadow: 0 10px 30px var(--tpl-shadow-strong); }
 .wc-about-namecard { margin-top: 16px; }
-.wc-about-name { font-size: 18px; font-weight: 700; color: ${BROWN}; margin: 0; }
-.wc-about-role { font-size: 13px; color: ${WOOD}; margin: 4px 0 0; }
-.wc-about-bio { font-size: 15px; line-height: 2.1; color: ${BROWN_MID}; }
+.wc-about-name { font-size: 18px; font-weight: 700; color: var(--tpl-ink); margin: 0; }
+.wc-about-role { font-size: 13px; color: var(--tpl-ink-soft); margin: 4px 0 0; }
+.wc-about-bio { font-size: 15px; line-height: 2.1; color: var(--tpl-ink2); }
 .wc-about-facts { margin-top: 24px; display: flex; flex-direction: column; gap: 10px; }
-.wc-about-facts div { display: flex; align-items: center; gap: 10px; font-size: 14px; color: ${BROWN}; }
-.wc-about-facts svg { color: ${TERRA}; flex-shrink: 0; }
+.wc-about-facts div { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--tpl-ink); }
+.wc-about-facts svg { color: var(--tpl-primary); flex-shrink: 0; }
 
 /* Voice */
-.wc-voice-card { background: #fff; border-radius: 16px; padding: 26px 24px; height: 100%; box-shadow: 0 3px 12px rgba(69,50,34,0.06); }
+.wc-voice-card { background: var(--tpl-surface); border-radius: 16px; padding: 26px 24px; height: 100%; box-shadow: 0 3px 12px var(--tpl-shadow-weak); }
 .wc-stars { display: flex; gap: 3px; margin-bottom: 14px; }
-.wc-voice-text { font-size: 14px; line-height: 1.9; color: ${BROWN}; margin: 0 0 14px; }
-.wc-voice-name { font-size: 13px; font-weight: 700; color: ${BROWN_MID}; margin: 0; }
-.wc-voice-name span { font-weight: 400; color: #b3a68f; }
+.wc-voice-text { font-size: 14px; line-height: 1.9; color: var(--tpl-ink); margin: 0 0 14px; }
+.wc-voice-name { font-size: 13px; font-weight: 700; color: var(--tpl-ink2); margin: 0; }
+.wc-voice-name span { font-weight: 400; color: var(--tpl-ink3); }
 
 /* News */
-.wc-news-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 14px; padding: 15px 0; border-bottom: 1px solid ${CREAM_DEEP}; }
-.wc-news-date { font-size: 13px; color: #b3a68f; flex-shrink: 0; }
-.wc-news-cat { font-size: 11px; color: ${TERRA}; background: ${CREAM_DEEP}; padding: 2px 10px; border-radius: 999px; flex-shrink: 0; }
-.wc-news-title { font-size: 14px; color: ${BROWN}; }
+.wc-news-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 14px; padding: 15px 0; border-bottom: 1px solid var(--tpl-bg-deep); }
+.wc-news-date { font-size: 13px; color: var(--tpl-ink3); flex-shrink: 0; }
+.wc-news-cat { font-size: 11px; color: var(--tpl-primary); background: var(--tpl-bg-deep); padding: 2px 10px; border-radius: 999px; flex-shrink: 0; }
+.wc-news-title { font-size: 14px; color: var(--tpl-ink); }
 
 /* Booking */
-.wc-event-card { background: #fff; border-radius: 16px; padding: 24px; box-shadow: 0 3px 12px rgba(69,50,34,0.06); display: flex; flex-direction: column; }
-.wc-event-date { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; color: ${TERRA}; }
-.wc-event-time { font-size: 12px; color: ${WOOD}; font-weight: 400; margin-left: 4px; }
-.wc-event-title { font-size: 16px; font-weight: 700; color: ${BROWN}; margin: 12px 0 8px; }
-.wc-event-loc { display: flex; align-items: center; gap: 5px; font-size: 13px; color: ${BROWN_MID}; margin: 0; }
+.wc-event-card { background: var(--tpl-surface); border-radius: 16px; padding: 24px; box-shadow: 0 3px 12px var(--tpl-shadow-weak); display: flex; flex-direction: column; }
+.wc-event-date { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; color: var(--tpl-primary); }
+.wc-event-time { font-size: 12px; color: var(--tpl-ink-soft); font-weight: 400; margin-left: 4px; }
+.wc-event-title { font-size: 16px; font-weight: 700; color: var(--tpl-ink); margin: 12px 0 8px; }
+.wc-event-loc { display: flex; align-items: center; gap: 5px; font-size: 13px; color: var(--tpl-ink2); margin: 0; }
 .wc-event-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 18px; }
-.wc-event-spots { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: ${WOOD}; }
-.wc-event-btn { font-size: 13px; font-weight: 700; color: #fff; background: ${TERRA}; padding: 8px 18px; border-radius: 999px; }
-.wc-event-btn-off { background: #c9bca9; }
+.wc-event-spots { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--tpl-ink-soft); }
+.wc-event-btn { font-size: 13px; font-weight: 700; color: var(--tpl-on-primary); background: var(--tpl-primary); padding: 8px 18px; border-radius: 999px; }
+.wc-event-btn-off { background: var(--tpl-muted-fill); }
 
 /* Contact */
-.wc-contact { background: ${INK_FOOT}; }
-.wc-contact-title { font-size: clamp(1.5rem, 4vw, 2.1rem); font-weight: 700; color: #fff; margin: 6px 0 12px; }
-.wc-contact-sub { font-size: 14px; line-height: 1.9; color: rgba(255,255,255,0.7); margin: 0; }
+.wc-contact { background: var(--tpl-ink-deep); }
+.wc-contact-title { font-size: clamp(1.5rem, 4vw, 2.1rem); font-weight: 700; color: var(--tpl-on-dark); margin: 6px 0 12px; }
+.wc-contact-sub { font-size: 14px; line-height: 1.9; color: var(--tpl-on-dark-2); margin: 0; }
 .wc-contact-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 24px; }
-.wc-contact-card { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 18px; border-radius: 12px; background: ${TERRA}; color: #fff; font-size: 17px; font-weight: 700; text-decoration: none; transition: background 0.2s; }
-.wc-contact-card:hover { background: #a94e2c; }
-.wc-contact-card-line { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.25); font-size: 15px; }
-.wc-contact-card-line:hover { background: rgba(255,255,255,0.16); }
-.wc-form { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 28px; display: flex; flex-direction: column; gap: 16px; }
+.wc-contact-card { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 18px; border-radius: 12px; background: var(--tpl-primary); color: var(--tpl-on-primary); font-size: 17px; font-weight: 700; text-decoration: none; transition: background 0.2s; }
+.wc-contact-card:hover { background: var(--tpl-primary-strong); }
+.wc-contact-card-line { background: var(--tpl-on-dark-fill); border: 1px solid var(--tpl-on-dark-line); font-size: 15px; }
+.wc-contact-card-line:hover { background: var(--tpl-on-dark-fill-2); }
+.wc-form { background: var(--tpl-on-dark-fill); border: 1px solid var(--tpl-on-dark-line); border-radius: 16px; padding: 28px; display: flex; flex-direction: column; gap: 16px; }
 .wc-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.wc-form label { display: flex; flex-direction: column; gap: 7px; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.85); }
-.wc-form input, .wc-form textarea { padding: 12px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.95); font-size: 14px; color: ${BROWN}; font-family: inherit; outline: none; }
-.wc-form input:focus, .wc-form textarea:focus { border-color: ${TERRA}; }
+.wc-form label { display: flex; flex-direction: column; gap: 7px; font-size: 13px; font-weight: 600; color: var(--tpl-on-dark-2); }
+.wc-form input, .wc-form textarea { padding: 12px 14px; border-radius: 8px; border: 1px solid var(--tpl-on-dark-line); background: var(--tpl-on-dark-field); font-size: 14px; color: var(--tpl-ink); font-family: inherit; outline: none; }
+.wc-form input:focus, .wc-form textarea:focus { border-color: var(--tpl-primary); }
 .wc-form textarea { resize: vertical; }
-.wc-thanks { text-align: center; padding: 40px 24px; background: rgba(255,255,255,0.05); border-radius: 16px; }
-.wc-thanks-icon { width: 54px; height: 54px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; }
-.wc-thanks-title { font-size: 18px; font-weight: 700; color: #fff; margin: 0 0 6px; }
+.wc-thanks { text-align: center; padding: 40px 24px; background: var(--tpl-on-dark-fill); border-radius: 16px; }
+.wc-thanks-icon { width: 54px; height: 54px; border-radius: 50%; background: var(--tpl-surface); display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; }
+.wc-thanks-title { font-size: 18px; font-weight: 700; color: var(--tpl-on-dark); margin: 0 0 6px; }
 
 /* Footer */
-.wc-foot { background: ${INK_FOOT}; color: #fff; padding: 40px 24px; border-top: 1px solid rgba(255,255,255,0.08); }
+.wc-foot { background: var(--tpl-ink-deep); color: var(--tpl-on-dark); padding: 40px 24px; border-top: 1px solid var(--tpl-on-dark-fill); }
 .wc-foot-inner { max-width: 1120px; margin: 0 auto; text-align: center; }
 .wc-foot-name { font-weight: 700; font-size: 16px; margin: 0 0 8px; }
-.wc-foot-info { font-size: 13px; color: rgba(255,255,255,0.6); line-height: 1.9; margin: 0; }
-.wc-foot-copy { font-size: 11px; color: rgba(255,255,255,0.35); margin: 16px 0 0; }
+.wc-foot-info { font-size: 13px; color: var(--tpl-on-dark-3); line-height: 1.9; margin: 0; }
+.wc-foot-copy { font-size: 11px; color: var(--tpl-on-dark-4); margin: 16px 0 0; }
 
 @media (max-width: 880px) {
   .wc-hero { grid-template-columns: 1fr; }
@@ -671,9 +696,14 @@ export default function WarmCraftRenderer({ config, editMode = false, onFieldCli
   const c = config.company;
   const sections = getSections(config);
   const ep: EP = { editMode, onFieldClick, changedFields };
+  const palette = useConfigPalette(config);
 
   return (
-    <div className="wc-root" onClick={(e) => { if (editMode && (e.target as HTMLElement).closest("a")) e.preventDefault(); }}>
+    <TplRoot
+      palette={palette}
+      className="wc-root"
+      onClick={(e) => { if (editMode && (e.target as HTMLElement).closest("a")) e.preventDefault(); }}
+    >
       <style>{STYLES}</style>
 
       {/* ─── Header ─── */}
@@ -710,6 +740,6 @@ export default function WarmCraftRenderer({ config, editMode = false, onFieldCli
           <p className="wc-foot-copy">© {new Date().getFullYear()} {c.name}</p>
         </div>
       </footer>
-    </div>
+    </TplRoot>
   );
 }

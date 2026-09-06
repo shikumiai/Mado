@@ -4,33 +4,42 @@ import { useState } from "react";
 import { Mail, Phone, Check, ArrowUpRight } from "lucide-react";
 import type { SiteConfig } from "@/lib/site-config-schema";
 import { getSections } from "@/lib/site-config-schema";
+import { TplRoot, useConfigPalette, useTplPalette } from "./TplPalette";
 
 /**
  * clean-arch テンプレートの描画コンポーネント（設計事務所向け）
  *
  * 余白の効いたミニマル白基調。細字・広い余白・ヘアライン。
- * 固定のモノトーン + ストーン系パレット（アプリのダークモードに引きずられない）。
+ * 色はお客さんが選んだ代表カラー＋サブから作る（src/lib/palette.ts）。
+ * 選んでいなければ、墨とストーンの初期色。
+ * 見出し・ヘアライン・送信ボタン・図面のラインアートまで同じ1組の色で塗るので、
+ * 代表カラーを変えると、静けさはそのままに全体がその色みへ寄る。
  * sections配列の順序でセクションを描く。会社情報は全て config から差し込む。
  */
 
-/* ─── 固定パレット ─── */
-const INK = "#2B2B2B";
-const SUB = "#8A8A84";
-const FAINT = "#B8B8B2";
-const LINE = "#EAEAE6";
-const STONE1 = "#D8D3C8";
-const STONE2 = "#C3BCAD";
+/**
+ * このテンプレートでの色の割り当て。
+ * 昔の固定パレットと同じ名前にして、絵や文字の描き方は変えていない。
+ */
+function useCa() {
+  const p = useTplPalette();
+  return {
+    INK: p.ink,              // 見出し・図面の線
+    SUB: p.ink2,             // 本文
+    FAINT: p.ink3,           // 補助・小さなラベル
+    LINE: p.line,            // ヘアライン
+    STONE1: p.lineStrong,    // 細い罫
+    STONE2: p.mutedFill,     // 面
+    SURFACE: p.surface,      // 地（白）
+    BG_DEEP: p.bgDeep,       // 写真枠の下地
+    BG: p.bg,
+    PRIMARY: p.primary,      // 代表カラー（送信ボタン）
+    STONES: p.stonePairs,    // 図面の面に使う2色組
+  };
+}
 
 /* 見出しの明朝（設計事務所の端正さ。未読込でも安全にフォールバック） */
 const SERIF = "var(--font-serif-mincho), 'Zen Old Mincho', 'Yu Mincho', serif";
-
-/* 作品プレースホルダーのパターン */
-const ARCH_STONES: [string, string][] = [
-  ["#D9D4C9", "#C5BDAD"], ["#D2CCC1", "#BEB6A5"],
-  ["#DAD5CB", "#C8C0B0"], ["#CFC9BD", "#BBB2A1"],
-  ["#D6D1C6", "#C2BAAA"], ["#D0CABE", "#BAB1A0"],
-  ["#DBD6CC", "#C6BEAE"], ["#CDC7BB", "#B9B09F"],
-];
 
 interface Props {
   config: SiteConfig;
@@ -75,8 +84,9 @@ function E({ fieldId, value, type = "text", editMode, onFieldClick, changedField
 
 /* ─── 作品写真の枠（実写が来るまで、細線の建築ドローイングで“完成”させる） ─── */
 function ArchArt({ seed, category }: { seed: number; category?: string }) {
+  const { INK, STONES, BG, BG_DEEP } = useCa();
   const u = `caw${seed}`;
-  const [s1, s2] = ARCH_STONES[seed % ARCH_STONES.length];
+  const [s1, s2] = STONES[seed % STONES.length];
   const cat = category || "";
   const isShop = cat.includes("店");
   const isOffice = cat.includes("オフィス") || cat.includes("ビル");
@@ -85,8 +95,8 @@ function ArchArt({ seed, category }: { seed: number; category?: string }) {
     <svg viewBox="0 0 600 460" preserveAspectRatio="xMidYMid slice" style={{ width: "100%", height: "100%", display: "block" }} xmlns="http://www.w3.org/2000/svg" aria-hidden>
       <defs>
         <linearGradient id={`${u}bg`} x1="0" y1="0" x2="0.4" y2="1">
-          <stop offset="0%" stopColor="#F4F2EC" />
-          <stop offset="100%" stopColor="#E7E3DA" />
+          <stop offset="0%" stopColor={BG} />
+          <stop offset="100%" stopColor={BG_DEEP} />
         </linearGradient>
         <pattern id={`${u}grid`} width="30" height="30" patternUnits="userSpaceOnUse">
           <path d="M30 0H0V30" fill="none" stroke={INK} strokeOpacity="0.04" strokeWidth="1" />
@@ -218,6 +228,7 @@ function WorksSection({ config, ep }: { config: SiteConfig; ep: EP }) {
    About（設計者紹介）
    ═══════════════════════════════════════ */
 function AboutSection({ config, ep }: { config: SiteConfig; ep: EP }) {
+  const { INK, STONE1, STONE2, BG, BG_DEEP } = useCa();
   const c = config.company;
   const facts: [string, string | undefined][] = [
     ["設立", c.since ? `${c.since}年` : undefined],
@@ -239,8 +250,8 @@ function AboutSection({ config, ep }: { config: SiteConfig; ep: EP }) {
                     <svg viewBox="0 0 400 500" preserveAspectRatio="xMidYMid slice" style={{ width: "100%", height: "100%", display: "block" }} xmlns="http://www.w3.org/2000/svg" aria-hidden>
                       <defs>
                         <linearGradient id="caPorBg" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#F2F0EA" />
-                          <stop offset="100%" stopColor="#E4E1D9" />
+                          <stop offset="0%" stopColor={BG} />
+                          <stop offset="100%" stopColor={BG_DEEP} />
                         </linearGradient>
                       </defs>
                       <rect width="400" height="500" fill="url(#caPorBg)" />
@@ -368,6 +379,7 @@ function NewsSection({ config, ep }: { config: SiteConfig; ep: EP }) {
    Contact（お問い合わせ）
    ═══════════════════════════════════════ */
 function ContactSection({ config, ep }: { config: SiteConfig; ep: EP }) {
+  const { SUB, FAINT } = useCa();
   const c = config.company;
   const [sent, setSent] = useState(false);
   return (
@@ -421,99 +433,99 @@ const SECTION_COMPONENTS: Record<string, (props: { config: SiteConfig; ep: EP })
    スコープCSS
    ═══════════════════════════════════════ */
 const STYLES = `
-.ca-root { font-family: 'Noto Sans JP', system-ui, sans-serif; color: ${INK}; background: #fff; font-weight: 300; }
+.ca-root { font-family: 'Noto Sans JP', system-ui, sans-serif; color: var(--tpl-ink); background: var(--tpl-surface); font-weight: 300; }
 .ca-root * { box-sizing: border-box; }
 .ca-root img { max-width: 100%; }
 .ca-wrap { max-width: 1240px; margin: 0 auto; padding: 0 32px; }
-.ca-sec { padding: 96px 0; background: #fff; }
-.ca-sec-line { border-top: 1px solid ${LINE}; }
-.ca-eyebrow { font-size: 10px; letter-spacing: 0.45em; color: ${FAINT}; margin: 0; font-weight: 400; }
-.ca-h2 { font-family: ${SERIF}; font-size: 25px; font-weight: 400; letter-spacing: 0.1em; color: ${INK}; margin: 8px 0 0; }
+.ca-sec { padding: 96px 0; background: var(--tpl-surface); }
+.ca-sec-line { border-top: 1px solid var(--tpl-line); }
+.ca-eyebrow { font-size: 10px; letter-spacing: 0.45em; color: var(--tpl-ink3); margin: 0; font-weight: 400; }
+.ca-h2 { font-family: ${SERIF}; font-size: 25px; font-weight: 400; letter-spacing: 0.1em; color: var(--tpl-ink); margin: 8px 0 0; }
 .ca-head-row { margin-bottom: 56px; }
 
 /* Header */
-.ca-head { position: sticky; top: 0; z-index: 50; background: rgba(255,255,255,0.94); backdrop-filter: blur(12px); border-bottom: 1px solid ${LINE}; }
+.ca-head { position: sticky; top: 0; z-index: 50; background: var(--tpl-surface-veil); backdrop-filter: blur(12px); border-bottom: 1px solid var(--tpl-line); }
 .ca-head.ca-head-static { position: relative; }
 .ca-head-inner { max-width: 1240px; margin: 0 auto; padding: 0 32px; height: 62px; display: flex; align-items: center; justify-content: space-between; }
-.ca-head-name { font-size: 14px; font-weight: 300; letter-spacing: 0.28em; color: ${INK}; }
+.ca-head-name { font-size: 14px; font-weight: 300; letter-spacing: 0.28em; color: var(--tpl-ink); }
 .ca-head-nav { display: flex; align-items: center; gap: 34px; }
-.ca-head-nav a { font-size: 11px; letter-spacing: 0.18em; color: ${SUB}; text-decoration: none; transition: color 0.2s; }
-.ca-head-nav a:hover { color: ${INK}; }
+.ca-head-nav a { font-size: 11px; letter-spacing: 0.18em; color: var(--tpl-ink2); text-decoration: none; transition: color 0.2s; }
+.ca-head-nav a:hover { color: var(--tpl-ink); }
 
 /* Hero */
-.ca-hero { min-height: 78vh; display: flex; align-items: center; justify-content: center; background: #fff; }
+.ca-hero { min-height: 78vh; display: flex; align-items: center; justify-content: center; background: var(--tpl-surface); }
 .ca-hero-inner { text-align: center; padding: 64px 32px; max-width: 860px; }
-.ca-hero-eyebrow { color: ${FAINT}; font-size: 10px; letter-spacing: 0.5em; margin: 0 0 34px; font-weight: 400; }
-.ca-hero-title { font-family: ${SERIF}; color: ${INK}; font-weight: 400; line-height: 1.5; font-size: clamp(2rem, 6vw, 3.9rem); letter-spacing: 0.06em; margin: 0; }
-.ca-hero-rule { width: 48px; height: 1px; background: ${STONE1}; margin: 32px auto; }
-.ca-hero-meta { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 12px; color: ${SUB}; font-size: 14px; letter-spacing: 0.08em; }
-.ca-hero-sep { color: ${LINE}; }
+.ca-hero-eyebrow { color: var(--tpl-ink3); font-size: 10px; letter-spacing: 0.5em; margin: 0 0 34px; font-weight: 400; }
+.ca-hero-title { font-family: ${SERIF}; color: var(--tpl-ink); font-weight: 400; line-height: 1.5; font-size: clamp(2rem, 6vw, 3.9rem); letter-spacing: 0.06em; margin: 0; }
+.ca-hero-rule { width: 48px; height: 1px; background: var(--tpl-line-strong); margin: 32px auto; }
+.ca-hero-meta { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 12px; color: var(--tpl-ink2); font-size: 14px; letter-spacing: 0.08em; }
+.ca-hero-sep { color: var(--tpl-line); }
 
 /* Works */
 .ca-grid-works { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px 20px; }
-.ca-work-img { overflow: hidden; height: 280px; background: #EDEAE3; }
+.ca-work-img { overflow: hidden; height: 280px; background: var(--tpl-bg-deep); }
 .ca-work-tall .ca-work-img { height: 420px; }
 .ca-work-cap { padding: 14px 2px 4px; }
-.ca-work-title { font-size: 14px; font-weight: 300; color: ${INK}; letter-spacing: 0.1em; margin: 0 0 4px; }
+.ca-work-title { font-size: 14px; font-weight: 300; color: var(--tpl-ink); letter-spacing: 0.1em; margin: 0 0 4px; }
 .ca-work-meta { display: flex; gap: 10px; }
-.ca-work-meta span { font-size: 11px; color: ${FAINT}; }
-.ca-work-desc { font-size: 13px; color: ${SUB}; line-height: 1.9; margin: 10px 0 0; }
+.ca-work-meta span { font-size: 11px; color: var(--tpl-ink3); }
+.ca-work-desc { font-size: 13px; color: var(--tpl-ink2); line-height: 1.9; margin: 10px 0 0; }
 
 /* About */
 .ca-about { display: grid; grid-template-columns: 0.85fr 1.15fr; gap: 56px; }
 .ca-portrait { aspect-ratio: 4/5; overflow: hidden; }
 .ca-portrait-cap { margin-top: 20px; }
-.ca-portrait-name { font-size: 20px; font-weight: 300; color: ${INK}; letter-spacing: 0.1em; margin: 0; }
-.ca-portrait-role { font-size: 12px; color: ${FAINT}; letter-spacing: 0.1em; margin: 6px 0 0; }
+.ca-portrait-name { font-size: 20px; font-weight: 300; color: var(--tpl-ink); letter-spacing: 0.1em; margin: 0; }
+.ca-portrait-role { font-size: 12px; color: var(--tpl-ink3); letter-spacing: 0.1em; margin: 6px 0 0; }
 .ca-about-body { display: flex; flex-direction: column; justify-content: center; }
-.ca-bio { font-size: 15px; color: ${SUB}; line-height: 2.4; }
-.ca-about-rule { width: 32px; height: 1px; background: ${STONE1}; margin: 32px 0; }
+.ca-bio { font-size: 15px; color: var(--tpl-ink2); line-height: 2.4; }
+.ca-about-rule { width: 32px; height: 1px; background: var(--tpl-line-strong); margin: 32px 0; }
 .ca-facts { display: flex; flex-direction: column; gap: 14px; }
-.ca-fact { display: flex; gap: 24px; font-size: 13px; color: ${SUB}; }
-.ca-fact-key { width: 56px; flex-shrink: 0; color: ${FAINT}; }
+.ca-fact { display: flex; gap: 24px; font-size: 13px; color: var(--tpl-ink2); }
+.ca-fact-key { width: 56px; flex-shrink: 0; color: var(--tpl-ink3); }
 
 /* Awards */
-.ca-award-row { display: flex; gap: 28px; padding: 18px 0; border-bottom: 1px solid ${LINE}; }
-.ca-award-year { font-size: 12px; color: ${FAINT}; flex-shrink: 0; width: 52px; padding-top: 2px; }
-.ca-award-title { font-size: 15px; font-weight: 300; color: ${INK}; margin: 0; }
-.ca-award-project { font-size: 12px; color: ${FAINT}; margin: 4px 0 0; }
+.ca-award-row { display: flex; gap: 28px; padding: 18px 0; border-bottom: 1px solid var(--tpl-line); }
+.ca-award-year { font-size: 12px; color: var(--tpl-ink3); flex-shrink: 0; width: 52px; padding-top: 2px; }
+.ca-award-title { font-size: 15px; font-weight: 300; color: var(--tpl-ink); margin: 0; }
+.ca-award-project { font-size: 12px; color: var(--tpl-ink3); margin: 4px 0 0; }
 
 /* Voice */
 .ca-grid-voice { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-.ca-voice { padding: 28px; border: 1px solid ${LINE}; }
-.ca-voice-text { font-size: 14px; color: ${SUB}; line-height: 2.1; margin: 0 0 16px; }
-.ca-voice-name { font-size: 11px; color: ${FAINT}; letter-spacing: 0.05em; margin: 0; }
+.ca-voice { padding: 28px; border: 1px solid var(--tpl-line); }
+.ca-voice-text { font-size: 14px; color: var(--tpl-ink2); line-height: 2.1; margin: 0 0 16px; }
+.ca-voice-name { font-size: 11px; color: var(--tpl-ink3); letter-spacing: 0.05em; margin: 0; }
 
 /* News */
-.ca-news-row { display: flex; gap: 28px; align-items: baseline; padding: 16px 0; border-bottom: 1px solid ${LINE}; }
-.ca-news-date { font-size: 11px; color: ${FAINT}; flex-shrink: 0; width: 84px; }
-.ca-news-title { font-size: 14px; font-weight: 300; color: ${INK}; }
+.ca-news-row { display: flex; gap: 28px; align-items: baseline; padding: 16px 0; border-bottom: 1px solid var(--tpl-line); }
+.ca-news-date { font-size: 11px; color: var(--tpl-ink3); flex-shrink: 0; width: 84px; }
+.ca-news-title { font-size: 14px; font-weight: 300; color: var(--tpl-ink); }
 
 /* Contact */
-.ca-contact-lead { font-size: 15px; color: ${SUB}; line-height: 1.8; margin: 0 0 40px; font-weight: 300; }
+.ca-contact-lead { font-size: 15px; color: var(--tpl-ink2); line-height: 1.8; margin: 0 0 40px; font-weight: 300; }
 .ca-contact-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 44px; }
-.ca-contact-link { display: flex; align-items: center; gap: 12px; padding: 16px 18px; border: 1px solid ${LINE}; font-size: 14px; color: ${SUB}; text-decoration: none; transition: border-color 0.2s; }
-.ca-contact-link:hover { border-color: ${STONE2}; }
+.ca-contact-link { display: flex; align-items: center; gap: 12px; padding: 16px 18px; border: 1px solid var(--tpl-line); font-size: 14px; color: var(--tpl-ink2); text-decoration: none; transition: border-color 0.2s; }
+.ca-contact-link:hover { border-color: var(--tpl-line-strong); }
 .ca-form { display: flex; flex-direction: column; gap: 26px; }
 .ca-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; }
 .ca-field { display: flex; flex-direction: column; }
-.ca-field span { font-size: 10px; color: ${FAINT}; letter-spacing: 0.2em; margin-bottom: 10px; }
-.ca-field input, .ca-field textarea { padding: 10px 0; border: none; border-bottom: 1px solid ${LINE}; font-size: 14px; color: ${INK}; background: transparent; outline: none; font-family: inherit; resize: vertical; transition: border-color 0.2s; }
-.ca-field input:focus, .ca-field textarea:focus { border-bottom-color: ${INK}; }
-.ca-submit { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 16px; background: ${INK}; color: #fff; font-size: 11px; letter-spacing: 0.22em; border: none; cursor: pointer; transition: background 0.2s; }
-.ca-submit:hover { background: #000; }
-.ca-thanks { text-align: center; padding: 56px 24px; border: 1px solid ${LINE}; }
-.ca-thanks-icon { width: 48px; height: 48px; border: 1px solid ${LINE}; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; }
-.ca-thanks-title { font-size: 15px; font-weight: 300; color: ${INK}; letter-spacing: 0.05em; margin: 0; }
-.ca-thanks-sub { font-size: 12px; color: ${FAINT}; margin: 6px 0 0; }
+.ca-field span { font-size: 10px; color: var(--tpl-ink3); letter-spacing: 0.2em; margin-bottom: 10px; }
+.ca-field input, .ca-field textarea { padding: 10px 0; border: none; border-bottom: 1px solid var(--tpl-line); font-size: 14px; color: var(--tpl-ink); background: transparent; outline: none; font-family: inherit; resize: vertical; transition: border-color 0.2s; }
+.ca-field input:focus, .ca-field textarea:focus { border-bottom-color: var(--tpl-primary); }
+.ca-submit { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 16px; background: var(--tpl-primary); color: var(--tpl-on-primary); font-size: 11px; letter-spacing: 0.22em; border: none; cursor: pointer; transition: background 0.2s; }
+.ca-submit:hover { background: var(--tpl-primary-strong); }
+.ca-thanks { text-align: center; padding: 56px 24px; border: 1px solid var(--tpl-line); }
+.ca-thanks-icon { width: 48px; height: 48px; border: 1px solid var(--tpl-line); display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; }
+.ca-thanks-title { font-size: 15px; font-weight: 300; color: var(--tpl-ink); letter-spacing: 0.05em; margin: 0; }
+.ca-thanks-sub { font-size: 12px; color: var(--tpl-ink3); margin: 6px 0 0; }
 
 /* Footer */
-.ca-foot { padding: 32px; border-top: 1px solid ${LINE}; background: #fff; }
+.ca-foot { padding: 32px; border-top: 1px solid var(--tpl-line); background: var(--tpl-surface); }
 .ca-foot-inner { max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; align-items: center; }
 .ca-foot-top { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; justify-content: center; }
-.ca-foot-name { font-size: 12px; font-weight: 300; letter-spacing: 0.28em; color: ${SUB}; }
-.ca-foot-addr { font-size: 10px; color: ${FAINT}; }
-.ca-foot-copy { font-size: 10px; color: ${FAINT}; margin: 0; }
+.ca-foot-name { font-size: 12px; font-weight: 300; letter-spacing: 0.28em; color: var(--tpl-ink2); }
+.ca-foot-addr { font-size: 10px; color: var(--tpl-ink3); }
+.ca-foot-copy { font-size: 10px; color: var(--tpl-ink3); margin: 0; }
 
 @media (max-width: 820px) {
   .ca-about { grid-template-columns: 1fr; gap: 36px; }
@@ -536,9 +548,14 @@ export default function CleanArchRenderer({ config, editMode = false, onFieldCli
   const name = c.nameEn || c.name;
   const sections = getSections(config);
   const ep: EP = { editMode, onFieldClick, changedFields };
+  const palette = useConfigPalette(config);
 
   return (
-    <div className="ca-root" onClick={(e) => { if (editMode && (e.target as HTMLElement).closest("a")) e.preventDefault(); }}>
+    <TplRoot
+      palette={palette}
+      className="ca-root"
+      onClick={(e) => { if (editMode && (e.target as HTMLElement).closest("a")) e.preventDefault(); }}
+    >
       <style>{STYLES}</style>
 
       {/* ─── Header ─── */}
@@ -575,6 +592,6 @@ export default function CleanArchRenderer({ config, editMode = false, onFieldCli
           <p className="ca-foot-copy">© {new Date().getFullYear()} {c.name}</p>
         </div>
       </footer>
-    </div>
+    </TplRoot>
   );
 }

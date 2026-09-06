@@ -8,21 +8,38 @@ import {
 } from "lucide-react";
 import type { SiteConfig } from "@/lib/site-config-schema";
 import { getSections } from "@/lib/site-config-schema";
+import { TplRoot, useConfigPalette, useTplPalette } from "./TplPalette";
 
 /**
  * trust-navy テンプレートの描画コンポーネント（建設会社向け）
  *
- * ネイビー × ゴールドで信頼感を出す。sections配列の順序でセクションを描く。
- * 色はこのテンプレート固有の固定パレット（アプリのダークモードに引きずられない）。
- * 会社名・電話・実績などは全て config から差し込む。
+ * 色はお客さんが選んだ代表カラー＋サブから作る（src/lib/palette.ts）。
+ * 選んでいなければ、ネイビー × ゴールドの初期色。
+ * 濃地の帯・数字の帯・ボタン・線・建物のラインアートまで同じ1組の色で塗るので、
+ * 代表カラーを変えるとページ全体が同じ構えのまま塗り替わる。
+ * sections配列の順序でセクションを描く。会社名・電話・実績は全て config から差し込む。
  */
 
-/* ─── 固定パレット（config.style が無くてもこの色で成立する） ─── */
-const NAVY = "#1B3A5C";
-const NAVY_DEEP = "#0D2440";
-const NAVY_MID = "#2A5080";
-const GOLD = "#C8A96E";
-const MIST = "#F0F4F8";
+/**
+ * このテンプレートでの色の割り当て。
+ * 昔の固定パレットと同じ名前にして、絵や文字の描き方は変えていない。
+ */
+function useTn() {
+  const p = useTplPalette();
+  return {
+    NAVY: p.primary,          // 代表カラー（帯・ボタン・表の見出し）
+    NAVY_DEEP: p.primaryDeep, // 濃地（ヘッダー・採用・フッター）
+    NAVY_MID: p.primaryLift,  // 少し明るい面（建物の面）
+    GOLD: p.sub1,             // サブ1（差し色）
+    MIST: p.bg,               // 地
+    INK: p.ink,               // 見出し
+    INK2: p.ink2,             // 本文
+    INK3: p.ink3,             // 補助
+    SURFACE: p.surface,       // 面（カード・白い段）
+    LINE_STRONG: p.lineStrong,
+    ON_DARK: p.onDark,        // 濃地の上の文字
+  };
+}
 
 /* 見出し・数字の明朝（信頼・実直さ。未読込でも安全にフォールバック） */
 const SERIF = "var(--font-serif-mincho), 'Zen Old Mincho', 'Yu Mincho', serif";
@@ -74,16 +91,18 @@ function E({ fieldId, value, type = "text", editMode, onFieldClick, changedField
 
 /* ─── ラベル（英字の小見出し＋日本語見出し） ─── */
 function Eyebrow({ en, ja, light = false }: { en: string; ja: string; light?: boolean }) {
+  const { GOLD, INK, ON_DARK } = useTn();
   return (
     <div style={{ marginBottom: 40, textAlign: "center" }}>
       <p style={{ color: GOLD, fontSize: 12, letterSpacing: "0.3em", fontWeight: 600, marginBottom: 8 }}>{en}</p>
-      <h2 style={{ color: light ? "#fff" : NAVY, fontWeight: 700, fontSize: "clamp(1.4rem, 3.5vw, 2rem)", margin: 0 }}>{ja}</h2>
+      <h2 style={{ color: light ? ON_DARK : INK, fontWeight: 700, fontSize: "clamp(1.4rem, 3.5vw, 2rem)", margin: 0 }}>{ja}</h2>
     </div>
   );
 }
 
 /* ─── 施工写真の枠（実写が来るまで、ネイビー×ゴールドの建築ラインアートで“完成”させる） ─── */
 function BuildingArt({ seed, category }: { seed: number; category?: string }) {
+  const { NAVY, NAVY_DEEP, NAVY_MID, GOLD } = useTn();
   const u = `tnw${seed}`;
   const cat = category || "";
   const isResidence = cat.includes("集合") || cat.includes("住宅") || cat.includes("マンション");
@@ -97,7 +116,7 @@ function BuildingArt({ seed, category }: { seed: number; category?: string }) {
         <linearGradient id={`${u}bg`} x1="0" y1="0" x2="0.3" y2="1">
           <stop offset="0%" stopColor={NAVY_DEEP} />
           <stop offset="60%" stopColor={NAVY} />
-          <stop offset="100%" stopColor="#16324F" />
+          <stop offset="100%" stopColor={NAVY_DEEP} />
         </linearGradient>
         <radialGradient id={`${u}glow`} cx="50%" cy="22%" r="62%">
           <stop offset="0%" stopColor={GOLD} stopOpacity="0.22" />
@@ -105,7 +124,7 @@ function BuildingArt({ seed, category }: { seed: number; category?: string }) {
           <stop offset="100%" stopColor={GOLD} stopOpacity="0" />
         </radialGradient>
         <radialGradient id={`${u}vig`} cx="50%" cy="45%" r="75%">
-          <stop offset="58%" stopColor="#000000" stopOpacity="0" />
+          <stop offset="58%" stopColor={NAVY_DEEP} stopOpacity="0" />
           <stop offset="100%" stopColor={NAVY_DEEP} stopOpacity="0.5" />
         </radialGradient>
         <pattern id={`${u}grid`} width="24" height="24" patternUnits="userSpaceOnUse">
@@ -199,6 +218,7 @@ function BuildingArt({ seed, category }: { seed: number; category?: string }) {
    Hero
    ═══════════════════════════════════════ */
 function HeroSection({ config, ep }: { config: SiteConfig; ep: EP }) {
+  const { NAVY, NAVY_DEEP, NAVY_MID, GOLD } = useTn();
   const c = config.company;
   return (
     <section className="tn-hero">
@@ -207,7 +227,7 @@ function HeroSection({ config, ep }: { config: SiteConfig; ep: EP }) {
           <linearGradient id="tnSky" x1="0" y1="0" x2="0.2" y2="1">
             <stop offset="0%" stopColor={NAVY_DEEP} />
             <stop offset="55%" stopColor={NAVY} />
-            <stop offset="100%" stopColor="#16324F" />
+            <stop offset="100%" stopColor={NAVY_DEEP} />
           </linearGradient>
           <radialGradient id="tnHeroGlow" cx="64%" cy="80%" r="55%">
             <stop offset="0%" stopColor={GOLD} stopOpacity="0.26" />
@@ -283,10 +303,11 @@ function HeroSection({ config, ep }: { config: SiteConfig; ep: EP }) {
    Services（事業内容）
    ═══════════════════════════════════════ */
 function ServicesSection({ config, ep }: { config: SiteConfig; ep: EP }) {
+  const { SURFACE } = useTn();
   const services = config.services || [];
   if (services.length === 0) return null;
   return (
-    <section id="service" className="tn-sec" style={{ background: "#fff" }}>
+    <section id="service" className="tn-sec" style={{ background: SURFACE }}>
       <div className="tn-wrap">
         <Eyebrow en="SERVICE" ja="事業内容" />
         <div className="tn-grid tn-grid-services">
@@ -312,6 +333,7 @@ function ServicesSection({ config, ep }: { config: SiteConfig; ep: EP }) {
    Works（施工実績）
    ═══════════════════════════════════════ */
 function WorksSection({ config, ep }: { config: SiteConfig; ep: EP }) {
+  const { MIST } = useTn();
   const projects = config.projects || [];
   if (projects.length === 0) return null;
   return (
@@ -376,6 +398,7 @@ function StatsSection({ config }: { config: SiteConfig; ep: EP }) {
    About（会社概要）
    ═══════════════════════════════════════ */
 function AboutSection({ config, ep }: { config: SiteConfig; ep: EP }) {
+  const { MIST, SURFACE } = useTn();
   const c = config.company;
   const rows: [string, string | undefined][] = [
     ["商号", c.name],
@@ -392,7 +415,7 @@ function AboutSection({ config, ep }: { config: SiteConfig; ep: EP }) {
   ];
   const visible = rows.filter((r) => r[1]);
   return (
-    <section id="about" className="tn-sec" style={{ background: "#fff" }}>
+    <section id="about" className="tn-sec" style={{ background: SURFACE }}>
       <div className="tn-wrap" style={{ maxWidth: 1000 }}>
         <Eyebrow en="COMPANY" ja="会社概要" />
         <E fieldId="company.bio" value={c.bio} {...ep}>
@@ -421,6 +444,7 @@ function AboutSection({ config, ep }: { config: SiteConfig; ep: EP }) {
    Testimonials（お客様の声）
    ═══════════════════════════════════════ */
 function TestimonialsSection({ config, ep }: { config: SiteConfig; ep: EP }) {
+  const { GOLD, MIST, LINE_STRONG } = useTn();
   const items = config.testimonials || [];
   if (items.length === 0) return null;
   return (
@@ -433,7 +457,7 @@ function TestimonialsSection({ config, ep }: { config: SiteConfig; ep: EP }) {
               <div className="tn-voice-card">
                 <div className="tn-stars">
                   {Array.from({ length: 5 }).map((_, s) => (
-                    <Star key={s} size={14} fill={s < (t.rating || 5) ? GOLD : "none"} color={s < (t.rating || 5) ? GOLD : "#D1D9E3"} />
+                    <Star key={s} size={14} fill={s < (t.rating || 5) ? GOLD : "none"} color={s < (t.rating || 5) ? GOLD : LINE_STRONG} />
                   ))}
                 </div>
                 <p className="tn-voice-text">「{t.text}」</p>
@@ -451,10 +475,11 @@ function TestimonialsSection({ config, ep }: { config: SiteConfig; ep: EP }) {
    News（お知らせ）
    ═══════════════════════════════════════ */
 function NewsSection({ config, ep }: { config: SiteConfig; ep: EP }) {
+  const { SURFACE } = useTn();
   const news = config.news || [];
   if (news.length === 0) return null;
   return (
-    <section className="tn-sec" style={{ background: "#fff" }}>
+    <section className="tn-sec" style={{ background: SURFACE }}>
       <div className="tn-wrap" style={{ maxWidth: 900 }}>
         <Eyebrow en="NEWS" ja="お知らせ" />
         <div>
@@ -520,6 +545,7 @@ function RecruitSection({ config }: { config: SiteConfig; ep: EP }) {
    Contact（お問い合わせ）
    ═══════════════════════════════════════ */
 function ContactSection({ config, ep }: { config: SiteConfig; ep: EP }) {
+  const { NAVY, MIST } = useTn();
   const c = config.company;
   const [sent, setSent] = useState(false);
   return (
@@ -584,12 +610,12 @@ const SECTION_COMPONENTS: Record<string, (props: { config: SiteConfig; ep: EP })
    スコープCSS（.tn-root 配下だけに効く。固定色 + レスポンシブ）
    ═══════════════════════════════════════ */
 const STYLES = `
-.tn-root { font-family: 'Noto Sans JP', system-ui, sans-serif; color: ${NAVY}; background: #fff; }
+.tn-root { font-family: 'Noto Sans JP', system-ui, sans-serif; color: var(--tpl-ink); background: var(--tpl-surface); }
 .tn-root * { box-sizing: border-box; }
 .tn-root img { max-width: 100%; }
 .tn-wrap { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
 .tn-sec { padding: 72px 0; }
-.tn-body { font-size: 14px; line-height: 1.9; color: ${NAVY_MID}; }
+.tn-body { font-size: 14px; line-height: 1.9; color: var(--tpl-ink2); }
 .tn-grid { display: grid; gap: 20px; }
 .tn-grid-services { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
 .tn-grid-works { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
@@ -598,120 +624,120 @@ const STYLES = `
 .tn-grid-stats { grid-template-columns: repeat(4, 1fr); gap: 16px; }
 
 /* Header */
-.tn-head { position: sticky; top: 0; z-index: 50; background: rgba(13,36,64,0.9); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.08); }
+.tn-head { position: sticky; top: 0; z-index: 50; background: var(--tpl-primary-deep-veil); backdrop-filter: blur(10px); border-bottom: 1px solid var(--tpl-on-dark-line); }
 .tn-head.tn-head-static { position: relative; }
 .tn-head-inner { max-width: 1200px; margin: 0 auto; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.tn-head-name { color: #fff; font-weight: 700; font-size: 16px; letter-spacing: 0.02em; }
-.tn-head-en { color: rgba(255,255,255,0.45); font-size: 9px; letter-spacing: 0.15em; display: block; }
+.tn-head-name { color: var(--tpl-on-dark); font-weight: 700; font-size: 16px; letter-spacing: 0.02em; }
+.tn-head-en { color: var(--tpl-on-dark-4); font-size: 9px; letter-spacing: 0.15em; display: block; }
 .tn-head-nav { display: flex; align-items: center; gap: 22px; }
-.tn-head-nav a { color: rgba(255,255,255,0.75); font-size: 13px; text-decoration: none; transition: color 0.2s; }
-.tn-head-nav a:hover { color: ${GOLD}; }
-.tn-head-tel { display: inline-flex; align-items: center; gap: 6px; color: ${GOLD}; font-size: 13px; font-weight: 600; text-decoration: none; }
+.tn-head-nav a { color: var(--tpl-on-dark-2); font-size: 13px; text-decoration: none; transition: color 0.2s; }
+.tn-head-nav a:hover { color: var(--tpl-sub1); }
+.tn-head-tel { display: inline-flex; align-items: center; gap: 6px; color: var(--tpl-sub1); font-size: 13px; font-weight: 600; text-decoration: none; }
 
 /* Hero */
 .tn-hero { position: relative; min-height: 620px; display: flex; align-items: center; overflow: hidden; }
 .tn-hero-bg { position: absolute; inset: 0; width: 100%; height: 100%; }
-.tn-hero-overlay { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(13,36,64,0.85) 0%, rgba(27,58,92,0.45) 55%, transparent 100%); }
+.tn-hero-overlay { position: absolute; inset: 0; background: linear-gradient(90deg, var(--tpl-primary-deep-veil) 0%, var(--tpl-primary-veil) 55%, transparent 100%); }
 .tn-hero-inner { position: relative; z-index: 2; max-width: 1200px; width: 100%; margin: 0 auto; padding: 56px 24px; }
-.tn-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border: 1px solid rgba(200,169,110,0.4); color: ${GOLD}; font-size: 12px; letter-spacing: 0.2em; margin-bottom: 22px; }
-.tn-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: ${GOLD}; }
-.tn-hero-title { font-family: ${SERIF}; color: #fff; font-weight: 700; line-height: 1.3; font-size: clamp(1.9rem, 5vw, 3.4rem); letter-spacing: 0.01em; margin: 0 0 18px; }
-.tn-hero-desc { color: rgba(255,255,255,0.65); font-size: 15px; line-height: 1.9; max-width: 540px; margin: 0 0 32px; }
+.tn-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border: 1px solid var(--tpl-sub1-line); color: var(--tpl-sub1); font-size: 12px; letter-spacing: 0.2em; margin-bottom: 22px; }
+.tn-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--tpl-sub1); }
+.tn-hero-title { font-family: ${SERIF}; color: var(--tpl-on-dark); font-weight: 700; line-height: 1.3; font-size: clamp(1.9rem, 5vw, 3.4rem); letter-spacing: 0.01em; margin: 0 0 18px; }
+.tn-hero-desc { color: var(--tpl-on-dark-2); font-size: 15px; line-height: 1.9; max-width: 540px; margin: 0 0 32px; }
 .tn-hero-cta { display: flex; flex-wrap: wrap; gap: 12px; }
 .tn-btn { display: inline-flex; align-items: center; gap: 8px; padding: 13px 30px; font-size: 14px; font-weight: 700; text-decoration: none; border-radius: 2px; transition: all 0.2s; cursor: pointer; border: none; }
-.tn-btn-gold { background: ${GOLD}; color: ${NAVY_DEEP}; }
-.tn-btn-gold:hover { background: #d8bd85; }
-.tn-btn-ghost { border: 1px solid rgba(255,255,255,0.3); color: #fff; background: transparent; }
-.tn-btn-ghost:hover { background: rgba(255,255,255,0.1); }
-.tn-btn-navy { background: ${NAVY}; color: #fff; justify-content: center; }
-.tn-btn-navy:hover { background: ${NAVY_MID}; }
+.tn-btn-gold { background: var(--tpl-sub1); color: var(--tpl-on-sub1); }
+.tn-btn-gold:hover { background: var(--tpl-sub1-hover); }
+.tn-btn-ghost { border: 1px solid var(--tpl-on-dark-line); color: var(--tpl-on-dark); background: transparent; }
+.tn-btn-ghost:hover { background: var(--tpl-on-dark-fill-2); }
+.tn-btn-navy { background: var(--tpl-primary); color: var(--tpl-on-primary); justify-content: center; }
+.tn-btn-navy:hover { background: var(--tpl-primary-lift); }
 
 /* Services */
-.tn-service-card { padding: 28px 24px; border: 1px solid ${MIST}; background: #fff; height: 100%; transition: box-shadow 0.25s, transform 0.25s, border-color 0.25s; }
-.tn-service-card:hover { border-color: rgba(27,58,92,0.2); box-shadow: 0 14px 30px rgba(27,58,92,0.1); transform: translateY(-3px); }
-.tn-service-icon { width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; background: ${MIST}; color: ${NAVY}; margin-bottom: 18px; transition: background 0.25s, color 0.25s; }
-.tn-service-card:hover .tn-service-icon { background: ${NAVY}; color: #fff; }
-.tn-service-title { font-size: 16px; font-weight: 700; color: ${NAVY}; margin: 0 0 10px; }
+.tn-service-card { padding: 28px 24px; border: 1px solid var(--tpl-line); background: var(--tpl-surface); height: 100%; transition: box-shadow 0.25s, transform 0.25s, border-color 0.25s; }
+.tn-service-card:hover { border-color: var(--tpl-line-strong); box-shadow: 0 14px 30px var(--tpl-shadow-mid); transform: translateY(-3px); }
+.tn-service-icon { width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; background: var(--tpl-bg); color: var(--tpl-primary); margin-bottom: 18px; transition: background 0.25s, color 0.25s; }
+.tn-service-card:hover .tn-service-icon { background: var(--tpl-primary); color: var(--tpl-on-primary); }
+.tn-service-title { font-size: 16px; font-weight: 700; color: var(--tpl-ink); margin: 0 0 10px; }
 
 /* Works */
-.tn-work-card { background: #fff; overflow: hidden; box-shadow: 0 2px 10px rgba(27,58,92,0.07); }
+.tn-work-card { background: var(--tpl-surface); overflow: hidden; box-shadow: 0 2px 10px var(--tpl-shadow-weak); }
 .tn-work-img { position: relative; height: 200px; overflow: hidden; }
-.tn-work-cat { position: absolute; top: 12px; left: 12px; background: rgba(13,36,64,0.85); color: ${GOLD}; font-size: 11px; padding: 4px 10px; letter-spacing: 0.05em; }
+.tn-work-cat { position: absolute; top: 12px; left: 12px; background: var(--tpl-primary-deep-veil); color: var(--tpl-sub1); font-size: 11px; padding: 4px 10px; letter-spacing: 0.05em; }
 .tn-work-body { padding: 18px 18px 22px; }
-.tn-work-title { font-size: 16px; font-weight: 700; color: ${NAVY}; margin: 0 0 8px; }
-.tn-work-meta { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: ${NAVY_MID}; }
+.tn-work-title { font-size: 16px; font-weight: 700; color: var(--tpl-ink); margin: 0 0 8px; }
+.tn-work-meta { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--tpl-ink2); }
 .tn-work-meta span { display: inline-flex; align-items: center; gap: 4px; }
 
 /* Stats band */
-.tn-stats-band { background: linear-gradient(180deg, ${NAVY} 0%, ${NAVY_DEEP} 100%); padding: 54px 0; border-top: 1px solid rgba(200,169,110,0.28); border-bottom: 1px solid rgba(200,169,110,0.28); }
+.tn-stats-band { background: linear-gradient(180deg, var(--tpl-primary) 0%, var(--tpl-primary-deep) 100%); padding: 54px 0; border-top: 1px solid var(--tpl-sub1-line-soft); border-bottom: 1px solid var(--tpl-sub1-line-soft); }
 .tn-stat { text-align: center; padding: 4px 8px; }
-.tn-grid-stats .tn-stat + .tn-stat { border-left: 1px solid rgba(200,169,110,0.16); }
-.tn-stat-num { font-family: ${SERIF}; color: #fff; font-weight: 700; font-size: clamp(2rem, 4.4vw, 2.9rem); line-height: 1; margin: 0; }
-.tn-stat-num span { color: ${GOLD}; font-size: 0.46em; margin-left: 4px; font-weight: 500; }
-.tn-stat-tick { display: block; width: 26px; height: 2px; background: ${GOLD}; opacity: 0.85; margin: 12px auto 0; }
-.tn-stat-label { color: rgba(255,255,255,0.55); font-size: 12px; letter-spacing: 0.08em; margin: 10px 0 0; }
+.tn-grid-stats .tn-stat + .tn-stat { border-left: 1px solid var(--tpl-sub1-line-soft); }
+.tn-stat-num { font-family: ${SERIF}; color: var(--tpl-on-dark); font-weight: 700; font-size: clamp(2rem, 4.4vw, 2.9rem); line-height: 1; margin: 0; }
+.tn-stat-num span { color: var(--tpl-sub1); font-size: 0.46em; margin-left: 4px; font-weight: 500; }
+.tn-stat-tick { display: block; width: 26px; height: 2px; background: var(--tpl-sub1); opacity: 0.85; margin: 12px auto 0; }
+.tn-stat-label { color: var(--tpl-on-dark-3); font-size: 12px; letter-spacing: 0.08em; margin: 10px 0 0; }
 
 /* About */
-.tn-ceo { padding: 32px; background: ${MIST}; border-left: 4px solid ${GOLD}; margin-bottom: 36px; }
-.tn-ceo-label { color: ${GOLD}; font-size: 12px; letter-spacing: 0.2em; font-weight: 600; margin: 0 0 16px; }
-.tn-ceo-body { color: ${NAVY}; font-size: 15px; line-height: 2; }
-.tn-ceo-name { color: ${NAVY_MID}; font-size: 14px; margin: 20px 0 0; text-align: right; }
-.tn-table { border: 1px solid ${MIST}; }
+.tn-ceo { padding: 32px; background: var(--tpl-bg); border-left: 4px solid var(--tpl-sub1); margin-bottom: 36px; }
+.tn-ceo-label { color: var(--tpl-sub1); font-size: 12px; letter-spacing: 0.2em; font-weight: 600; margin: 0 0 16px; }
+.tn-ceo-body { color: var(--tpl-ink); font-size: 15px; line-height: 2; }
+.tn-ceo-name { color: var(--tpl-ink2); font-size: 14px; margin: 20px 0 0; text-align: right; }
+.tn-table { border: 1px solid var(--tpl-line); }
 .tn-table-row { display: flex; flex-direction: row; }
-.tn-table-key { width: 176px; flex-shrink: 0; padding: 14px 20px; background: ${NAVY}; color: #fff; font-size: 14px; font-weight: 600; }
-.tn-table-val { flex: 1; padding: 14px 20px; background: #fff; color: ${NAVY_MID}; font-size: 14px; }
+.tn-table-key { width: 176px; flex-shrink: 0; padding: 14px 20px; background: var(--tpl-primary); color: var(--tpl-on-primary); font-size: 14px; font-weight: 600; }
+.tn-table-val { flex: 1; padding: 14px 20px; background: var(--tpl-surface); color: var(--tpl-ink2); font-size: 14px; }
 
 /* Voice */
-.tn-voice-card { padding: 26px 24px; background: #fff; border: 1px solid ${MIST}; height: 100%; }
+.tn-voice-card { padding: 26px 24px; background: var(--tpl-surface); border: 1px solid var(--tpl-line); height: 100%; }
 .tn-stars { display: flex; gap: 3px; margin-bottom: 14px; }
-.tn-voice-text { color: ${NAVY}; font-size: 14px; line-height: 1.9; margin: 0 0 14px; }
-.tn-voice-name { color: ${NAVY_MID}; font-size: 13px; font-weight: 600; margin: 0; }
-.tn-voice-name span { font-weight: 400; color: #8fa0b3; }
+.tn-voice-text { color: var(--tpl-ink); font-size: 14px; line-height: 1.9; margin: 0 0 14px; }
+.tn-voice-name { color: var(--tpl-ink2); font-size: 13px; font-weight: 600; margin: 0; }
+.tn-voice-name span { font-weight: 400; color: var(--tpl-ink3); }
 
 /* News */
-.tn-news-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 14px; padding: 14px 0; border-bottom: 1px solid ${MIST}; }
-.tn-news-date { color: #8fa0b3; font-size: 13px; flex-shrink: 0; }
-.tn-news-cat { color: ${GOLD}; font-size: 11px; border: 1px solid ${GOLD}; padding: 2px 10px; flex-shrink: 0; }
-.tn-news-title { color: ${NAVY}; font-size: 14px; }
+.tn-news-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--tpl-line); }
+.tn-news-date { color: var(--tpl-ink3); font-size: 13px; flex-shrink: 0; }
+.tn-news-cat { color: var(--tpl-sub1); font-size: 11px; border: 1px solid var(--tpl-sub1); padding: 2px 10px; flex-shrink: 0; }
+.tn-news-title { color: var(--tpl-ink); font-size: 14px; }
 
 /* Recruit */
-.tn-recruit { background: ${NAVY_DEEP}; }
-.tn-job-card { padding: 26px 24px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); }
+.tn-recruit { background: var(--tpl-primary-deep); }
+.tn-job-card { padding: 26px 24px; background: var(--tpl-on-dark-fill); border: 1px solid var(--tpl-on-dark-line); }
 .tn-job-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
-.tn-job-title { color: #fff; font-size: 17px; font-weight: 700; margin: 0; }
-.tn-job-type { color: ${NAVY_DEEP}; background: ${GOLD}; font-size: 11px; font-weight: 700; padding: 3px 10px; }
-.tn-job-meta { display: flex; flex-wrap: wrap; gap: 14px; color: rgba(255,255,255,0.6); font-size: 13px; }
+.tn-job-title { color: var(--tpl-on-dark); font-size: 17px; font-weight: 700; margin: 0; }
+.tn-job-type { color: var(--tpl-on-sub1); background: var(--tpl-sub1); font-size: 11px; font-weight: 700; padding: 3px 10px; }
+.tn-job-meta { display: flex; flex-wrap: wrap; gap: 14px; color: var(--tpl-on-dark-3); font-size: 13px; }
 .tn-job-meta span { display: inline-flex; align-items: center; gap: 4px; }
-.tn-recruit .tn-body { color: rgba(255,255,255,0.6); }
+.tn-recruit .tn-body { color: var(--tpl-on-dark-3); }
 .tn-job-block { margin-top: 14px; }
-.tn-job-block-label { color: ${GOLD}; font-size: 12px; font-weight: 600; margin: 0 0 6px; }
-.tn-job-list { margin: 0; padding-left: 18px; color: rgba(255,255,255,0.72); font-size: 13px; line-height: 1.9; }
-.tn-recruit-note { color: rgba(255,255,255,0.5); font-size: 13px; text-align: center; margin: 32px 0 0; }
+.tn-job-block-label { color: var(--tpl-sub1); font-size: 12px; font-weight: 600; margin: 0 0 6px; }
+.tn-job-list { margin: 0; padding-left: 18px; color: var(--tpl-on-dark-2); font-size: 13px; line-height: 1.9; }
+.tn-recruit-note { color: var(--tpl-on-dark-3); font-size: 13px; text-align: center; margin: 32px 0 0; }
 
 /* Contact */
 .tn-contact-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 32px; }
-.tn-contact-card { display: flex; flex-direction: column; gap: 4px; padding: 24px; background: #fff; border: 1px solid ${MIST}; text-decoration: none; transition: box-shadow 0.2s; }
-.tn-contact-card:hover { box-shadow: 0 10px 24px rgba(27,58,92,0.1); }
-.tn-contact-card-label { color: ${NAVY_MID}; font-size: 12px; margin-top: 8px; }
-.tn-contact-card-val { color: ${NAVY}; font-size: 18px; font-weight: 700; }
-.tn-contact-card-sub { color: #8fa0b3; font-size: 12px; display: inline-flex; align-items: center; gap: 5px; margin-top: 2px; }
-.tn-form { display: flex; flex-direction: column; gap: 18px; background: #fff; padding: 32px; border: 1px solid ${MIST}; }
+.tn-contact-card { display: flex; flex-direction: column; gap: 4px; padding: 24px; background: var(--tpl-surface); border: 1px solid var(--tpl-line); text-decoration: none; transition: box-shadow 0.2s; }
+.tn-contact-card:hover { box-shadow: 0 10px 24px var(--tpl-shadow-mid); }
+.tn-contact-card-label { color: var(--tpl-ink2); font-size: 12px; margin-top: 8px; }
+.tn-contact-card-val { color: var(--tpl-ink); font-size: 18px; font-weight: 700; }
+.tn-contact-card-sub { color: var(--tpl-ink3); font-size: 12px; display: inline-flex; align-items: center; gap: 5px; margin-top: 2px; }
+.tn-form { display: flex; flex-direction: column; gap: 18px; background: var(--tpl-surface); padding: 32px; border: 1px solid var(--tpl-line); }
 .tn-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-.tn-form label { display: flex; flex-direction: column; gap: 8px; font-size: 13px; font-weight: 600; color: ${NAVY}; }
-.tn-form input, .tn-form textarea { padding: 12px 14px; border: 1px solid ${MIST}; border-radius: 2px; font-size: 14px; color: ${NAVY}; font-family: inherit; outline: none; }
-.tn-form input:focus, .tn-form textarea:focus { border-color: ${GOLD}; }
+.tn-form label { display: flex; flex-direction: column; gap: 8px; font-size: 13px; font-weight: 600; color: var(--tpl-ink); }
+.tn-form input, .tn-form textarea { padding: 12px 14px; border: 1px solid var(--tpl-line); border-radius: 2px; font-size: 14px; color: var(--tpl-ink); font-family: inherit; outline: none; }
+.tn-form input:focus, .tn-form textarea:focus { border-color: var(--tpl-sub1); }
 .tn-form textarea { resize: vertical; }
-.tn-thanks { text-align: center; padding: 48px 24px; background: #fff; border: 1px solid ${MIST}; }
-.tn-thanks-icon { width: 52px; height: 52px; border-radius: 50%; background: ${MIST}; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; }
-.tn-thanks-title { color: ${NAVY}; font-size: 16px; font-weight: 700; margin: 0 0 6px; }
+.tn-thanks { text-align: center; padding: 48px 24px; background: var(--tpl-surface); border: 1px solid var(--tpl-line); }
+.tn-thanks-icon { width: 52px; height: 52px; border-radius: 50%; background: var(--tpl-bg); display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; }
+.tn-thanks-title { color: var(--tpl-ink); font-size: 16px; font-weight: 700; margin: 0 0 6px; }
 
 /* Footer */
-.tn-foot { background: ${NAVY_DEEP}; color: #fff; padding: 44px 24px; }
+.tn-foot { background: var(--tpl-primary-deep); color: var(--tpl-on-dark); padding: 44px 24px; }
 .tn-foot-inner { max-width: 1200px; margin: 0 auto; text-align: center; }
 .tn-foot-name { font-weight: 700; font-size: 16px; margin: 0 0 6px; }
-.tn-foot-en { color: rgba(255,255,255,0.4); font-size: 11px; letter-spacing: 0.15em; margin: 0 0 14px; }
-.tn-foot-info { color: rgba(255,255,255,0.55); font-size: 13px; line-height: 1.9; margin: 0; }
-.tn-foot-copy { color: rgba(255,255,255,0.3); font-size: 11px; margin: 18px 0 0; }
+.tn-foot-en { color: var(--tpl-on-dark-4); font-size: 11px; letter-spacing: 0.15em; margin: 0 0 14px; }
+.tn-foot-info { color: var(--tpl-on-dark-3); font-size: 13px; line-height: 1.9; margin: 0; }
+.tn-foot-copy { color: var(--tpl-on-dark-4); font-size: 11px; margin: 18px 0 0; }
 
 @media (max-width: 860px) {
   .tn-head-nav a { display: none; }
@@ -734,9 +760,14 @@ export default function TrustNavyRenderer({ config, editMode = false, onFieldCli
   const c = config.company;
   const sections = getSections(config);
   const ep: EP = { editMode, onFieldClick, changedFields };
+  const palette = useConfigPalette(config);
 
   return (
-    <div className="tn-root" onClick={(e) => { if (editMode && (e.target as HTMLElement).closest("a")) e.preventDefault(); }}>
+    <TplRoot
+      palette={palette}
+      className="tn-root"
+      onClick={(e) => { if (editMode && (e.target as HTMLElement).closest("a")) e.preventDefault(); }}
+    >
       <style>{STYLES}</style>
 
       {/* ─── Header（常に表示） ─── */}
@@ -778,6 +809,6 @@ export default function TrustNavyRenderer({ config, editMode = false, onFieldCli
           <p className="tn-foot-copy">© {new Date().getFullYear()} {c.name}. All rights reserved.</p>
         </div>
       </footer>
-    </div>
+    </TplRoot>
   );
 }
