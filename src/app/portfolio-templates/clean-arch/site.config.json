@@ -1,141 +1,340 @@
 {
   "templateId": "clean-arch",
-  "plan": "lite",
-  "orderId": "",
-  "siteUrl": "",
+  "plan": "otameshi",
+  "orderId": "demo-clean-arch",
+  "siteUrl": "https://shirakawa-sekkei.example.jp",
   "company": {
-    "name": "高橋設計事務所",
-    "nameEn": "TAKAHASHI DESIGN",
-    "tagline": "空間に、静けさを。",
-    "description": "住宅・店舗・オフィスの建築設計",
-    "phone": "03-0000-0000",
-    "email": "hello@takahashi-design.jp",
-    "address": "東京都目黒区〇〇 3-4-5 2F",
-    "hours": "",
-    "since": "2015",
-    "ceo": "高橋 健一",
-    "ceoTitle": "一級建築士 / 管理建築士",
-    "bio": "高橋設計事務所は、住宅・店舗・オフィスの建築設計を手がける一級建築士事務所です。\n\n「使う人の日常に溶け込む空間」をテーマに、素材の質感と光の入り方を丁寧に設計しています。過剰な装飾を排し、静けさの中に豊かさを感じる建築を。\n\n土地の持つ力を読み取り、周辺環境と呼応する建築をつくること。住む人が年月とともに愛着を深められる空間であること。そのために、一つひとつのプロジェクトに十分な時間をかけて向き合います。",
-    "license": "一級建築士事務所 東京都知事登録 第00000号",
-    "domain": "takahashi-design.jp"
+    "name": "白川建築設計室",
+    "nameEn": "SHIRAKAWA ARCHITECTS",
+    "tagline": "そこにある光と風から、形を決める。",
+    "description": "京都市を拠点に、住宅・小さな店舗・宿の設計をしています。年に手がけるのは4件まで。敷地に1年通ってから図面を引くこともあります。",
+    "phone": "075-431-2680",
+    "email": "office@shirakawa-sekkei.example.jp",
+    "address": "京都府京都市上京区新町通今出川上る 1F",
+    "hours": "10:00〜18:00（土日祝は予約制）",
+    "since": "2009",
+    "founded": "2009年5月",
+    "ceo": "白川 志乃",
+    "ceoTitle": "主宰 / 一級建築士",
+    "employees": "4名（一級建築士2名・二級建築士1名）",
+    "business": "住宅・店舗・宿泊施設の設計監理 / 古い建物の改修設計 / 家具の設計",
+    "license": "一級建築士事務所 京都府知事登録 第2A08214号",
+    "domain": "shirakawa-sekkei.example.jp",
+    "bio": "設計を始める前に、敷地で半日過ごすようにしています。朝の光がどこまで入るか、隣の家の音がどう届くか、風がどちらから抜けるか。図面の上では決められないことが、そこにあるからです。\n\n年に手がけるのは4件までと決めています。監理まで自分が現場に立つので、それ以上は目が届きません。少ないぶん、決めるまでの時間を長く取ります。\n\n新しい形をつくることには興味がありません。100年前からある納まりで済むなら、それでいいと思っています。ただし、その建物にしかない条件からしか形は決めません。",
+    "social": [
+      { "label": "Instagram", "href": "https://www.instagram.com/" },
+      { "label": "設計ノート", "href": "#news" }
+    ]
   },
   "projects": [
     {
       "id": 1,
-      "title": "世田谷の住宅",
-      "titleEn": "House in Setagaya",
-      "category": "住宅",
+      "slug": "house-in-kamigyo",
+      "title": "上京の町家を、二人の家に",
+      "titleEn": "House in Kamigyo",
+      "category": "改修 / 住宅",
       "year": "2025",
-      "description": "南側の庭に向かって大きく開いたLDK。深い軒が夏の日差しを遮り、冬の光を奥まで導く。",
-      "size": "landscape"
-    },
-    {
-      "id": 2,
-      "title": "カフェ ルミエール",
-      "titleEn": "Café Lumière",
-      "category": "店舗",
-      "year": "2024",
-      "description": "路地裏の小さなカフェ。トップライトから落ちる光が、白い壁に時間の移ろいを描く。",
+      "description": "間口2間半の町家です。通り庭を残し、奥の坪庭まで光が通るように床の高さを3段に分けました。構造は既存の柱を活かし、新しく入れた壁は取り外せるようにしています。",
+      "specs": "木造2階 / 改修 74㎡ / 京都市上京区",
       "size": "portrait"
     },
     {
-      "id": 3,
-      "title": "鎌倉の住宅",
-      "titleEn": "House in Kamakura",
-      "category": "住宅",
+      "id": 2,
+      "slug": "house-in-ohara",
+      "title": "大原の斜面に建つ家",
+      "titleEn": "House in Ohara",
+      "category": "新築 / 住宅",
       "year": "2024",
-      "description": "海を望む丘の上に建つ週末住宅。スキップフロアが、一つの空間にさまざまな居場所をつくる。",
+      "description": "北へ下る斜面です。掘らずに床を段々にして地形にのせました。居間の窓は北向きですが、正面の杉山からの反射光で一日中明るくなります。",
+      "specs": "木造平屋 / 延床 108㎡ / 京都市左京区",
+      "size": "landscape"
+    },
+    {
+      "id": 3,
+      "slug": "guesthouse-nishijin",
+      "title": "西陣の宿",
+      "titleEn": "Guesthouse in Nishijin",
+      "category": "改修 / 宿泊",
+      "year": "2024",
+      "description": "織屋建ての建物を5室の宿にしました。天井の高い織り場をそのまま共用の土間として残し、客室は増築部にまとめています。",
+      "specs": "木造2階 / 改修 186㎡ / 京都市上京区",
       "size": "landscape"
     },
     {
       "id": 4,
-      "title": "オフィス モノ",
-      "titleEn": "Office MONO",
-      "category": "オフィス",
-      "year": "2024",
-      "description": "IT企業の本社オフィス。集中とコミュニケーションの切り替えを、空間のグラデーションで実現。",
-      "size": "portrait"
-    },
-    {
-      "id": 5,
-      "title": "葉山の住宅",
-      "titleEn": "House in Hayama",
-      "category": "住宅",
+      "slug": "atelier-in-kurama",
+      "title": "鞍馬の工房",
+      "titleEn": "Atelier in Kurama",
+      "category": "新築 / 工房",
       "year": "2023",
-      "description": "里山の風景に溶け込む平屋。縁側が内と外を曖昧につなぎ、四季を身近に感じる暮らし。",
-      "size": "landscape"
-    },
-    {
-      "id": 6,
-      "title": "ギャラリー 空",
-      "titleEn": "Gallery SORA",
-      "category": "店舗",
-      "year": "2023",
-      "description": "現代美術を扱うギャラリー。白い箱の中に浮かぶ作品を、均質な光が静かに照らす。",
+      "description": "陶芸家の工房です。窯の熱を逃がす高い天井と、作業台に一日中同じ明るさの光が落ちる北の高窓。屋根の勾配は、雪が落ちる向きから決めました。",
+      "specs": "木造平屋 / 延床 82㎡ / 京都市左京区",
       "size": "square"
     },
     {
-      "id": 7,
-      "title": "目黒の住宅",
-      "titleEn": "House in Meguro",
-      "category": "住宅",
+      "id": 5,
+      "slug": "shop-in-sanjo",
+      "title": "三条の紙の店",
+      "titleEn": "Paper Shop in Sanjo",
+      "category": "改修 / 店舗",
       "year": "2023",
-      "description": "住宅密集地に建つ都市型住宅。中庭を囲むことで、外に閉じ内に開く静謐な空間を実現。",
+      "description": "紙は光と湿気に弱いので、直射を1本も入れない設計にしました。天井の布で光を散らし、床は湿度を吸う土間にしています。",
+      "specs": "RC1階 / 改修 58㎡ / 京都市中京区",
       "size": "portrait"
     },
     {
-      "id": 8,
-      "title": "アトリエ K",
-      "titleEn": "Atelier K",
-      "category": "オフィス",
+      "id": 6,
+      "slug": "house-in-yamashina",
+      "title": "山科の三世代の家",
+      "titleEn": "House in Yamashina",
+      "category": "新築 / 住宅",
       "year": "2022",
-      "description": "陶芸家のアトリエ兼住居。土間からつながるアトリエ空間が、暮らしと創作を一つにする。",
+      "description": "三世代7人が住む家です。共有する台所を中心に置き、各世代の居場所を高さで分けました。将来2軒に分けられるよう、水回りの位置を決めています。",
+      "specs": "木造2階 / 延床 168㎡ / 京都市山科区",
       "size": "landscape"
     }
   ],
-  "strengths": [],
+  "staff": [
+    {
+      "id": 1,
+      "slug": "shirakawa-shino",
+      "name": "白川 志乃",
+      "role": "主宰 / 一級建築士",
+      "bio": "設計から現場の監理まで担当します。年に手がけるのは4件までと決めています。",
+      "philosophy": "設計を始める前に、敷地で半日過ごすようにしています。朝の光がどこまで入るか、隣の家の音がどう届くか、風がどちらから抜けるか。図面の上では決められないことが、そこにあるからです。\n\n年に手がけるのは4件までと決めています。監理まで自分が現場に立つので、それ以上は目が届きません。少ないぶん、決めるまでの時間を長く取ります。図面が固まるまで平均11か月かかりますが、着工してからの変更はほとんど出ません。\n\n新しい形をつくることには興味がありません。100年前からある納まりで済むなら、それでいいと思っています。ただし、その建物にしかない条件からしか形は決めません。同じ図面を二度描いたことはありません。",
+      "experience": "設計 22年（独立 2009年）",
+      "specialty": "住宅・小規模宿泊施設 / 京町家の改修",
+      "qualifications": ["一級建築士", "京都市京町家アドバイザー"],
+      "schedule": "月〜金（土日祝は予約制）"
+    },
+    {
+      "id": 2,
+      "slug": "nomura-kai",
+      "name": "野村 櫂",
+      "role": "設計 / 一級建築士",
+      "bio": "実施設計と現場監理を担当します。古い建物の構造を読む仕事が多いです。",
+      "experience": "設計 13年",
+      "qualifications": ["一級建築士"],
+      "schedule": "月〜金"
+    },
+    {
+      "id": 3,
+      "slug": "kubota-nagisa",
+      "name": "久保田 渚",
+      "role": "設計 / 二級建築士",
+      "bio": "模型と家具の設計を担当します。決めきれないところは、実寸の模型を作って確かめます。",
+      "experience": "設計 6年",
+      "qualifications": ["二級建築士"],
+      "schedule": "月〜金"
+    }
+  ],
+  "flow": [
+    {
+      "step": 1,
+      "title": "はじめにお会いします",
+      "description": "設計の依頼を決める前で構いません。今のお住まいや土地の話を伺い、こちらの仕事の進め方をご説明します。費用はいただきません。",
+      "duration": "2時間・無料"
+    },
+    {
+      "step": 2,
+      "title": "敷地を読みます",
+      "description": "敷地で半日過ごし、光・音・風・視線を記録します。改修の場合は建物の調査を行います。この時点で費用が発生します。",
+      "duration": "1〜2か月"
+    },
+    {
+      "step": 3,
+      "title": "基本設計",
+      "description": "模型と図面で案をお見せします。案は1つずつ、理由をつけてお出しします。納得いただけるまで作り直します。",
+      "duration": "4〜7か月"
+    },
+    {
+      "step": 4,
+      "title": "実施設計と見積もり",
+      "description": "施工会社に出す図面をつくり、2〜3社から見積もりを取ります。金額の内訳を一緒に読み、削る所を決めます。",
+      "duration": "3〜4か月"
+    },
+    {
+      "step": 5,
+      "title": "工事監理",
+      "description": "週に1度以上、現場に立ちます。図面どおりに進んでいるかを見て、その場で決められることは決めます。記録は毎週お送りします。",
+      "duration": "6〜14か月"
+    },
+    {
+      "step": 6,
+      "title": "引き渡しと、その後",
+      "description": "引き渡し後も1年・5年で伺います。木や土は動くものなので、直すべき時期をこちらからお知らせします。",
+      "duration": "5年"
+    }
+  ],
+  "testimonials": [
+    {
+      "name": "2025年 京都建築賞 奨励賞",
+      "project": "上京の町家を、二人の家に",
+      "rating": 5,
+      "text": "間口2間半という厳しい条件のなかで、通り庭という京町家の型を残しつつ、現代の暮らしに耐える性能を入れている。既存を活かす判断と、新しく足す部分の取り外しやすさが、100年後も更新できる建物にしている。"
+    },
+    {
+      "name": "2024年 グッドデザイン賞",
+      "project": "大原の斜面に建つ家",
+      "rating": 5,
+      "text": "斜面を掘らず、床を段々にして地形にのせるという解き方が明快である。北向きの窓から山の反射光を採るという判断は、その敷地でしか成立しない。土地を読む力が形に直結している。"
+    },
+    {
+      "name": "2024年 日本建築士会連合会賞 奨励賞",
+      "project": "西陣の宿",
+      "rating": 5,
+      "text": "織り場の天井の高さを共用の土間として残した判断が、この建物の記憶を宿泊者に伝えている。改修と増築の境目を隠さず見せる誠実さを評価した。"
+    },
+    {
+      "name": "K様（大原の斜面に建つ家）",
+      "project": "施主",
+      "rating": 5,
+      "text": "図面が決まるまでに1年かかりました。急かされないので、こちらも本当に必要なものを考える時間ができました。着工してからの変更は1つもありませんでした。"
+    }
+  ],
+  "news": [
+    {
+      "id": 1,
+      "slug": "kyoto-award-2025",
+      "date": "2025.11.14",
+      "category": "受賞",
+      "title": "「上京の町家を、二人の家に」が 京都建築賞 奨励賞をいただきました",
+      "excerpt": "既存を活かす判断と、新しく足した部分の取り外しやすさを評価いただきました。"
+    },
+    {
+      "id": 2,
+      "slug": "open-house-ohara",
+      "date": "2025.09.06",
+      "category": "見学会",
+      "title": "「大原の斜面に建つ家」の完成見学会を行います（10月4日・5日）",
+      "excerpt": "施主のご厚意により、引き渡し前の2日間だけ公開します。予約制・各日8組まで。"
+    },
+    {
+      "id": 3,
+      "slug": "lecture-kyoto-machiya",
+      "date": "2025.06.20",
+      "category": "講演",
+      "title": "京町家の改修についてお話しします（京都市主催 6月28日）",
+      "excerpt": "改修で何を残し、何を足すか。実際の図面と写真でご紹介します。"
+    },
+    {
+      "id": 4,
+      "slug": "new-staff-2025",
+      "date": "2025.04.02",
+      "category": "お知らせ",
+      "title": "設計スタッフが1名加わりました",
+      "excerpt": "4名の体制になりました。お引き受けする件数は年4件のまま変えません。"
+    }
+  ],
   "style": {
+    "brand": { "primary": "#2B2B2B", "sub1": "#C3BCAD", "sub2": "#D8D3C8" },
     "colors": {
-      "primary": "#333333",
-      "accent": "#999999",
+      "primary": "#2B2B2B",
+      "accent": "#C3BCAD",
       "background": "#FFFFFF",
-      "text": "#333333",
-      "textMuted": "#999999",
+      "text": "#2B2B2B",
+      "textMuted": "#8A8A84",
       "border": "#E5E5E5"
     },
-    "fonts": {
-      "heading": "'Noto Sans JP', sans-serif",
-      "body": "'Noto Sans JP', sans-serif"
-    },
-    "sizes": {
-      "heading": "lg",
-      "body": "md"
-    },
-    "weights": {
-      "heading": "light",
-      "body": "normal"
-    }
+    "fonts": { "heading": "'Noto Serif JP', serif", "body": "'Noto Sans JP', sans-serif" },
+    "sizes": { "heading": "lg", "body": "md" },
+    "weights": { "heading": "light", "body": "normal" }
   },
   "sections": [
     {
       "type": "hero",
+      "variant": "quiet",
+      "id": "home",
+      "label": "メインビジュアル",
       "visible": true,
-      "label": "メインビジュアル"
+      "data": {
+        "badge": "京都・2009年開設",
+        "eyebrow": "SHIRAKAWA ARCHITECTS",
+        "title": "そこにある光と風から、形を決める。",
+        "lead": "京都市を拠点に、住宅・小さな店舗・宿の設計をしています。年に手がけるのは4件まで。敷地に1年通ってから図面を引くこともあります。",
+        "primaryCta": { "label": "設計のご相談", "href": "#contact" },
+        "secondaryCta": { "label": "作品を見る", "href": "#works" },
+        "facts": ["2009／開設", "年4件／お引き受けする数", "11か月／図面が決まるまでの平均"]
+      }
     },
     {
       "type": "works",
+      "variant": "quiet",
+      "id": "works",
+      "label": "作品",
       "visible": true,
-      "label": "作品一覧"
+      "data": {
+        "eyebrow": "WORKS",
+        "heading": "これまでの仕事",
+        "lead": "住宅、店舗、宿。どれも同じ図面を二度描いたことはありません。"
+      }
     },
     {
-      "type": "about",
+      "type": "staff",
+      "variant": "lead-message",
+      "id": "message",
+      "label": "設計者について",
       "visible": true,
-      "label": "設計者紹介"
+      "data": {
+        "eyebrow": "ARCHITECT",
+        "heading": "敷地で半日過ごしてから、線を引く。"
+      }
+    },
+    {
+      "type": "flow",
+      "variant": "quiet-line",
+      "id": "flow",
+      "label": "設計の流れ",
+      "visible": true,
+      "data": {
+        "eyebrow": "PROCESS",
+        "heading": "設計のすすめ方",
+        "lead": "はじめにお会いするところから引き渡しまで、平均で2年半かかります。急がないことが、結局いちばん早いと考えています。",
+        "note": "設計監理料は工事費の12%（最低額 350万円）です。基本設計に入る前に、金額と範囲を書面でお出しします。"
+      }
+    },
+    {
+      "type": "voices",
+      "variant": "quotes-list",
+      "id": "awards",
+      "label": "受賞と評価",
+      "visible": true,
+      "data": {
+        "eyebrow": "AWARDS",
+        "heading": "受賞と、いただいた言葉",
+        "lead": "審査の講評と、住まわれている方の言葉をそのまま載せています。"
+      }
+    },
+    {
+      "type": "news",
+      "variant": "quiet",
+      "id": "news",
+      "label": "お知らせ",
+      "visible": true,
+      "data": {
+        "eyebrow": "NEWS",
+        "heading": "お知らせ"
+      }
     },
     {
       "type": "contact",
+      "variant": "form-info",
+      "id": "contact",
+      "label": "お問い合わせ",
       "visible": true,
-      "label": "お問い合わせ"
+      "data": {
+        "eyebrow": "CONTACT",
+        "heading": "設計のご相談",
+        "lead": "土地が決まっていない段階でも構いません。はじめの2時間は費用をいただきません。お会いしたうえで、進めるかどうかを決めていただきます。",
+        "note": "年に4件までしかお引き受けできないため、お待ちいただくことがあります。今の空き状況はお問い合わせください。",
+        "purposes": [
+          "住宅の設計を相談したい",
+          "古い建物の改修を相談したい",
+          "店舗・宿の設計を相談したい",
+          "見学会に参加したい",
+          "そのほか"
+        ]
+      }
     }
   ]
 }

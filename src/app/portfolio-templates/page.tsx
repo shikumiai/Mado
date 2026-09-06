@@ -14,6 +14,13 @@ import {
   Square,
   ExternalLink,
   Star,
+  Utensils,
+  Scissors,
+  Stethoscope,
+  Scale,
+  GraduationCap,
+  Dumbbell,
+  ShoppingBag,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
@@ -43,6 +50,14 @@ const templates: Template[] = [
   { id: "clean-arch", name: "Clean Arch", industry: "設計事務所", plan: "おためし", icon: Compass, accentColor: "#2D3436", features: ["施工実績", "会社概要", "問い合わせ"] },
   { id: "clean-arch-mid", name: "Clean Arch Mid", industry: "設計事務所", plan: "おまかせ", planBadge: "おすすめ", icon: Compass, accentColor: "#2D3436", features: ["Before/After", "ブログ", "SEO強化"] },
   { id: "clean-arch-pro", name: "Clean Arch Pro", industry: "設計事務所", plan: "おまかせプロ", icon: Compass, accentColor: "#2D3436", features: ["AIチャット", "多言語", "360°ビューア"] },
+  // 建築以外の7業種（構成は src/lib/templates/catalog.ts）
+  { id: "saveur", name: "Saveur", industry: "飲食店", plan: "おまかせプロ", icon: Utensils, accentColor: "#B23A2E", features: ["お品書き", "営業時間・地図", "予約"] },
+  { id: "velvet", name: "Velvet", industry: "美容・サロン", plan: "おまかせプロ", icon: Scissors, accentColor: "#7A2E45", features: ["メニュー・料金", "スタッフ", "予約"] },
+  { id: "clarity", name: "Clarity", industry: "医療・クリニック", plan: "おまかせプロ", icon: Stethoscope, accentColor: "#2E7D8C", features: ["診療案内", "医師紹介", "診療時間"] },
+  { id: "credence", name: "Credence", industry: "士業", plan: "おまかせプロ", icon: Scale, accentColor: "#3A4652", features: ["取扱分野", "料金", "解決事例"] },
+  { id: "beacon", name: "Beacon", industry: "教育・スクール", plan: "おまかせプロ", icon: GraduationCap, accentColor: "#2C5F7C", features: ["コース・月謝", "合格実績", "体験申込"] },
+  { id: "forge", name: "Forge", industry: "フィットネス", plan: "おまかせプロ", icon: Dumbbell, accentColor: "#C7472B", features: ["プログラム", "トレーナー", "体験申込"] },
+  { id: "marche", name: "Marche", industry: "小売・店舗", plan: "おまかせプロ", icon: ShoppingBag, accentColor: "#C45B28", features: ["商品", "入荷・催し", "店舗案内"] },
 ];
 
 /* ═══ デバイス設定 ═══ */
@@ -95,10 +110,10 @@ export default function PortfolioTemplatesPage() {
         {/* ===== タイトル ===== */}
         <section className="max-w-[1800px] mx-auto px-4 sm:px-6 mb-8">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="text-center mb-6">
-            <p className={`text-xs tracking-[0.3em] uppercase mb-2 font-medium ${gradientText}`}>建築業テンプレート一覧</p>
+            <p className={`text-xs tracking-[0.3em] uppercase mb-2 font-medium ${gradientText}`}>業種別テンプレート一覧</p>
             <h1 className="text-2xl sm:text-3xl text-gray-800 font-bold">業種別ホームページテンプレート</h1>
             <p className="text-gray-500 text-sm mt-3 max-w-[540px] mx-auto leading-relaxed">
-              3業種 × 3プラン = 全9種。デバイス表示やレイアウトを切り替えて、実際の見え方をチェックしてください。
+              10業種ぶん。建築3業種はプラン違いも並べています。デバイス表示やレイアウトを切り替えて、実際の見え方をチェックしてください。
             </p>
           </motion.div>
 

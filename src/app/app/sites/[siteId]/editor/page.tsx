@@ -107,6 +107,20 @@ const AI_FIELD_LABELS: Record<string, string> = {
    ═══════════════════════════════════════ */
 
 /** 設定の入れ子パスに値を書き込む（"company.tagline" など） */
+/**
+ * 部品が付ける項目の名前（sections.2.items.0.title）を、設定の中の実際の場所に直す。
+ *
+ * 部品は「自分が何番目のセクションか」までしか知らないので sections.2 から書き始めるが、
+ * 中身は sections[2].data の下にある。ここで data を1つはさむ。
+ * company.name のような、セクションに属さない項目はそのまま。
+ */
+function toConfigPath(path: string): string {
+  const m = /^sections\.(\d+)\.(.+)$/.exec(path);
+  if (!m) return path;
+  if (m[2].startsWith("data.")) return path;
+  return `sections.${m[1]}.data.${m[2]}`;
+}
+
 function setNestedValue(obj: Record<string, unknown>, path: string, value: unknown): void {
   const keys = path.split(".");
   let current: Record<string, unknown> = obj;
@@ -574,9 +588,9 @@ export default function EditorPage() {
             failed.push({ field: fieldLabel(c.label), error: up.message });
             continue;
           }
-          setNestedValue(target, fieldId, up.url);
+          setNestedValue(target, toConfigPath(fieldId), up.url);
         } else {
-          setNestedValue(target, fieldId, c.newValue);
+          setNestedValue(target, toConfigPath(fieldId), c.newValue);
         }
         applied++;
       }

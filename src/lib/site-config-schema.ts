@@ -32,6 +32,15 @@ export interface CompanyInfo {
   domain: string;             // yamada-koumuten.jp
   ceoPhoto?: string;          // /images/ceo.jpg
   mapEmbedUrl?: string;       // Google Maps embed URL
+  social?: SocialLink[];      // フッターに出す SNS・外部ページ
+}
+
+/* ═══════════════════════════════════════
+   SNS・外部ページ（フッターに出す）
+   ═══════════════════════════════════════ */
+export interface SocialLink {
+  label: string;              // Instagram / LINE公式アカウント
+  href: string;               // https://instagram.com/...
 }
 
 /* ═══════════════════════════════════════
