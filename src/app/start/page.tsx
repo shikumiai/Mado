@@ -925,7 +925,7 @@ export default function StartPage() {
               <AnimatePresence mode="wait">
                 <motion.div
                   key="step-address"
-                  initial={{ opacity: 0, y: 8 }}
+                  initial={false}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.2 }}
@@ -1005,7 +1005,7 @@ export default function StartPage() {
               <AnimatePresence mode="wait">
                 <motion.div
                   key="step-login"
-                  initial={{ opacity: 0, y: 8 }}
+                  initial={false}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.2 }}
@@ -1037,7 +1037,7 @@ export default function StartPage() {
               <AnimatePresence mode="wait">
                 <motion.div
                   key="step-color"
-                  initial={{ opacity: 0, y: 8 }}
+                  initial={false}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.2 }}
@@ -1086,7 +1086,7 @@ export default function StartPage() {
               <AnimatePresence mode="wait">
                 <motion.div
                   key="step-industry"
-                  initial={{ opacity: 0, y: 8 }}
+                  initial={false}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.2 }}
@@ -1186,7 +1186,7 @@ export default function StartPage() {
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={step}
-                      initial={{ opacity: 0, y: 8 }}
+                      initial={false}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -8 }}
                       transition={{ duration: 0.2 }}
