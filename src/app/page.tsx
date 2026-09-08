@@ -17,6 +17,8 @@ import Link from "next/link";
 import LazyIframe from "@/components/LazyIframe";
 import { Mascot } from "@/components/ui";
 import { LinkButton } from "@/components/marketing/LinkButton";
+import { NameClaim } from "@/components/marketing/NameClaim";
+import { ClaimCta } from "@/components/marketing/ClaimCta";
 import { SiteHeader } from "@/components/marketing/SiteHeader";
 import { SiteFooter } from "@/components/marketing/SiteFooter";
 import { PricingCards } from "@/components/marketing/PricingCards";
@@ -136,22 +138,20 @@ function Hero() {
             独自ドメインも全プランで使えて、最短翌日に公開できます。
           </p>
 
-          <div
-            className="mado-load mt-9 flex flex-col gap-3 sm:flex-row"
-            style={{ animationDelay: "280ms" }}
-          >
-            <LinkButton
-              href="/start"
-              variant="cta"
-              size="lg"
-              rightIcon={<ArrowRight className="size-4" aria-hidden />}
-            >
-              サイトを作る
-            </LinkButton>
-            <LinkButton href="/pricing" variant="secondary" size="lg">
-              料金を見る
-            </LinkButton>
+          {/* 主役。ここで名前を決めれば、そのまま作りはじめられる */}
+          <div className="mado-load mt-9" style={{ animationDelay: "280ms" }}>
+            <NameClaim />
           </div>
+
+          <p className="mado-load mt-4 text-sm text-ink2" style={{ animationDelay: "310ms" }}>
+            先に中身を見たい方は{" "}
+            <Link
+              href="/pricing"
+              className="rounded font-medium text-accent underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              料金を見る
+            </Link>
+          </p>
 
           <ul
             className="mado-load mt-7 flex flex-wrap gap-x-5 gap-y-2 text-sm text-ink2"
@@ -554,14 +554,13 @@ function FinalCta() {
             写真を送るだけ。制作費0円・月額0円から、最短翌日で公開できます。
           </p>
           <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <LinkButton
-              href="/start"
+            <ClaimCta
               variant="cta"
               size="lg"
               rightIcon={<ArrowRight className="size-4" aria-hidden />}
             >
               サイトを作る
-            </LinkButton>
+            </ClaimCta>
             <LinkButton href="/pricing" variant="secondary" size="lg">
               料金を見る
             </LinkButton>

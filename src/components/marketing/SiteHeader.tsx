@@ -9,7 +9,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Menu } from "lucide-react";
 import { ThemeToggle, Sheet } from "@/components/ui";
-import { LinkButton } from "./LinkButton";
+import { ClaimCta } from "./ClaimCta";
 import { WindowMark } from "./WindowMark";
 
 /** ページ内の見出しへ飛ぶリンク。トップ以外からはトップへ戻ってから移動する。 */
@@ -64,9 +64,9 @@ export function SiteHeader() {
           >
             ログイン
           </Link>
-          <LinkButton href="/start" variant="cta" size="sm">
+          <ClaimCta variant="cta" size="sm">
             サイトを作る
-          </LinkButton>
+          </ClaimCta>
         </div>
 
         {/* スマホ */}
@@ -109,9 +109,9 @@ export function SiteHeader() {
           </Link>
         </nav>
         <div className="mt-3">
-          <LinkButton href="/start" variant="cta" block>
+          <ClaimCta variant="cta" block onNavigate={() => setOpen(false)}>
             サイトを作る
-          </LinkButton>
+          </ClaimCta>
         </div>
       </Sheet>
     </header>

@@ -5,7 +5,7 @@
  */
 
 import Link from "next/link";
-import type { ReactNode } from "react";
+import type { MouseEvent, ReactNode } from "react";
 
 type Variant = "primary" | "cta" | "secondary" | "ghost";
 type Size = "sm" | "md" | "lg";
@@ -42,6 +42,8 @@ export interface LinkButtonProps {
   leftIcon?: ReactNode;
   rightIcon?: ReactNode;
   className?: string;
+  /** 押したときの割り込み（同じページ内の入力へ運ぶ、など）。呼び出し側はクライアント側 */
+  onClick?: (e: MouseEvent<HTMLAnchorElement>) => void;
   children: ReactNode;
 }
 
@@ -54,11 +56,13 @@ export function LinkButton({
   leftIcon,
   rightIcon,
   className = "",
+  onClick,
   children,
 }: LinkButtonProps) {
   return (
     <Link
       href={href}
+      onClick={onClick}
       className={[
         base,
         sizes[size],
