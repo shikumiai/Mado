@@ -44,14 +44,13 @@ export default function BookingPhotoCta(p: SectionProps) {
       <Styles id="booking-photo-cta" css={CSS} />
       <div className="bpc-grid">
         <div className="bpc-media">
-          <F p={p} at={["image"]} v={d.image || ""} type="image">
-            <Media
-              src={d.image}
-              alt={d.heading}
-              art={<WindowArt seed={1} />}
-              className="bpc-frame"
-            />
-          </F>
+          <Media
+            edit={{ p, at: ["image"] }}
+            src={d.image}
+            alt={d.heading}
+            art={<WindowArt seed={1} />}
+            className="bpc-frame"
+          />
           <span className="bpc-tag">{d.eyebrow}</span>
         </div>
         <div className="bpc-body">

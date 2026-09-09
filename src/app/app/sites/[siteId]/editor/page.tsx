@@ -18,11 +18,11 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import {
   Eye, Pencil, Bot, Smartphone, Monitor, Check, Lock,
-  Camera, LayoutList, History, Type as TypeIcon, ArrowLeft,
+  Camera, LayoutList, History, Type as TypeIcon, ArrowLeft, Plus,
   Sparkles, RotateCcw, Crop, ExternalLink, Loader2, Palette,
 } from "lucide-react";
 
-import type { SiteConfig, Section } from "@/lib/site-config-schema";
+import type { SiteConfig, Section, SectionType } from "@/lib/site-config-schema";
 import { getSections } from "@/lib/site-config-schema";
 import { normalizePlanId, type Plan } from "@/lib/stripe";
 import {
@@ -31,9 +31,13 @@ import {
 } from "@/lib/site-editor";
 import { customerSiteUrl, customerSiteLabel } from "@/lib/resolve-site";
 import { resolveFieldTarget } from "@/lib/editor/field-target";
+
 import { buildPalette, resolveBrand, styleWithBrand, COLOR_SETS, normalizeHex } from "@/lib/palette";
 
-import SectionPanel from "@/components/editor/SectionPanel";
+import SectionPanel, { uniqueAnchor, type SectionsChangeMeta } from "@/components/editor/SectionPanel";
+import { SECTION_CATALOG } from "@/components/sections";
+import { findSectionDef } from "@/lib/templates/catalog";
+import { sampleSectionSeed } from "@/lib/templates/sample-content";
 import BrandPicker, { PaletteBoard, type BrandChoice } from "@/components/brand/BrandPicker";
 import TemplateRenderer from "@/components/template-renderers/TemplateRenderer";
 import { Button, Card, Badge, Field, Skeleton, Tabs, Sheet, useToast } from "@/components/ui";
@@ -55,6 +59,52 @@ const Cropper = dynamic(() => import("react-easy-crop"), { ssr: false }) as unkn
   showGrid?: boolean;
   objectFit?: "contain" | "cover" | "horizontal-cover" | "vertical-cover";
 }>;
+
+/* ═══════════════════════════════════════
+   部品カタログの引き出し
+   開いたときだけ読み込む（手本の中身を持っているので、画面の初回表示を重くしない）
+   ═══════════════════════════════════════ */
+const SectionCatalogDrawer = dynamic(
+  () => import("@/components/editor/SectionCatalogDrawer"),
+  { ssr: false },
+);
+
+/* ═══════════════════════════════════════
+   編集中の書き換え先の付け替え
+   ═══════════════════════════════════════ */
+
+type ChangeEntry = { label: string; oldValue: string; newValue: string; path: string };
+
+/**
+ * 部品を足す・消す・並べ替えると、"sections.2.…" の 2 がずれる。
+ * 変更前の番号 → 変更後の番号 に付け替えて、まだ保存していない編集の宛先を合わせる。
+ * 消えた部品の編集は落とす。
+ */
+function remapChanges(
+  prev: Map<string, ChangeEntry>,
+  remap: (oldIndex: number) => number | null,
+): Map<string, ChangeEntry> {
+  const AT = /^sections\.(\d+)(\..*)$/;
+  const next = new Map<string, ChangeEntry>();
+  for (const [key, value] of prev) {
+    const mk = AT.exec(key);
+    const mp = AT.exec(value.path);
+    let nextKey = key;
+    let nextPath = value.path;
+    if (mk) {
+      const to = remap(Number(mk[1]));
+      if (to === null) continue;
+      nextKey = `sections.${to}${mk[2]}`;
+    }
+    if (mp) {
+      const to = remap(Number(mp[1]));
+      if (to === null) continue;
+      nextPath = `sections.${to}${mp[2]}`;
+    }
+    next.set(nextKey, { ...value, path: nextPath });
+  }
+  return next;
+}
 
 /* ═══════════════════════════════════════
    フォント
@@ -439,6 +489,8 @@ export default function EditorPage() {
   // モードとパネル
   const [mode, setMode] = useState<"view" | "edit" | "ai">("edit");
   const [sectionsOpen, setSectionsOpen] = useState(false);
+  // カタログを開いている位置（null なら閉じている）
+  const [catalogAt, setCatalogAt] = useState<number | null>(null);
   const [brandOpen, setBrandOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [reviewing, setReviewing] = useState(false);
@@ -451,9 +503,10 @@ export default function EditorPage() {
   const [editText, setEditText] = useState("");
   // 直した項目。path は「設定のどこに書くか」で、直した時点で決めてしまう
   // （あとでセクションを並び替えても宛先がずれない）
-  const [changes, setChanges] = useState<
-    Map<string, { label: string; oldValue: string; newValue: string; path: string }>
-  >(new Map());
+  const [changes, setChanges] = useState<Map<string, ChangeEntry>>(new Map());
+  // 「元に戻す」で編集の宛先ごと戻せるように、いまの中身を手元に控えておく
+  const changesRef = useRef(changes);
+  useEffect(() => { changesRef.current = changes; }, [changes]);
 
   // 履歴
   const [history, setHistory] = useState<HistoryEntry[]>([]);
@@ -536,9 +589,29 @@ export default function EditorPage() {
 
   const closePanels = useCallback(() => {
     setSectionsOpen(false);
+    setCatalogAt(null);
     setBrandOpen(false);
     setHistoryOpen(false);
     setShowFontMenu(false);
+  }, []);
+
+  /* ── 足した部品をプレビューで見せる ── */
+  const revealSection = useCallback((anchor: string) => {
+    if (typeof window === "undefined") return;
+    // 並びが画面に出てから動かす
+    window.setTimeout(() => {
+      const el = document.getElementById(anchor);
+      if (!el) return;
+      const still = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      el.scrollIntoView({ behavior: still ? "auto" : "smooth", block: "start" });
+      el.animate?.(
+        [
+          { boxShadow: "inset 0 0 0 4px rgba(232,135,58,0.9)" },
+          { boxShadow: "inset 0 0 0 4px rgba(232,135,58,0)" },
+        ],
+        { duration: 1600, easing: "ease-out" },
+      );
+    }, 80);
   }, []);
 
   function switchMode(next: string) {
@@ -556,11 +629,89 @@ export default function EditorPage() {
   }
 
   /* ── セクション変更 → 即プレビュー反映 ── */
-  const handleSectionsChange = useCallback((newSections: Section[]) => {
+  const applySections = useCallback((newSections: Section[]) => {
     setSections(newSections);
     setSectionsChanged(JSON.stringify(newSections) !== initialSectionsJson);
-    if (siteConfig) setSiteConfig({ ...siteConfig, sections: newSections });
-  }, [siteConfig, initialSectionsJson]);
+    setSiteConfig((prev) => (prev ? { ...prev, sections: newSections } : prev));
+  }, [initialSectionsJson]);
+
+  const handleSectionsChange = useCallback((newSections: Section[], meta?: SectionsChangeMeta) => {
+    // 消す前の編集内容。「元に戻す」で並びと一緒に戻す
+    const before = changesRef.current;
+    applySections(newSections);
+
+    if (meta?.remap) {
+      const remap = meta.remap;
+      setChanges((prev) => remapChanges(prev, remap));
+    }
+    if (meta?.revealAnchor) revealSection(meta.revealAnchor);
+    if (meta?.undo) {
+      const restore = meta.undo.sections;
+      toast({
+        title: "削除しました",
+        description: meta.undo.message,
+        action: {
+          label: "元に戻す",
+          onClick: () => {
+            applySections(restore);
+            setChanges(before);
+          },
+        },
+        duration: 8000,
+      });
+    }
+    // toast は下で安定して作られる
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [applySections, revealSection]);
+
+  /* ── カタログ（部品を追加）───────────── */
+  const openCatalog = useCallback((index: number) => {
+    setCatalogAt(index);
+    // 引き出しは1つずつ。構成の一覧は選び終わったら戻す
+    setSectionsOpen(false);
+  }, []);
+
+  const closeCatalog = useCallback(() => {
+    setCatalogAt(null);
+    setSectionsOpen(true);
+  }, []);
+
+  /** カタログで選んだ部品を、その位置に入れる */
+  const insertSection = useCallback((type: string, variant: string) => {
+    if (!siteConfig || catalogAt === null) return;
+    const at = Math.min(Math.max(catalogAt, 0), sections.length);
+    const def = findSectionDef(templateId, { type });
+    const entry = SECTION_CATALOG.find((t) => t.type === type);
+    // 飛び先（アンカー）は重複させない。同じ部品を2つ置いてよい
+    const anchor = uniqueAnchor(sections, def?.id || type);
+    // 足した直後に空にならないよう、その業種の手本を入れる。
+    // 一覧（実績・スタッフ…）は詳細ページも読む config の一番上へ
+    const seed = sampleSectionSeed(siteConfig, type, variant);
+    const added: Section = {
+      type: type as SectionType,
+      variant,
+      visible: true,
+      label: def?.label || entry?.label || type,
+      id: anchor,
+      ...(Object.keys(seed.data).length > 0 ? { data: seed.data } : {}),
+    };
+    const next = [...sections.slice(0, at), added, ...sections.slice(at)];
+
+    setSections(next);
+    setSectionsChanged(JSON.stringify(next) !== initialSectionsJson);
+    setSiteConfig((prev) => (prev ? { ...prev, ...seed.shared, sections: next } : prev));
+    setChanges((prev) => remapChanges(prev, (i) => (i >= at ? i + 1 : i)));
+
+    revealSection(anchor);
+    closeCatalog();
+    toast({
+      title: "部品を追加しました",
+      description: `「${added.label}」を${at + 1}番目に入れました。文字や写真をタップすると直せます。`,
+      tone: "success",
+    });
+    // toast は下で安定して作られる
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [siteConfig, catalogAt, sections, templateId, initialSectionsJson, revealSection, closeCatalog]);
 
   /* ── 色の変更 → 即プレビュー反映 ── */
   const handleBrandChange = useCallback((next: BrandChoice) => {
@@ -900,6 +1051,17 @@ export default function EditorPage() {
               </button>
               <button
                 type="button"
+                onClick={() => { cancelEdit(); closePanels(); openCatalog(sections.length); }}
+                aria-pressed={catalogAt !== null}
+                className={[
+                  "inline-flex h-8 items-center gap-1.5 rounded-pill px-3 text-sm font-medium outline-none transition focus-visible:ring-2 focus-visible:ring-ring",
+                  catalogAt !== null ? "bg-accent-soft text-ink" : "text-ink2 hover:bg-surface2 hover:text-ink",
+                ].join(" ")}
+              >
+                <Plus className="size-4" aria-hidden /> 部品を追加
+              </button>
+              <button
+                type="button"
                 onClick={() => { cancelEdit(); closePanels(); setBrandOpen(true); }}
                 aria-pressed={brandOpen}
                 className={[
@@ -1083,21 +1245,37 @@ export default function EditorPage() {
         )}
       </Sheet>
 
-      {/* ── セクション構成（右から） ── */}
+      {/* ── ページの部品（右から。プレビューは見えたまま） ── */}
       <Sheet
-        open={sectionsOpen && mode === "edit"}
+        open={sectionsOpen && mode === "edit" && catalogAt === null}
         onClose={() => setSectionsOpen(false)}
         side="right"
-        title="ページの構成"
-        description="表示する内容・並び順・見せ方を決めます。変更はすぐプレビューに映ります。"
+        modal={false}
+        title="ページの部品"
+        description="足す・外す・並べ替え・見せ方を決めます。変更はすぐプレビューに映ります。"
       >
         <SectionPanel
           sections={sections}
           onChange={handleSectionsChange}
           templateId={templateId}
           plan={plan}
+          onRequestAdd={openCatalog}
         />
       </Sheet>
+
+      {/* ── 部品を追加（カタログ。プレビューは見えたまま） ── */}
+      {catalogAt !== null && siteConfig && (
+        <SectionCatalogDrawer
+          open
+          onClose={closeCatalog}
+          config={siteConfig}
+          templateId={templateId}
+          plan={plan}
+          insertAt={catalogAt}
+          total={sections.length}
+          onPick={insertSection}
+        />
+      )}
 
       {/* ── 色（右から） ── */}
       <Sheet

@@ -54,9 +54,7 @@ export default function CompanyMessageFeature(p: SectionProps) {
       <div className="cmf-wrap">
         <div className="cmf-grid">
           <div className="cmf-media">
-            <F p={p} at={["image"]} v={d.image || ""} type="image">
-              <Media src={d.image} alt={c.ceo} art={<PortraitArt seed={1} />} className="cmf-photo" />
-            </F>
+            <Media edit={{ p, at: ["image"] }} src={d.image} alt={c.ceo} art={<PortraitArt seed={1} />} className="cmf-photo" width={1024} height={1536} />
             <div className="cmf-caption">
               <small>{c.ceoTitle || "代表"}</small>
               <b className="ms-serif">{c.ceo}</b>

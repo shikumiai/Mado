@@ -62,14 +62,15 @@ export default function StaffLeadMessage(p: SectionProps) {
       <div className="tlm-wrap">
         <div className="tlm-main">
           <div>
-            <F p={p} at={["items", 0, "image"]} v={lead?.image || c.ceoPhoto || ""} type="image">
-              <Media
-                src={lead?.image || c.ceoPhoto}
-                alt={name}
-                art={<PortraitArt seed={0} />}
-                className="tlm-photo"
-              />
-            </F>
+            <Media
+              edit={{ p, at: ["items", 0, "image"] }}
+              src={lead?.image || c.ceoPhoto}
+              alt={name}
+              art={<PortraitArt seed={0} />}
+              className="tlm-photo"
+              width={1024}
+              height={1536}
+            />
             <div className="tlm-plate">
               <F p={p} at={["items", 0, "name"]} v={name}>
                 <p className="tlm-plate-name ms-serif">{name}</p>
@@ -102,10 +103,13 @@ export default function StaffLeadMessage(p: SectionProps) {
             {d.items.slice(1).map((s, i) => (
               <div key={s.id ?? i}>
                 <Media
+                  edit={{ p, at: ["items", i + 1, "image"] }}
                   src={s.image}
                   alt={s.name}
                   art={<PortraitArt seed={i + 1} />}
                   className="tlm-rest-img"
+                  width={1024}
+                  height={1536}
                 />
                 <p className="tlm-rest-name ms-serif">{s.name}</p>
                 <p className="tlm-rest-role">{s.role}</p>

@@ -57,6 +57,7 @@ export default function MenuSignboard(p: SectionProps) {
       <div className="msb-wrap">
         <div className="msb-board">
           <Media
+            edit={{ p, at: ["items", heroIndex, "image"] }}
             src={hero.image}
             alt={hero.name}
             art={<DishArt seed={heroIndex} category={hero.category} name={hero.name} />}

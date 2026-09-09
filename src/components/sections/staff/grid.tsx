@@ -52,14 +52,15 @@ export default function StaffGrid(p: SectionProps) {
       <div className="tgr-grid">
         {d.items.map((s, i) => (
           <article key={s.id ?? i} className={`tgr-card${i === 0 ? " tgr-lead" : ""}`}>
-            <F p={p} at={["items", i, "image"]} v={s.image || ""} type="image">
-              <Media
-                src={s.image}
-                alt={s.name}
-                art={<PortraitArt seed={i} />}
-                className="tgr-img"
-              />
-            </F>
+            <Media
+              edit={{ p, at: ["items", i, "image"] }}
+              src={s.image}
+              alt={s.name}
+              art={<PortraitArt seed={i} />}
+              className="tgr-img"
+              width={1024}
+              height={1536}
+            />
             <div className="tgr-body">
               <span className="tgr-role">{s.role}</span>
               <DetailLink section="staff" item={s} index={i}>

@@ -74,7 +74,14 @@ export default function HeroStatement(p: SectionProps) {
           </div>
         </div>
       </div>
-      <Media src={d.image} alt={d.company.name} art={<WindowArt />} className="hst-art" />
+      <Media
+        edit={{ p, at: ["image"] }}
+        eager
+        src={d.image}
+        alt={d.company.name}
+        art={<WindowArt />}
+        className="hst-art"
+      />
     </section>
   );
 }

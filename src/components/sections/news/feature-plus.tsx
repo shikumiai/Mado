@@ -54,14 +54,13 @@ export default function NewsFeaturePlus(p: SectionProps) {
       <div className="nfp-grid">
         <article className="nfp-main">
           <DetailLink section="news" item={main} index={0}>
-            <F p={p} at={["items", 0, "image"]} v={main.image || ""} type="image">
-              <Media
-                src={main.image}
-                alt={main.title}
-                art={<NoticeArt seed={0} category={main.category} />}
-                className="nfp-img"
-              />
-            </F>
+            <Media
+              edit={{ p, at: ["items", 0, "image"] }}
+              src={main.image}
+              alt={main.title}
+              art={<NoticeArt seed={0} category={main.category} />}
+              className="nfp-img"
+            />
           </DetailLink>
           <div className="nfp-main-body">
             <div className="nfp-meta">

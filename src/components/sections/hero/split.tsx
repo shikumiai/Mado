@@ -72,7 +72,14 @@ export default function HeroSplit(p: SectionProps) {
           )}
         </div>
       </div>
-      <Media src={d.image} alt={d.company.name} art={<WindowArt seed={1} />} className="hsp-art" />
+      <Media
+        edit={{ p, at: ["image"] }}
+        eager
+        src={d.image}
+        alt={d.company.name}
+        art={<WindowArt seed={1} />}
+        className="hsp-art"
+      />
     </section>
   );
 }

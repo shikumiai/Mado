@@ -55,14 +55,13 @@ export default function WorksGrid(p: SectionProps) {
         {d.items.map((w, i) => (
           <article key={w.id ?? i} className={`wgr-card${i === 0 ? " wgr-lead" : ""}`}>
             <div className="wgr-media">
-              <F p={p} at={["items", i, "image"]} v={w.image || ""} type="image">
-                <Media
-                  src={w.image}
-                  alt={w.title}
-                  art={<SceneArt seed={i} category={w.category} />}
-                  className="wgr-img"
-                />
-              </F>
+              <Media
+                edit={{ p, at: ["items", i, "image"] }}
+                src={w.image}
+                alt={w.title}
+                art={<SceneArt seed={i} category={w.category} />}
+                className="wgr-img"
+              />
               {w.category && <span className="wgr-cat">{w.category}</span>}
             </div>
             <div className="wgr-body">

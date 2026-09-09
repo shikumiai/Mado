@@ -60,9 +60,15 @@ export default function StaffEditorial(p: SectionProps) {
         </div>
         <div className="ted-grid">
           <div className="ted-hero">
-            <F p={p} at={["items", 0, "image"]} v={lead.image || ""} type="image">
-              <Media src={lead.image} alt={lead.name} art={<PortraitArt seed={0} />} className="ted-hero-img" />
-            </F>
+            <Media
+              edit={{ p, at: ["items", 0, "image"] }}
+              src={lead.image}
+              alt={lead.name}
+              art={<PortraitArt seed={0} />}
+              className="ted-hero-img"
+              width={1024}
+              height={1536}
+            />
             <div className="ted-plate">
               <span className="ted-no ms-num">{pad2(0)}</span>
               <F p={p} at={["items", 0, "name"]} v={lead.name}>
@@ -79,9 +85,15 @@ export default function StaffEditorial(p: SectionProps) {
           <div className="ted-rest">
             {rest.map((s, i) => (
               <div key={s.id ?? i}>
-                <F p={p} at={["items", i + 1, "image"]} v={s.image || ""} type="image">
-                  <Media src={s.image} alt={s.name} art={<PortraitArt seed={i + 1} />} className="ted-rest-img" />
-                </F>
+                <Media
+                  edit={{ p, at: ["items", i + 1, "image"] }}
+                  src={s.image}
+                  alt={s.name}
+                  art={<PortraitArt seed={i + 1} />}
+                  className="ted-rest-img"
+                  width={1024}
+                  height={1536}
+                />
                 <F p={p} at={["items", i + 1, "name"]} v={s.name}>
                   <h3 className="ted-rest-name ms-serif">{s.name}</h3>
                 </F>

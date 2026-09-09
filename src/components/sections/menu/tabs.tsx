@@ -69,6 +69,7 @@ export default function MenuTabs(p: SectionProps) {
             return (
               <article key={m.id ?? i} className="mtb-item">
                 <Media
+                  edit={{ p, at: ["items", idx, "image"] }}
                   src={m.image}
                   alt={m.name}
                   art={<DishArt seed={idx} category={m.category} name={m.name} />}

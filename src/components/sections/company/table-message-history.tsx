@@ -80,14 +80,15 @@ export default function CompanyTableMessageHistory(p: SectionProps) {
 
           {d.message && (
             <div className="ctm-msg">
-              <F p={p} at={["image"]} v={d.image || ""} type="image">
-                <Media
-                  src={d.image}
-                  alt={c.ceo}
-                  art={<PortraitArt seed={0} />}
-                  className="ctm-photo"
-                />
-              </F>
+              <Media
+                edit={{ p, at: ["image"] }}
+                src={d.image}
+                alt={c.ceo}
+                art={<PortraitArt seed={0} />}
+                className="ctm-photo"
+                width={1024}
+                height={1536}
+              />
               <div className="ctm-msg-body">
                 <p className="ctm-msg-h">{d.messageHeading}</p>
                 {d.messageTitle && <h3 className="ctm-msg-t ms-serif">{d.messageTitle}</h3>}

@@ -52,6 +52,8 @@ export default function HeroWindow(p: SectionProps) {
         {d.eyebrow && <p className="hwn-eyebrow">{d.eyebrow}</p>}
         <div className="hwn-pane">
           <Media
+            edit={{ p, at: ["image"] }}
+            eager
             src={d.image}
             alt={d.company.name}
             art={<SceneArt seed={2} category={d.company.name} />}

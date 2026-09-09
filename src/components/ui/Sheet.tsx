@@ -19,6 +19,16 @@ export interface SheetProps {
   description?: string;
   children?: React.ReactNode;
   className?: string;
+  /**
+   * 画面を覆うかどうか。
+   * false にすると背景を暗くせず、後ろ（プレビューなど）をそのまま見て触れる。
+   * 組み立てのように「結果を見ながら操作する」パネルはこちらを使う。
+   */
+  modal?: boolean;
+  /** 横幅。中に実物のプレビューを並べるときは wide */
+  width?: "default" | "wide";
+  /** 見出しの左に置くもの（「戻る」ボタンなど） */
+  headerLeading?: React.ReactNode;
 }
 
 export function Sheet({
@@ -29,6 +39,9 @@ export function Sheet({
   description,
   children,
   className = "",
+  modal = true,
+  width = "default",
+  headerLeading,
 }: SheetProps) {
   const [render, setRender] = useState(open);
   const [shown, setShown] = useState(false);
@@ -81,30 +94,37 @@ export function Sheet({
 
   const isRight = side === "right";
   const hiddenTransform = isRight ? "translateX(100%)" : "translateY(100%)";
+  const wide = width === "wide";
   const panelPos = isRight
-    ? "top-0 right-0 h-full w-full max-w-md rounded-l-2xl"
+    ? `top-0 right-0 h-full w-full ${wide ? "max-w-xl" : "max-w-md"} rounded-l-2xl`
     : "inset-x-0 bottom-0 max-h-[85vh] rounded-t-2xl";
 
   return (
-    <div className="fixed inset-0 z-[70]" onKeyDown={onKeyDown}>
-      {/* 背景。クリックで閉じる */}
-      <button
-        type="button"
-        aria-label="閉じる"
-        tabIndex={-1}
-        onClick={onClose}
-        className="absolute inset-0 cursor-default bg-[rgba(16,21,31,0.45)] transition-opacity duration-200 ease-brand"
-        style={{ opacity: shown ? 1 : 0 }}
-      />
+    <div
+      className={["fixed inset-0 z-[70]", modal ? "" : "pointer-events-none"].filter(Boolean).join(" ")}
+      onKeyDown={onKeyDown}
+    >
+      {/* 背景。クリックで閉じる（覆わないシートには出さない） */}
+      {modal && (
+        <button
+          type="button"
+          aria-label="閉じる"
+          tabIndex={-1}
+          onClick={onClose}
+          className="absolute inset-0 cursor-default bg-[rgba(16,21,31,0.45)] transition-opacity duration-200 ease-brand"
+          style={{ opacity: shown ? 1 : 0 }}
+        />
+      )}
 
       <div
         ref={panelRef}
         role="dialog"
-        aria-modal="true"
+        aria-modal={modal}
         aria-label={title}
         tabIndex={-1}
         className={[
           "absolute flex flex-col bg-surface text-ink border border-line shadow-sh3 outline-none",
+          modal ? "" : "pointer-events-auto",
           panelPos,
           className,
         ]
@@ -115,9 +135,10 @@ export function Sheet({
           transition: "transform 320ms var(--ease)",
         }}
       >
-        {(title || description) && (
+        {(title || description || headerLeading) && (
           <div className="flex items-start justify-between gap-3 border-b border-line p-4">
-            <div className="min-w-0">
+            {headerLeading}
+            <div className="min-w-0 flex-1">
               {title && <h2 className="text-base font-semibold">{title}</h2>}
               {description && (
                 <p className="mt-0.5 text-sm text-ink2">{description}</p>

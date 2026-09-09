@@ -71,14 +71,13 @@ export default function WorksShowcase(p: SectionProps) {
       <div className="wsc-rail" ref={rail} tabIndex={0} role="group" aria-label={`${d.heading}（横にスクロールできます）`}>
         {d.items.map((w, i) => (
           <article key={w.id ?? i} className="wsc-card">
-            <F p={p} at={["items", i, "image"]} v={w.image || ""} type="image">
-              <Media
-                src={w.image}
-                alt={w.title}
-                art={<SceneArt seed={i + 2} category={w.category} />}
-                className="wsc-img"
-              />
-            </F>
+            <Media
+              edit={{ p, at: ["items", i, "image"] }}
+              src={w.image}
+              alt={w.title}
+              art={<SceneArt seed={i + 2} category={w.category} />}
+              className="wsc-img"
+            />
             <span className="wsc-no ms-num">{pad2(i)} / {pad2(d.items.length - 1)}</span>
             <div className="wsc-body">
               <span className="wsc-cat">{w.category}</span>

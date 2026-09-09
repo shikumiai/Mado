@@ -24,11 +24,17 @@ export interface ToastOptions {
   tone?: Tone;
   /** 消えるまでの時間(ms)。0 で自動で消えない */
   duration?: number;
+  /**
+   * その場でやり直せる一手（「元に戻す」など）。
+   * 確認の窓を出して手を止めさせる代わりに、先に実行してここで戻せるようにする。
+   */
+  action?: { label: string; onClick: () => void };
 }
 
-interface ToastItem extends Required<Omit<ToastOptions, "description">> {
+interface ToastItem extends Required<Omit<ToastOptions, "description" | "action">> {
   id: number;
   description?: string;
+  action?: { label: string; onClick: () => void };
 }
 
 interface ToastContextValue {
@@ -68,6 +74,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         description: opts.description,
         tone: opts.tone ?? "neutral",
         duration: opts.duration ?? 4500,
+        action: opts.action,
       };
       setItems((prev) => [...prev, item]);
       if (item.duration > 0) {
@@ -93,7 +100,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       <div
         aria-live="polite"
         aria-relevant="additions"
-        className="pointer-events-none fixed inset-x-0 bottom-0 z-[60] flex flex-col items-center gap-2 p-4"
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-[80] flex flex-col items-center gap-2 p-4"
       >
         {items.map((t) => {
           const s = toneStyle[t.tone];
@@ -115,6 +122,18 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                   </p>
                 )}
               </div>
+              {t.action && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    t.action?.onClick();
+                    remove(t.id);
+                  }}
+                  className="shrink-0 rounded-md px-2 py-1 text-xs font-medium text-accent outline-none transition hover:bg-accent-soft focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  {t.action.label}
+                </button>
+              )}
               <button
                 type="button"
                 aria-label="閉じる"

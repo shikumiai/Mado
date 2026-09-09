@@ -1222,6 +1222,7 @@ export default function StartPage() {
                             選んだ色で塗った実物です。{template.tagline}。
                             中の文字や写真は、公開したあとで自由に差し替えられます。
                           </p>
+                          <p className="mt-1 text-sm text-ink2">部品はあとからいつでも足せます。</p>
 
                           {/* 大きく1枚 */}
                           <div className="mt-6">

@@ -46,14 +46,13 @@ export default function WorksQuiet(p: SectionProps) {
         </F>
         {d.items.map((w, i) => (
           <article key={w.id ?? i} className="wqt-item">
-            <F p={p} at={["items", i, "image"]} v={w.image || ""} type="image">
-              <Media
-                src={w.image}
-                alt={w.title}
-                art={<SceneArt seed={i + 3} category={w.category} />}
-                className="wqt-img"
-              />
-            </F>
+            <Media
+              edit={{ p, at: ["items", i, "image"] }}
+              src={w.image}
+              alt={w.title}
+              art={<SceneArt seed={i + 3} category={w.category} />}
+              className="wqt-img"
+            />
             <div className="wqt-cap">
               <span className="wqt-no ms-num">{pad2(i)}</span>
               <div>

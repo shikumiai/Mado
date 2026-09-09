@@ -36,8 +36,12 @@ export interface FieldTarget {
   toStored?: (value: string) => string;
 }
 
-/** 一覧の中身が本当に置いてある場所（機能 → config の一番上の配列） */
-const ITEM_SOURCE: Record<string, string> = {
+/**
+ * 一覧の中身が本当に置いてある場所（機能 → config の一番上の配列）。
+ * 詳細ページもここを読むので、部品を足したときの手本の中身もここへ入れる
+ * （src/lib/templates/sample-content.ts がこの表を使う）。
+ */
+export const ITEM_SOURCE: Record<string, string> = {
   works: "projects",
   staff: "staff",
   menu: "menu",
@@ -51,10 +55,10 @@ const ITEM_SOURCE: Record<string, string> = {
 };
 
 /** voices の数字は testimonials ではなく stats に入っている */
-const STATS_SOURCE = "stats";
+export const STATS_SOURCE = "stats";
 
 /** 沿革（company）の置き場 */
-const HISTORY_SOURCE = "history";
+export const HISTORY_SOURCE = "history";
 
 /**
  * 1つだけの項目の出どころ。

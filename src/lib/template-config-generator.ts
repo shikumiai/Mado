@@ -9,6 +9,7 @@ import { getPlanFromTemplateId, getBaseTemplateId } from "./stripe";
 import { customerSiteUrl, customerSiteLabel } from "./resolve-site";
 import { type BrandColors, styleWithBrand } from "./palette";
 import { defaultSectionsFor } from "./templates/catalog";
+import { templatePhoto } from "./templates/photos";
 
 interface OrderFormData {
   orderId: string;
@@ -26,6 +27,18 @@ interface OrderFormData {
   /** 申し込み画面で選んだ色（代表カラー＋サブ最大2つ） */
   brand?: Partial<BrandColors>;
 }
+
+/**
+ * セクションが1枚だけ持つ写真（テンプレートに付いてくるもの）。
+ * お客さんが自分の写真を送るまでのあいだ、ここが埋まっているから公開初日から完成して見える。
+ * 写真の中身は docs/PHOTO_BRIEF.md、置き場は public/images/templates/<テンプレート>/。
+ */
+const SECTION_PHOTO: Record<string, "hero" | "scene-1" | "scene-2" | "owner"> = {
+  hero: "hero",
+  access: "scene-1",
+  booking: "scene-2",
+  company: "owner",
+};
 
 /**
  * フォームデータからsite.config.jsonの内容を生成
@@ -52,7 +65,12 @@ export function generateSiteConfig(formData: OrderFormData): SiteConfig {
     // その業種・そのプランの構成をはじめから書いておく。
     // 書かなければ描く側が既定に落としてくれるが、書いておけば
     // 編集画面の「ページの構成」と公開サイトが最初から同じものを指す。
-    sections: defaultSectionsFor(formData.templateId, plan),
+    sections: defaultSectionsFor(formData.templateId, plan).map((section) => {
+      const role = SECTION_PHOTO[section.type];
+      return role
+        ? { ...section, data: { ...section.data, image: templatePhoto(baseTemplate, role) } }
+        : section;
+    }),
 
     company: {
       name: formData.companyName,
@@ -66,6 +84,8 @@ export function generateSiteConfig(formData: OrderFormData): SiteConfig {
       ceo: formData.ceo || "",
       bio: formData.bio || "",
       domain: formData.domain || customerSiteLabel(formData.siteSlug || "sample"),
+      // 代表の写真。差し替えるまではテンプレートのものが出る
+      ceoPhoto: templatePhoto(baseTemplate, "owner"),
     },
 
     projects: [],

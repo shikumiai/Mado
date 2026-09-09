@@ -56,14 +56,13 @@ export default function WorksFeatureList(p: SectionProps) {
       <HeadStack p={p} eyebrow={d.eyebrow} heading={d.heading} lead={d.lead} />
       <div className="wfl-grid">
         <div className="wfl-stage">
-          <F p={p} at={["items", i, "image"]} v={cur.image || ""} type="image">
-            <Media
-              src={cur.image}
-              alt={cur.title}
-              art={<SceneArt seed={i} category={cur.category} />}
-              className="wfl-img"
-            />
-          </F>
+          <Media
+            edit={{ p, at: ["items", i, "image"] }}
+            src={cur.image}
+            alt={cur.title}
+            art={<SceneArt seed={i} category={cur.category} />}
+            className="wfl-img"
+          />
           <div className="wfl-cap">
             {cur.category && <span className="wfl-cat">{cur.category}</span>}
             <DetailLink section="works" item={cur} index={i}>

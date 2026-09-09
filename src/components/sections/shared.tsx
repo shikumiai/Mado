@@ -12,7 +12,7 @@
  * 色は全部 var(--tpl-*)。生の色コードはここにも部品にも書かない。
  */
 
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, useState, type ReactNode } from "react";
 import {
   Award, BadgeCheck, Briefcase, Building2, Check, Clock, Coffee, Compass,
   Dumbbell, GraduationCap, Hammer, HardHat, Heart, Home, Leaf, MapPin,
@@ -138,6 +138,8 @@ a.ms-dlink:hover .ms-more { gap: 10px; }
   transition: outline-color 0.15s; }
 .ms-edit:hover { outline-color: var(--tpl-sub1); }
 .ms-edit-on { outline: 2px solid var(--tpl-primary); }
+/* 写真の枠は中身をはみ出させない（overflow: hidden）ので、印は枠の内側に置く */
+.ms-frame > .ms-edit-mark { top: 7px; right: 7px; }
 .ms-edit-mark { position: absolute; top: -7px; right: -7px; z-index: 5; width: 16px; height: 16px;
   border-radius: 50%; background: var(--tpl-primary); color: var(--tpl-on-primary);
   display: flex; align-items: center; justify-content: center; }
@@ -279,20 +281,76 @@ export function HeadSplit({
    写真の枠（無ければ設計された絵）
    ═══════════════════════════════════════ */
 
-/** 写真があれば写真、無ければ渡された絵を出す */
+/**
+ * 写真があれば写真、無ければ渡された絵を出す枠。
+ *
+ * ・写真の読み込みに失敗したら（ファイルがまだ無い・URL が古い）絵に戻す。
+ *   テンプレートの写真を先に config へ書いておいて、写真は後から置く、ができる。
+ * ・width / height を必ず付ける。枠の高さは CSS が決めるが、
+ *   縦横の比が先に分かるぶん読み込み中の跳ねが起きない。
+ * ・主役の1枚（ヒーロー）だけ eager。それ以外は近づいてから読む。
+ */
 export function Media({
-  src, alt, art, className, style,
+  src, alt, art, className, style, width = 1536, height = 1024, eager = false, edit,
 }: {
   src?: string;
   alt: string;
   art: ReactNode;
   className?: string;
   style?: React.CSSProperties;
+  /** 写真の実寸（比を先に伝えるためのもの。表示の大きさは CSS が決める） */
+  width?: number;
+  height?: number;
+  /** 画面の上のほうに出る写真（ヒーロー）だけ true */
+  eager?: boolean;
+  /**
+   * 編集モードで、この写真をクリックして差し替えられるようにする。
+   * at は保存先（["image"] や ["items", 2, "image"]）。
+   * 枠そのものを押せる形にするので、写真の位置が絶対配置でもずれない。
+   */
+  edit?: { p: EditProps; at: (string | number)[] };
 }) {
+  // 失敗した URL を覚える。src が別のものに変われば、また写真を試す
+  const [failed, setFailed] = useState<string | null>(null);
+  const show = src && failed !== src;
+
+  const fieldId = edit?.p.editMode ? fieldIdOf(edit.p.fieldPath, edit.at) : null;
+  const changed = fieldId ? edit?.p.changedFields?.has(fieldId) : false;
+
   return (
-    <div className={`ms-frame${className ? ` ${className}` : ""}`} style={style}>
+    <div
+      className={`ms-frame${className ? ` ${className}` : ""}${fieldId ? " ms-edit" : ""}${changed ? " ms-edit-on" : ""}`}
+      style={style}
+      data-field-id={fieldId ?? undefined}
+      onClick={
+        fieldId
+          ? (e) => {
+              e.stopPropagation();
+              edit?.p.onFieldClick?.(fieldId, src || "", "image");
+            }
+          : undefined
+      }
+    >
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      {src ? <img src={src} alt={alt} /> : art}
+      {show ? (
+        <img
+          src={src}
+          alt={alt}
+          width={width}
+          height={height}
+          loading={eager ? "eager" : "lazy"}
+          decoding={eager ? "sync" : "async"}
+          fetchPriority={eager ? "high" : "auto"}
+          onError={() => setFailed(src)}
+        />
+      ) : (
+        art
+      )}
+      {changed && (
+        <span className="ms-edit-mark">
+          <Check size={9} strokeWidth={3} />
+        </span>
+      )}
     </div>
   );
 }

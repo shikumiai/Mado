@@ -58,14 +58,13 @@ export default function NewsCards(p: SectionProps) {
         {d.items.map((n, i) => (
           <article key={i} className={`ncd-card${i === 0 ? " ncd-lead" : ""}`}>
             <DetailLink section="news" item={n} index={i}>
-              <F p={p} at={["items", i, "image"]} v={n.image || ""} type="image">
-                <Media
-                  src={n.image}
-                  alt={n.title}
-                  art={<NoticeArt seed={i} category={n.category} />}
-                  className="ncd-img"
-                />
-              </F>
+              <Media
+                edit={{ p, at: ["items", i, "image"] }}
+                src={n.image}
+                alt={n.title}
+                art={<NoticeArt seed={i} category={n.category} />}
+                className="ncd-img"
+              />
             </DetailLink>
             <div className="ncd-body">
               <div className="ncd-meta">

@@ -48,6 +48,8 @@ export default function HeroFull(p: SectionProps) {
       <Base />
       <Styles id="hero-full" css={CSS} />
       <Media
+        edit={{ p, at: ["image"] }}
+        eager
         src={d.image}
         alt={d.company.name}
         art={<SceneArt seed={3} category="オフィス" />}

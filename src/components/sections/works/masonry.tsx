@@ -53,14 +53,13 @@ export default function WorksMasonry(p: SectionProps) {
               : w.size === "landscape" ? "wms-a3" : RATIOS[i % RATIOS.length];
             return (
               <article key={w.id ?? i} className="wms-item">
-                <F p={p} at={["items", i, "image"]} v={w.image || ""} type="image">
-                  <Media
-                    src={w.image}
-                    alt={w.title}
-                    art={<SceneArt seed={i + 1} category={w.category} />}
-                    className={`wms-img ${ratio}`}
-                  />
-                </F>
+                <Media
+                  edit={{ p, at: ["items", i, "image"] }}
+                  src={w.image}
+                  alt={w.title}
+                  art={<SceneArt seed={i + 1} category={w.category} />}
+                  className={`wms-img ${ratio}`}
+                />
                 <div className="wms-cap">
                   <span className="wms-no ms-num">{pad2(i)}</span>
                   <DetailLink section="works" item={w} index={i}>

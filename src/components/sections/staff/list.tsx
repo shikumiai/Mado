@@ -50,7 +50,15 @@ export default function StaffList(p: SectionProps) {
         <div>
           {d.items.map((s, i) => (
             <div key={s.id ?? i} className="tls-row">
-              <Media src={s.image} alt={s.name} art={<PortraitArt seed={i} />} className="tls-img" />
+              <Media
+                edit={{ p, at: ["items", i, "image"] }}
+                src={s.image}
+                alt={s.name}
+                art={<PortraitArt seed={i} />}
+                className="tls-img"
+                width={1024}
+                height={1536}
+              />
               <div>
                 <span className="tls-role">{s.role}</span>
                 <DetailLink section="staff" item={s} index={i}>

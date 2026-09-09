@@ -150,7 +150,15 @@ export default function DetailView({
         {item.subtitle && <p className="dtl-sub ms-num">{item.subtitle}</p>}
 
         <div className="dtl-hero">
-          <Media src={item.image} alt={item.title} art={artFor(item)} className="dtl-img" />
+          <Media
+            src={item.image}
+            alt={item.title}
+            art={artFor(item)}
+            className="dtl-img"
+            eager
+            width={item.section === "staff" ? 1024 : 1536}
+            height={item.section === "staff" ? 1536 : 1024}
+          />
         </div>
 
         <div className="dtl-cols">

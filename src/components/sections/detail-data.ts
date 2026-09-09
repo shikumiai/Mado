@@ -15,6 +15,7 @@ import type {
   MenuItem,
   NewsItem,
 } from "@/lib/site-config-schema";
+import { templateListPhoto } from "@/lib/templates/photos";
 import type { InfoRow } from "./types";
 
 /** 詳細ページを持てる機能。ここに無い名前は 404 にする */
@@ -136,7 +137,7 @@ export function findDetailItem(
       title: w.title,
       eyebrow: s(w.category),
       subtitle: s(w.titleEn) ?? s(w.year),
-      image: s(w.image),
+      image: s(w.image) ?? templateListPhoto(config.templateId, "work", i),
       body: w.description ?? "",
       rows: rowsOf([
         ["分類", w.category],
@@ -168,7 +169,7 @@ export function findDetailItem(
       title: m.name,
       eyebrow: s(m.role),
       subtitle: s(m.experience),
-      image: s(m.image),
+      image: s(m.image) ?? templateListPhoto(config.templateId, "staff", i),
       body: m.bio ?? "",
       rows: rowsOf([
         ["担当", m.role],
@@ -193,7 +194,7 @@ export function findDetailItem(
       title: m.name,
       eyebrow: s(m.category),
       subtitle: s(m.price),
-      image: s(m.image),
+      image: s(m.image) ?? templateListPhoto(config.templateId, "item", i),
       body: m.description ?? "",
       rows: rowsOf([
         ["分類", m.category],
@@ -216,7 +217,7 @@ export function findDetailItem(
     title: n.title,
     eyebrow: s(n.category),
     subtitle: s(n.date),
-    image: s(n.image),
+    image: s(n.image) ?? templateListPhoto(config.templateId, "news", i),
     body: s(n.body) ?? s(n.excerpt) ?? "",
     rows: rowsOf([
       ["掲載日", n.date],

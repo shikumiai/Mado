@@ -59,14 +59,13 @@ export default function MenuPhotoCards(p: SectionProps) {
       <div className="mpc-grid">
         {d.items.map((m, i) => (
           <article key={m.id ?? i} className={`mpc-card${i === heroIndex ? " mpc-hero" : ""}`}>
-            <F p={p} at={["items", i, "image"]} v={m.image || ""} type="image">
-              <Media
-                src={m.image}
-                alt={m.name}
-                art={<DishArt seed={i} category={m.category} name={m.name} />}
-                className="mpc-img"
-              />
-            </F>
+            <Media
+              edit={{ p, at: ["items", i, "image"] }}
+              src={m.image}
+              alt={m.name}
+              art={<DishArt seed={i} category={m.category} name={m.name} />}
+              className="mpc-img"
+            />
             <div className="mpc-body">
               {m.isRecommended && (
                 <span className="mpc-badge">

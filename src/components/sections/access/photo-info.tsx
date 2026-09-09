@@ -54,14 +54,13 @@ export default function AccessPhotoInfo(p: SectionProps) {
       <Base />
       <Styles id="access-photo-info" css={CSS} />
       <div className="api-stage">
-        <F p={p} at={["image"]} v={d.image || ""} type="image">
-          <Media
-            src={d.image}
-            alt={`${c.name}の外観`}
-            art={<SceneArt seed={2} category={c.business || "店舗"} />}
-            className="api-photo"
-          />
-        </F>
+        <Media
+          edit={{ p, at: ["image"] }}
+          src={d.image}
+          alt={`${c.name}の外観`}
+          art={<SceneArt seed={2} category={c.business || "店舗"} />}
+          className="api-photo"
+        />
         <span className="api-shade" />
       </div>
 

@@ -21,6 +21,7 @@ import type {
   BookingEvent,
   HistoryEvent,
 } from "@/lib/site-config-schema";
+import { templateListPhoto, templatePhoto, type PhotoListKind } from "@/lib/templates/photos";
 import type { Cta, HoursTable, InfoRow, SectionData } from "./types";
 
 /* ─── 小さな取り出し ─── */
@@ -31,6 +32,31 @@ function str(v: unknown): string | undefined {
 
 function list<T>(v: unknown): T[] | undefined {
   return Array.isArray(v) && v.length > 0 ? (v as T[]) : undefined;
+}
+
+/**
+ * 写真の当てはめ。
+ *
+ * その1件が自分の写真を持っていればそれを使い、まだ無ければ
+ * テンプレートに付いてくる写真（public/images/templates/<templateId>/…）を当てる。
+ * お客さんが自分の写真を送るまでのあいだ、初日から完成した会社サイトに見えるようにするため。
+ * テンプレートの写真がまだ置かれていなければ <img> の読み込みが失敗し、
+ * shared.tsx の Media が設計された絵に戻す（画面は壊れない）。
+ */
+function withPhotos<T extends { image?: string }>(
+  config: SiteConfig,
+  kind: PhotoListKind,
+  items: T[],
+): T[] {
+  let changed = false;
+  const out = items.map((item, i) => {
+    if (str(item.image)) return item;
+    const photo = templateListPhoto(config.templateId, kind, i);
+    if (!photo) return item;
+    changed = true;
+    return { ...item, image: photo };
+  });
+  return changed ? out : items;
 }
 
 function cta(v: unknown): Cta | undefined {
@@ -51,7 +77,7 @@ export function heroOf(config: SiteConfig, data?: SectionData) {
     eyebrow: str(data?.eyebrow) ?? c.nameEn,
     title: str(data?.title) ?? c.tagline ?? c.name,
     lead: str(data?.lead) ?? c.description,
-    image: str(data?.image),
+    image: str(data?.image) ?? templatePhoto(config.templateId, "hero"),
     primary: cta(data?.primaryCta) ?? { label: "相談してみる", href: "#contact" },
     secondary: cta(data?.secondaryCta) ?? { label: "私たちについて", href: "#about" },
     facts: list<string>(data?.facts) ?? [],
@@ -87,7 +113,7 @@ export function worksOf(config: SiteConfig, data?: SectionData) {
     eyebrow: str(data?.eyebrow) ?? "WORKS",
     heading: str(data?.heading) ?? "施工実績",
     lead: str(data?.lead),
-    items: list<Project>(data?.items) ?? config.projects ?? [],
+    items: withPhotos(config, "work", list<Project>(data?.items) ?? config.projects ?? []),
   };
 }
 
@@ -99,7 +125,7 @@ export function menuOf(config: SiteConfig, data?: SectionData) {
     heading: str(data?.heading) ?? "メニュー",
     lead: str(data?.lead),
     note: str(data?.note),
-    items: list<MenuItem>(data?.items) ?? config.menu ?? [],
+    items: withPhotos(config, "item", list<MenuItem>(data?.items) ?? config.menu ?? []),
   };
 }
 
@@ -122,7 +148,7 @@ export function staffOf(config: SiteConfig, data?: SectionData) {
     eyebrow: str(data?.eyebrow) ?? "STAFF",
     heading: str(data?.heading) ?? "スタッフ紹介",
     lead: str(data?.lead),
-    items: list<StaffMember>(data?.items) ?? config.staff ?? [],
+    items: withPhotos(config, "staff", list<StaffMember>(data?.items) ?? config.staff ?? []),
   };
 }
 
@@ -182,7 +208,7 @@ export function newsOf(config: SiteConfig, data?: SectionData) {
     heading: str(data?.heading) ?? "お知らせ",
     lead: str(data?.lead),
     moreCta: cta(data?.moreCta),
-    items: list<NewsItem>(data?.items) ?? config.news ?? [],
+    items: withPhotos(config, "news", list<NewsItem>(data?.items) ?? config.news ?? []),
   };
 }
 
@@ -233,7 +259,7 @@ export function accessOf(config: SiteConfig, data?: SectionData) {
     heading: str(data?.heading) ?? "アクセス・営業時間",
     lead: str(data?.lead),
     note: str(data?.note),
-    image: str(data?.image),
+    image: str(data?.image) ?? templatePhoto(config.templateId, "scene-1"),
     mapEmbedUrl: str(data?.mapEmbedUrl) ?? c.mapEmbedUrl,
     ways: list<string>(data?.ways) ?? [],
     hoursTable:
@@ -261,7 +287,7 @@ export function bookingOf(config: SiteConfig, data?: SectionData) {
     heading: str(data?.heading) ?? "ご予約・お申し込み",
     lead: str(data?.lead) ?? "日にちが決まっていなくても構いません。まずはご希望をお聞かせください。",
     note: str(data?.note) ?? "お電話でも承ります。受付時間は " + (c.hours || "営業時間内") + " です。",
-    image: str(data?.image),
+    image: str(data?.image) ?? templatePhoto(config.templateId, "scene-2"),
     primary: cta(data?.primaryCta) ?? { label: "予約を申し込む", href: "#booking-form" },
     secondary: cta(data?.secondaryCta) ?? (c.phone ? { label: c.phone, href: `tel:${c.phone.replace(/[^\d+]/g, "")}` } : undefined),
     items: list<BookingEvent>(data?.items) ?? config.bookingEvents ?? [],
@@ -304,7 +330,7 @@ export function companyOf(config: SiteConfig, data?: SectionData) {
     eyebrow: str(data?.eyebrow) ?? "COMPANY",
     heading: str(data?.heading) ?? "会社概要",
     lead: str(data?.lead),
-    image: str(data?.image) ?? c.ceoPhoto,
+    image: str(data?.image) ?? str(c.ceoPhoto) ?? templatePhoto(config.templateId, "owner"),
     messageHeading: str(data?.messageHeading) ?? "代表あいさつ",
     messageTitle: str(data?.messageTitle) ?? c.tagline,
     message: str(data?.message) ?? c.bio,
