@@ -71,24 +71,6 @@
       "year": "各3室",
       "description": "個室が男女それぞれ3つ。タオルとシャンプー類は備え付けです。手ぶらで来て、そのまま出勤できます。",
       "size": "square"
-    },
-    {
-      "id": 5,
-      "slug": "counseling-room",
-      "title": "カウンセリングルーム",
-      "category": "施設",
-      "year": "個室",
-      "description": "体組成の測定と、管理栄養士との面談に使います。他の方に聞かれない場所で数字の話ができます。",
-      "size": "portrait"
-    },
-    {
-      "id": 6,
-      "slug": "parking",
-      "title": "駐車場（提携14台）",
-      "category": "施設",
-      "year": "2時間無料",
-      "description": "田町スクエアの地下駐車場をご利用ください。受付で駐車券をお出しいただければ2時間分をお引きします。",
-      "size": "landscape"
     }
   ],
   "staff": [
@@ -125,37 +107,6 @@
       "specialty": "ケトルベル / 競技者のトレーニング",
       "qualifications": ["NSCA-CSCS", "SFG Level1"],
       "schedule": "火・木・金・土・日"
-    },
-    {
-      "id": 4,
-      "slug": "mashiko-ren",
-      "name": "益子 蓮",
-      "role": "トレーナー",
-      "bio": "初めての方の担当が多いです。器具の使い方は毎回同じ説明をします。覚えるまで何度でも聞いてください。",
-      "experience": "指導 5年",
-      "specialty": "初心者の指導 / マシントレーニング",
-      "qualifications": ["NSCA-CPT"],
-      "schedule": "月・火・木・金・土"
-    },
-    {
-      "id": 5,
-      "slug": "iwaki-yuka",
-      "name": "岩城 侑香",
-      "role": "管理栄養士",
-      "bio": "食事の型づくりを担当します。献立は指定しません。今食べているものから始めます。外食が多い方ほど、型が効きます。",
-      "experience": "管理栄養士 12年",
-      "specialty": "減量・増量の食事設計 / 外食の組み立て",
-      "qualifications": ["管理栄養士", "公認スポーツ栄養士"],
-      "schedule": "火・木・土"
-    },
-    {
-      "id": 6,
-      "slug": "shimada-kaoru",
-      "name": "島田 薫",
-      "role": "受付",
-      "bio": "予約の変更、プランの相談、駐車券のことは何でも聞いてください。見学だけの方も歓迎します。",
-      "experience": "受付 4年",
-      "schedule": "月・火・木・金・土・日"
     }
   ],
   "testimonials": [

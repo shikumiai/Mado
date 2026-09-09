@@ -70,28 +70,6 @@
       "description": "陶芸家の工房です。窯の熱を逃がす高い天井と、作業台に一日中同じ明るさの光が落ちる北の高窓。屋根の勾配は、雪が落ちる向きから決めました。",
       "specs": "木造平屋 / 延床 82㎡ / 京都市左京区",
       "size": "square"
-    },
-    {
-      "id": 5,
-      "slug": "shop-in-sanjo",
-      "title": "三条の紙の店",
-      "titleEn": "Paper Shop in Sanjo",
-      "category": "改修 / 店舗",
-      "year": "2023",
-      "description": "紙は光と湿気に弱いので、直射を1本も入れない設計にしました。天井の布で光を散らし、床は湿度を吸う土間にしています。",
-      "specs": "RC1階 / 改修 58㎡ / 京都市中京区",
-      "size": "portrait"
-    },
-    {
-      "id": 6,
-      "slug": "house-in-yamashina",
-      "title": "山科の三世代の家",
-      "titleEn": "House in Yamashina",
-      "category": "新築 / 住宅",
-      "year": "2022",
-      "description": "三世代7人が住む家です。共有する台所を中心に置き、各世代の居場所を高さで分けました。将来2軒に分けられるよう、水回りの位置を決めています。",
-      "specs": "木造2階 / 延床 168㎡ / 京都市山科区",
-      "size": "landscape"
     }
   ],
   "staff": [

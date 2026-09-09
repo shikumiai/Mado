@@ -79,25 +79,6 @@
       "description": "肩ではねてしまう長さを、あえて巻いて収めます。乾かすだけで形が出るので、コテを使わなくて済みます。",
       "specs": "デジタルパーマ 13,200円 / 3〜4か月",
       "size": "square"
-    },
-    {
-      "id": 5,
-      "slug": "shichigosan-set",
-      "title": "七五三・卒業式のセット",
-      "category": "サロンワーク / セット",
-      "year": "所要 40分",
-      "description": "朝7時からお受けします。ご家族一緒のご予約も承ります。着付けと合わせると2時間ほどです。",
-      "specs": "ヘアセット 4,400円 / 着付け込み 11,000円",
-      "size": "portrait"
-    },
-    {
-      "id": 6,
-      "slug": "salon-interior",
-      "title": "席は4つだけです",
-      "category": "サロンの様子",
-      "year": "2013年から",
-      "description": "同じ時間に2人までしかお受けしません。待たせない代わりに、ひとりに時間をかけます。ベビーカーのまま入れる席が1つあります。",
-      "size": "landscape"
     }
   ],
   "staff": [
@@ -133,17 +114,6 @@
       "specialty": "着付け / ヘアセット / トリートメント",
       "qualifications": ["美容師", "着付け技能士2級"],
       "schedule": "月・水・金・土・日"
-    },
-    {
-      "id": 4,
-      "slug": "morishita-akane",
-      "name": "森下 茜",
-      "role": "アシスタント",
-      "bio": "シャンプーとヘッドスパを担当します。力加減はいつでも言ってください。強め・弱めどちらでも合わせます。",
-      "experience": "美容師 3年",
-      "specialty": "ヘッドスパ",
-      "qualifications": ["美容師"],
-      "schedule": "水〜日"
     }
   ],
   "testimonials": [

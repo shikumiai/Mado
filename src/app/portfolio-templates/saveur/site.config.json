@@ -170,24 +170,6 @@
       "year": "1978年から",
       "description": "開店の日から使っている寸胴です。毎朝6時に火を入れます。夏でも切らしません。",
       "size": "square"
-    },
-    {
-      "id": 5,
-      "slug": "koshitsu",
-      "title": "2階の個室（6名まで）",
-      "category": "個室",
-      "year": "2019年改装",
-      "description": "法事やお祝いの席にお使いいただけます。2日前までにご予約ください。コースは3,800円からご用意します。",
-      "size": "landscape"
-    },
-    {
-      "id": 6,
-      "slug": "morning-fish",
-      "title": "朝の仕入れ",
-      "category": "店内",
-      "year": "毎朝",
-      "description": "腰越の朝市には毎朝6時に行きます。その日に出す魚を自分で選ぶので、献立は開店直前まで決まりません。",
-      "size": "landscape"
     }
   ],
   "staff": [
@@ -295,7 +277,50 @@
     },
     {
       "type": "menu",
-      "variant": "tabs",
+      "variant": "photo-cards",
+      "id": "signature",
+      "label": "看板料理",
+      "visible": true,
+      "data": {
+        "eyebrow": "SIGNATURE",
+        "heading": "まずは、この4皿から",
+        "lead": "どれも開店の年からお出ししている品です。初めての方には、この中のどれかをおすすめしています。",
+        "items": [
+          {
+            "id": 1,
+            "name": "牛ほほ肉のビーフシチュー",
+            "price": "2,420円",
+            "category": "看板料理",
+            "isRecommended": true,
+            "description": "48年継ぎ足したデミグラスで、牛ほほ肉を6時間煮込みます。スプーンで切れる柔らかさになってからお出しします。ライスかパンが付きます。"
+          },
+          {
+            "id": 2,
+            "name": "特製ハンバーグ（デミグラス）",
+            "price": "1,760円",
+            "category": "看板料理",
+            "description": "つなぎを入れず、粗挽きの牛肉だけで焼きます。中心が桜色のうちにお出しするので、焼き加減のご指定は承っていません。"
+          },
+          {
+            "id": 6,
+            "name": "クリームコロッケ（かに）",
+            "price": "1,650円",
+            "category": "メイン",
+            "description": "揚げてからお出しするまで2分。中がとろけている状態でお召し上がりください。タルタルは別添えです。"
+          },
+          {
+            "id": 8,
+            "name": "オムライス（デミグラス）",
+            "price": "1,540円",
+            "category": "ごはん",
+            "description": "中はチキンライスのみ。薄焼き卵をかぶせて、シチューと同じソースをかけます。昼はサラダとスープが付いて同じ値段です。"
+          }
+        ]
+      }
+    },
+    {
+      "type": "menu",
+      "variant": "price-table",
       "id": "menu",
       "label": "お品書き",
       "visible": true,
@@ -385,7 +410,7 @@
     },
     {
       "type": "news",
-      "variant": "cards",
+      "variant": "list-rows",
       "id": "news",
       "label": "お知らせ",
       "visible": true,

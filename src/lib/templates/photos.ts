@@ -4,13 +4,14 @@
  * 設計書 docs/TEMPLATE_SYSTEM_V3.md 8.1 の「ファイル名固定」をコードにしたもの。
  * 置き場は public/images/templates/<templateId>/ で、名前は決め打ち。
  *   hero.jpg / scene-1.jpg / scene-2.jpg … 主役の1枚・仕事の風景
- *   owner.jpg / staff-2.jpg 〜           … 代表と、その他の人（縦長）
- *   work-1.jpg 〜                        … 実績・作品・スタイル・施設
- *   item-1.jpg 〜                        … 料理・商品・コース・プログラム
- *   news-1.jpg 〜                        … お知らせに写真が出る業種だけ
+ *   owner.jpg / staff-2.jpg / staff-3.jpg … 代表と、その他の人（縦長・3人まで）
+ *   work-1.jpg 〜 work-4.jpg             … 実績・作品・スタイル・施設（4件まで）
+ *   item-1.jpg 〜 item-4.jpg             … 料理・商品（写真付きの品書きを持つ5業種だけ）
  *   team.jpg                             … 予備（スタッフが仕事中の横位置）
  *
- * 枚数は「そのテンプレートの初期状態で実際に写真が出る場所の数」に合わせてある。
+ * 枚数は「実際に用意する写真の数」。デモ（＝テンプレートの初期状態）の一覧は
+ * 必ずこの数以下にしてあるので、初期状態で写真の無い行は出ない。
+ * お知らせ（news）に写真は付けない（写真の出ない見せ方だけを使う）。
  * 写真そのものが無くても画面は壊れない（<img> の読み込みに失敗したら
  * shared.tsx の Media が設計された絵に戻す）。だからファイルは後から足せる。
  *
@@ -58,23 +59,28 @@ export interface TemplatePhotoManifest {
    ═══════════════════════════════════════ */
 
 /**
- * 10業種ぶん。数はデモ（＝テンプレートの初期状態）で写真が出る場所の数。
- *   works … その業種の works セクションが出す件数（works が無い業種は 0）
- *   items … menu セクションが写真付きで出す件数（料金表だけの業種は差し替え用に 4）
- *   staff … 顔写真が出る人数（代表 1 人だけの見せ方でも、一覧に出る人数を数える）
- *   news  … お知らせに写真が出る件数（行だけの見せ方は 0）
+ * 10業種ぶん。数は「そのテンプレートに用意する写真の数」。
+ * デモの一覧（projects / staff / menu）はこの数を超えないので、初期状態では
+ * どの行にも写真が入り、同じ写真が1つの並びに二度出ることもない。
+ *   works … 実績・作品・スタイル・施設。どの業種も 4 枚
+ *           （works セクションを持たない clarity・beacon は施設の写真として持ち、
+ *             お客さんが実績の部品を足したときにそのまま入る）
+ *   items … 写真付きの品書きを持つ業種だけ 4 枚（料金表だけの業種も、
+ *           写真カードに替えたときのために同じ 4 枚を持つ）
+ *   staff … 人の写真は 3 枚まで（1人目は owner.jpg）
+ *   news  … お知らせに写真は付けない。どの業種も 0
  */
 export const TEMPLATE_PHOTOS: Record<string, TemplatePhotoManifest> = {
-  "warm-craft": { works: 6, items: 0, staff: 3, news: 0 },
-  "trust-navy": { works: 6, items: 0, staff: 5, news: 0 },
-  "clean-arch": { works: 6, items: 0, staff: 3, news: 0 },
-  saveur: { works: 6, items: 12, staff: 3, news: 4 },
-  velvet: { works: 6, items: 4, staff: 4, news: 0 },
-  clarity: { works: 0, items: 0, staff: 6, news: 0 },
-  credence: { works: 6, items: 0, staff: 3, news: 0 },
-  beacon: { works: 0, items: 4, staff: 5, news: 0 },
-  forge: { works: 6, items: 4, staff: 6, news: 0 },
-  marche: { works: 6, items: 12, staff: 0, news: 1 },
+  "warm-craft": { works: 4, items: 0, staff: 3, news: 0 },
+  "trust-navy": { works: 4, items: 0, staff: 3, news: 0 },
+  "clean-arch": { works: 4, items: 0, staff: 3, news: 0 },
+  saveur: { works: 4, items: 4, staff: 3, news: 0 },
+  velvet: { works: 4, items: 4, staff: 3, news: 0 },
+  clarity: { works: 4, items: 0, staff: 3, news: 0 },
+  credence: { works: 4, items: 0, staff: 3, news: 0 },
+  beacon: { works: 4, items: 4, staff: 3, news: 0 },
+  forge: { works: 4, items: 4, staff: 3, news: 0 },
+  marche: { works: 4, items: 4, staff: 3, news: 0 },
 };
 
 const EMPTY: TemplatePhotoManifest = { works: 0, items: 0, staff: 0, news: 0 };

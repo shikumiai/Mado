@@ -97,24 +97,6 @@
       "year": "2016年に増設",
       "description": "3代目が継いだときにつくりました。売場から中が見えるようにしてあります。何をどうつくっているか、見ていただけます。",
       "size": "landscape"
-    },
-    {
-      "id": 5,
-      "slug": "chomiryo-tana",
-      "title": "調味料の棚",
-      "category": "店内",
-      "year": "県内 9軒",
-      "description": "味噌・醤油・塩・油。県内のつくり手のものだけを置いています。味噌は味見ができます。",
-      "size": "square"
-    },
-    {
-      "id": 6,
-      "slug": "asaichi",
-      "title": "第2土曜の朝市",
-      "category": "店内",
-      "year": "毎月",
-      "description": "月に1度、農家さんが直接店先に立ちます。育て方の話を聞きながら買えます。8時開始、10時ごろに終わります。",
-      "size": "landscape"
     }
   ],
   "news": [
@@ -233,7 +215,51 @@
       "visible": true,
       "data": {
         "eyebrow": "ITEMS",
-        "heading": "置いているもの",
+        "heading": "毎日置いている4つ",
+        "lead": "季節で入れ替わる店ですが、この4つは年じゅう並びます。はじめての方はここからどうぞ。",
+        "note": "表示は税込です。惣菜は売り切れ次第で終わりです。お取り置きはLINEで承ります。",
+        "items": [
+          {
+            "id": 1,
+            "name": "朝どれ野菜の詰め合わせ（M）",
+            "price": "1,300円",
+            "category": "野菜・果物",
+            "isRecommended": true,
+            "description": "その日に届いた野菜を7〜9種類。2〜3人家族で3日分くらいです。中身は日によって変わるので、献立はお任せください。"
+          },
+          {
+            "id": 4,
+            "name": "白えびのかき揚げ",
+            "price": "1枚 320円",
+            "category": "惣菜",
+            "description": "富山湾の白えびを使います。夕方4時に揚げたてが並びます。土日は昼にも出します。"
+          },
+          {
+            "id": 8,
+            "name": "カンパーニュ（ハーフ）",
+            "price": "560円",
+            "category": "パン",
+            "description": "高岡のパン屋「粉と麦」から、火・金の朝に届きます。夕方には無くなることが多いです。"
+          },
+          {
+            "id": 10,
+            "name": "手づくり味噌（1kg）",
+            "price": "980円",
+            "category": "調味料・乾物",
+            "description": "南砺の蔵から。麹の割合が違う3種類を置いています。味見ができます。"
+          }
+        ]
+      }
+    },
+    {
+      "type": "menu",
+      "variant": "price-table",
+      "id": "pricelist",
+      "label": "品ぞろえ",
+      "visible": true,
+      "data": {
+        "eyebrow": "PRICE",
+        "heading": "置いているものと値段",
         "lead": "季節で入れ替わります。ここに載っていないものも、その日の入荷しだいで並びます。毎朝の入荷はInstagramでお知らせしています。",
         "note": "表示は税込です。惣菜は売り切れ次第で終わりです。お取り置きはLINEで承ります。"
       }
@@ -264,7 +290,7 @@
     },
     {
       "type": "news",
-      "variant": "feature-plus",
+      "variant": "list-rows",
       "id": "news",
       "label": "入荷・催し",
       "visible": true,

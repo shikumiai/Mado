@@ -90,14 +90,22 @@
 
 ### 8.1 写真セット（テンプレごと・ファイル名固定）
 置き場 `public/images/templates/<templateId>/`。生成は写真調（イラスト禁止）、日本の実景、自然光、35mm、看板文字なし、同一テンプレ内で光と色調を揃える。彩度は控えめ。
+枚数の正はコード（`src/lib/templates/photos.ts` の `TEMPLATE_PHOTOS`）。デモの一覧（実績・スタッフ・品書き）は必ずこの枚数以下にしてあるので、初期状態で写真の入らない行は出ない。
+
 | ファイル | 寸法 | 用途 |
 |---|---|---|
 | `hero.jpg` | 1536×1024 | 主役の1枚（外観・現場・店内の顔） |
-| `scene-1.jpg` `scene-2.jpg` | 1536×1024 | 仕事の風景・店内（strengths 誌面、access 写真、booking 写真＋CTA、company） |
-| `work-1.jpg`〜`work-4.jpg` | 1536×1024 | 実績・作品・スタイル・施設（works） |
-| `owner.jpg` | 1024×1536 | 代表（staff 代表1人＋メッセージ、company 挨拶） |
-| `team.jpg` | 1536×1024 | スタッフが仕事中（staff 一覧・誌面、voices 主役） |
-| `item-1.jpg`〜`item-4.jpg` | 1536×1024（正方形で切る） | menu を持つ業種のみ: saveur（料理）velvet（メニュー）beacon（コース）forge（プログラム）marche（商品）credence（料金＝不要） |
+| `scene-1.jpg` `scene-2.jpg` | 1536×1024 | 仕事の風景・店内（access 写真＋情報、booking 写真＋CTA、strengths 誌面） |
+| `work-1.jpg`〜`work-4.jpg` | 1536×1024 | 実績・作品・スタイル・施設（works）。**4件まで** |
+| `owner.jpg` | 1024×1536 | 代表（staff 一覧の1人目＋メッセージ、company 挨拶） |
+| `staff-2.jpg` `staff-3.jpg` | 1024×1536 | 代表以外の人。**人は3人まで**（1人目は `owner.jpg`） |
+| `team.jpg` | 1536×1024 | スタッフが仕事中（staff 一覧・誌面の見せ方違い、voices 主役） |
+| `item-1.jpg`〜`item-4.jpg` | 1536×1024（正方形で切る） | menu を持つ業種のみ: saveur（料理）velvet（メニュー）beacon（コース）forge（プログラム）marche（商品）。credence（料金＝表だけ）は不要。**4件まで** |
+
+- お知らせ（news）に写真は付けない。10業種とも写真の出ない見せ方（`list-rows` / `quiet`）を使う。`news-*.jpg` は作らない。
+- 1テンプレあたり **11枚**（hero / scene-1 / scene-2 / work-1〜4 / owner / staff-2 / staff-3 / team）。品書きに写真を出す5業種（saveur・velvet・beacon・forge・marche）は `item-1`〜`item-4` を足して **15枚**。10業種で **合計 130枚**。
+- works セクションを持たない clarity・beacon も `work-1`〜`work-4` は作る（施設の写真として持ち、お客さんが実績の部品を足したときにそのまま入る）。
+- 写真を出す品書きが要る業種（saveur・marche）は「写真カード4品」と「値段の表（全品）」の2セクションに分けてある。表のほうは写真を使わない。
 
 ### 8.2 配線
 - catalog / data の各セクション data に写真を割り当てる: `hero.image`、`works.items[].image`、`staff.items[].image`、`menu.items[].image`、`access` の写真、`strengths`・`booking`・`company` の写真付き変種。
