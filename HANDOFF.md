@@ -26,7 +26,7 @@
 | 顧客サイト | `https://mado.shikumiai.com/{顧客のスラッグ}` |
 | GitHub | **shikumiai/Mado**（履歴は 2026-09-03 に切り直した） |
 | Vercel | `shikumiais-projects/mado`（Hobby） |
-| Supabase | `dralpswprcifzmgojgxu`（東京・プロジェクト名 `site` のまま） |
+| Supabase | `tayfsmypscyndfekbzsx`（東京・組織 shikumiai の `shikumiai's Project`。2026-09-15 に組織 `site` の `dralpswprcifzmgojgxu` から移設） |
 | Stripe | `acct_1UBIUDCMwxuV78LX`（JP / JPY / サンドボックス） |
 | 旧リポジトリ | `AndoLyo/shikumiya`（116コミット。まだ消していない） |
 
