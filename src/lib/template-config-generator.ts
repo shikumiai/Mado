@@ -10,6 +10,7 @@ import { customerSiteUrl, customerSiteLabel } from "./resolve-site";
 import { type BrandColors, styleWithBrand } from "./palette";
 import { defaultSectionsFor } from "./templates/catalog";
 import { templatePhoto } from "./templates/photos";
+import { sampleSectionSeed } from "./templates/sample-content";
 
 interface OrderFormData {
   orderId: string;
@@ -56,7 +57,7 @@ export function generateSiteConfig(formData: OrderFormData): SiteConfig {
     ? `https://${formData.domain}`
     : customerSiteUrl(formData.siteSlug || "sample");
 
-  return {
+  const base: SiteConfig = {
     templateId: formData.templateId,
     plan,
     orderId: formData.orderId,
@@ -105,6 +106,34 @@ export function generateSiteConfig(formData: OrderFormData): SiteConfig {
 
     style,
   };
+
+  return withSampleContent(base);
+}
+
+/**
+ * 公開する設定に、その業種の見本の中身を入れる。
+ *
+ * 入れないと、実績や選ばれる理由が0件のまま公開され、
+ * 中身が0件のセクションは描画側で消えるので、申込中に見た見本と公開物が食い違う。
+ * 部品を足したときと同じ `sampleSectionSeed` を使うので、入り方は編集画面とそろう。
+ *
+ * その人が入力した会社名・あいさつなどは `sampleSectionSeed` の中で除かれるため、
+ * ここで上書きされることはない。すでに入れてある写真も見本より優先する。
+ */
+function withSampleContent(base: SiteConfig): SiteConfig {
+  let config = base;
+
+  const sections = (base.sections ?? []).map((section) => {
+    const seed = sampleSectionSeed(config, section.type, section.variant);
+    // 実績・スタッフ・お品書きなどは詳細ページも読むので config の一番上へ
+    if (Object.keys(seed.shared).length > 0) {
+      config = { ...config, ...seed.shared };
+    }
+    const data = { ...seed.data, ...(section.data ?? {}) };
+    return Object.keys(data).length > 0 ? { ...section, data } : section;
+  });
+
+  return { ...config, sections };
 }
 
 /**
