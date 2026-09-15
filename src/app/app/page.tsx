@@ -10,8 +10,10 @@ import { redirect } from "next/navigation";
 import { getMyAccount } from "@/lib/auth";
 import { customerSiteUrl, customerSiteLabel } from "@/lib/resolve-site";
 import { PLAN_LABELS, PLAN_PRICES, normalizePlanId } from "@/lib/stripe";
+import { loadSiteForEdit } from "@/lib/site-editor";
+import { onboardingState } from "@/lib/onboarding";
 import { Card, Badge } from "@/components/ui";
-import { ExternalLink, Pencil, Plus, ArrowRight, ShieldCheck, KeyRound } from "lucide-react";
+import { ExternalLink, Pencil, Plus, ArrowRight, ShieldCheck, KeyRound, Sparkles } from "lucide-react";
 
 export const metadata = { title: "マイページ｜Mado" };
 
@@ -36,6 +38,17 @@ export default async function AppHome() {
   const { org, sites, isPlatformAdmin } = account;
   const plan = normalizePlanId(org.plan);
 
+  // 公開したあと、次にやることを1つだけ出す（docs/ONBOARDING_V1.md）。
+  // サイトが1つのうちは、そのサイトについて出す。
+  const mainSite = sites[0] ?? null;
+  const loaded = mainSite ? await loadSiteForEdit(mainSite.id) : null;
+  const todo = loaded?.ok ? onboardingState(loaded.config) : null;
+  const next = todo?.next ?? null;
+  const nextHref =
+    mainSite && next
+      ? `/app/sites/${mainSite.id}/editor${next.anchor ? `?focus=${encodeURIComponent(next.anchor)}` : ""}`
+      : "";
+
   return (
     <div className="flex flex-col gap-8">
       {/* 見出し: 会社名 + プランのバッジ */}
@@ -54,6 +67,61 @@ export default async function AppHome() {
           )}
         </div>
       </div>
+
+      {/* 次にやること: 全部は並べず、いちばん効く1つだけ出す */}
+      {todo && next && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-sm font-semibold text-ink2">次にやること</h2>
+          <Card className="flex flex-col gap-4">
+            <div>
+              <div className="flex items-baseline justify-between gap-3">
+                <p className="text-xs text-ink3">サイトの仕上がり</p>
+                <p className="tnum text-xs text-ink3">
+                  {todo.done} / {todo.total}
+                </p>
+              </div>
+              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface2">
+                <div
+                  className="h-full rounded-full bg-accent transition-[width] duration-500"
+                  style={{ width: `${Math.round((todo.done / todo.total) * 100)}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-base font-bold text-ink sm:text-lg">{next.title}</p>
+                <p className="mt-1 text-sm text-ink2">{next.detail}</p>
+              </div>
+              <Link href={nextHref} className={primaryLink}>
+                <Pencil className="size-4" aria-hidden /> 直す
+              </Link>
+            </div>
+          </Card>
+        </section>
+      )}
+
+      {todo?.complete && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-sm font-semibold text-ink2">次にやること</h2>
+          <Card className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-accent-soft text-accent">
+                <Sparkles className="size-[18px]" aria-hidden />
+              </span>
+              <div>
+                <p className="text-sm font-medium text-ink">サイトはひととおり仕上がっています。</p>
+                <p className="mt-0.5 text-sm text-ink2">
+                  写真も文章も自分のものに入れ替わりました。あとはいつでも直せます。
+                </p>
+              </div>
+            </div>
+            <Link href={`/app/sites/${mainSite?.id}/editor`} className={secondaryLink}>
+              編集する <ArrowRight className="size-4" aria-hidden />
+            </Link>
+          </Card>
+        </section>
+      )}
 
       {/* 自分のサイト一覧 */}
       <section className="flex flex-col gap-3">

@@ -614,6 +614,16 @@ export default function EditorPage() {
     }, 80);
   }, []);
 
+  /* ── マイページの「直す」から来たとき、その場所まで連れていく ── */
+  const focusedRef = useRef(false);
+  useEffect(() => {
+    if (loading || focusedRef.current || typeof window === "undefined") return;
+    const anchor = new URLSearchParams(window.location.search).get("focus");
+    if (!anchor) return;
+    focusedRef.current = true;
+    revealSection(anchor);
+  }, [loading, revealSection]);
+
   function switchMode(next: string) {
     if (next === "ai" && aiLocked) {
       toast({
