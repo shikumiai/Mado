@@ -687,8 +687,12 @@ export default function StartPage() {
     }
     setSlugStatus("checking");
     setSlugMsg(null);
+    // 問い合わせている間に名前を押さえると、その名前は「使用済み」で返ってくる。
+    // 古い返事で上書きしないよう、入れ替わったら捨てる。
+    let alive = true;
     const timer = setTimeout(async () => {
       const res = await checkSlugAvailability(s);
+      if (!alive) return;
       if (res.ok) {
         setSlugStatus("ok");
         setSlugMsg(null);
@@ -697,7 +701,10 @@ export default function StartPage() {
         setSlugMsg(res.message);
       }
     }, 400);
-    return () => clearTimeout(timer);
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+    };
   }, [slug, reservedSlug]);
 
   /* --- 業種を選ぶ（カードは系統、選び直しで細目は外す） --- */
