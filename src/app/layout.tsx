@@ -22,21 +22,20 @@ const mono = JetBrains_Mono({
   weight: ["400", "500"],
 });
 export const metadata: Metadata = {
-  title: "Mado｜AIでつくる。人の声で、選ぶ。",
+  title: "Mado｜できたサイト。お客さまは、先へ進める？",
   description:
-    "商品写真から3つの制作案。人が選んだ理由を参考に、使う1案を決めるMadoの初期版です。",
+    "紹介ページから問い合わせまで。人の実操作とAIの視点で、顧客の導線を確かめるMadoの初期版です。",
   metadataBase: new URL("https://mado.shikumiai.com"),
   openGraph: {
-    title: "Mado｜AIでつくる。人の声で、選ぶ。",
-    description:
-      "商品写真から3つの制作案。人が選んだ理由まで届く、制作の窓口。",
+    title: "Mado｜できたサイト。お客さまは、先へ進める？",
+    description: "人の実操作とAIの視点で、顧客の導線を確かめる。",
     type: "website",
     siteName: "Mado",
     locale: "ja_JP",
   },
   twitter: {
     card: "summary",
-    title: "Mado｜AIでつくる。人の声で、選ぶ。",
+    title: "Mado｜できたサイト。お客さまは、先へ進める？",
     description: "AIと人間では、分かることが違う。",
   },
 };

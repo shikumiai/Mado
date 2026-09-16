@@ -14,13 +14,13 @@ export default function PilotLayout({
         </Link>
         <nav>
           <Link href="/pilot">依頼一覧</Link>
-          <Link href="/pilot/join">つくり手として参加</Link>
+          <Link href="/pilot/join">確認に協力する</Link>
         </nav>
       </header>
       <main className="m-workspace">{children}</main>
       <footer className="m-footer">
         <Link href="/">Mado</Link>
-        <Link href="/pilot/privacy">素材と個人情報の取り扱い</Link>
+        <Link href="/pilot/privacy">情報の取り扱い</Link>
       </footer>
     </div>
   );
