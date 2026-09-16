@@ -57,3 +57,5 @@ tsconfig.tsbuildinfo
 
 # Supabase CLI の一時ファイル
 supabase/.temp/
+/.npm-cache/
+/.verification/

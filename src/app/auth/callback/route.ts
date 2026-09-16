@@ -16,7 +16,8 @@ export async function GET(request: Request) {
   const next = searchParams.get("next");
 
   // Google 側で断られた場合
-  const oauthError = searchParams.get("error_description") || searchParams.get("error");
+  const oauthError =
+    searchParams.get("error_description") || searchParams.get("error");
   if (oauthError) {
     console.error("[auth/callback] ログインに失敗", oauthError);
     return NextResponse.redirect(`${origin}/auth/login?error=login_failed`);
@@ -38,7 +39,7 @@ export async function GET(request: Request) {
   }
 
   // 行き先が指定されていればそこへ。ただし外部URLへは飛ばさない
-  if (next && next.startsWith("/") && !next.startsWith("//")) {
+  if (next && /^\/(?![\/\\])/.test(next) && !/[\\\r\n]/.test(next)) {
     return NextResponse.redirect(`${origin}${next}`);
   }
 
@@ -46,7 +47,7 @@ export async function GET(request: Request) {
   const { data: orgs } = await supabase.from("orgs").select("id").limit(1);
   // 会社がある人は Supabase 版の会員トップ（/member/site）へ。
   // 旧 /member は next-auth なので、ここへ返すと再ログインを促してしまう。
-  const dest = orgs && orgs.length > 0 ? "/member/site" : "/start";
+  const dest = orgs && orgs.length > 0 ? "/member/site" : "/pilot";
 
   return NextResponse.redirect(`${origin}${dest}`);
 }
