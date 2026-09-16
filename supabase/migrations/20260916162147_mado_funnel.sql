@@ -8,6 +8,8 @@ create table public.mado_funnel_orders (
   goal text not null check (length(goal) between 1 and 1000),
   context text not null default '' check (length(context) <= 4000),
   test_mode text not null check (test_mode in ('before_submit','test_completion')),
+  test_authorized boolean not null default false,
+  check (test_mode = 'before_submit' or test_authorized),
   consent boolean not null check (consent),
   status text not null default 'requested' check (status in ('requested','quoted','checking','reported','closed','cancelled')),
   quote_yen integer check (quote_yen between 0 and 1000000),
@@ -93,6 +95,9 @@ begin
  if new.status in ('quoted','checking','reported','closed') and (new.quote_yen is null or length(btrim(new.quote_scope)) = 0) then raise exception 'Quote required'; end if;
  if new.status in ('checking','reported','closed') and (new.quote_accepted_at is null or not new.payment_confirmed) then raise exception 'Acceptance and payment required'; end if;
  if new.status in ('reported','closed') and (length(btrim(new.report_summary)) = 0 or length(btrim(new.checked_scope)) = 0 or jsonb_array_length(new.findings) = 0) then raise exception 'Report required'; end if;
+ if new.status not in ('reported','closed') and (new.report_summary <> '' or new.checked_scope <> '' or new.findings <> '[]'::jsonb) then
+   raise exception 'Save results only when publishing';
+ end if;
  for item in select value from jsonb_array_elements(new.findings) loop
    if jsonb_typeof(item) <> 'object' or not (item ?& array['source','reviewer','step','observation','hypothesis','suggestion'])
      or coalesce(item->>'source','') not in ('human','ai')

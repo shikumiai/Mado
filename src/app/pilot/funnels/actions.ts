@@ -66,6 +66,7 @@ export async function createFunnel(
       goal,
       entry_url,
       test_mode,
+      test_authorized: form.get("test_authorized") === "on",
       context: field(form, "context", 4000),
       consent: true,
       previous_order_id: previous || null,
