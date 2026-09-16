@@ -302,6 +302,7 @@ export async function applyCreator(
     .insert({
       user_id: ctx.user.id,
       display_name,
+      contact_email: ctx.user.email,
       specialty,
       method,
       consent: true,

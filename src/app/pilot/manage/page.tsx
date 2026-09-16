@@ -20,7 +20,7 @@ export default async function ManagePage() {
       .limit(100),
     db
       .from("mado_pilot_applications")
-      .select("user_id,display_name,specialty,method,created_at")
+      .select("user_id,display_name,contact_email,specialty,method,created_at")
       .order("created_at", { ascending: false })
       .limit(100),
   ]);
@@ -46,6 +46,7 @@ export default async function ManagePage() {
       {applications.data?.map((a) => (
         <details className="m-panel" key={a.user_id}>
           <summary>{a.display_name}</summary>
+          <p>連絡先：{a.contact_email}</p>
           <h3>得意分野</h3>
           <p className="m-pre">{a.specialty}</p>
           <h3>非公開の制作方法</h3>

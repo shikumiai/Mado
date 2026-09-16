@@ -102,6 +102,7 @@ for each row execute function public.guard_mado_pilot_order();
 create table public.mado_pilot_applications (
   user_id uuid primary key references auth.users(id),
   display_name text not null check (char_length(display_name) between 1 and 80),
+  contact_email text not null check (char_length(contact_email) between 3 and 254),
   specialty text not null check (char_length(specialty) between 1 and 1000),
   method text not null check (char_length(method) between 1 and 8000),
   consent boolean not null check (consent),
@@ -113,15 +114,43 @@ grant select, insert on public.mado_pilot_applications to authenticated;
 create policy pilot_applications_read on public.mado_pilot_applications for select to authenticated
 using (user_id = (select auth.uid()) or (select public.is_platform_admin()));
 create policy pilot_applications_create on public.mado_pilot_applications for insert to authenticated
-with check (user_id = (select auth.uid()));
+with check (user_id = (select auth.uid()) and contact_email = (select auth.jwt()->>'email'));
 
 insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types)
 values ('mado-pilot','mado-pilot',false,3145728,array['image/jpeg','image/png','image/webp']);
 create policy pilot_assets_read on storage.objects for select to authenticated
 using (bucket_id = 'mado-pilot' and ((storage.foldername(name))[1] = (select auth.uid())::text or (select public.is_platform_admin())));
+-- Storage policy counters must bypass Storage SELECT RLS to avoid recursion.
+-- This narrow definer lives outside exposed schemas and validates the caller.
+create schema if not exists mado_private;
+revoke all on schema mado_private from public, anon;
+grant usage on schema mado_private to authenticated;
+create function mado_private.can_upload_asset(p_name text) returns boolean
+language plpgsql volatile security definer set search_path = '' as $$
+declare
+  actor uuid := auth.uid();
+  order_id uuid;
+  owner_id uuid;
+  order_status text;
+  admin boolean;
+  total integer;
+  prefix text;
+begin
+  if actor is null or p_name !~ '^[0-9a-f-]{36}/[0-9a-f-]{36}/(material|output)-[0-9a-f-]{36}\.webp$' then return false; end if;
+  select o.id, o.user_id, o.status into order_id, owner_id, order_status
+  from public.mado_pilot_orders o
+  where o.id::text = split_part(p_name,'/',2) and o.user_id::text = split_part(p_name,'/',1);
+  if order_id is null then return false; end if;
+  select exists(select 1 from public.platform_admins where user_id = actor) into admin;
+  if not admin and (owner_id <> actor or order_status <> 'requested' or split_part(p_name,'/',3) not like 'material-%') then return false; end if;
+  perform pg_advisory_xact_lock(hashtextextended(order_id::text, 9148));
+  prefix := owner_id::text || '/' || order_id::text || '/';
+  select count(*) into total from storage.objects where bucket_id = 'mado-pilot' and starts_with(name,prefix);
+  return total < case when admin then 40 else 5 end;
+end $$;
+revoke all on function mado_private.can_upload_asset(text) from public, anon;
+grant execute on function mado_private.can_upload_asset(text) to authenticated;
 create policy pilot_assets_insert on storage.objects for insert to authenticated
-with check (bucket_id = 'mado-pilot' and exists (
-  select 1 from public.mado_pilot_orders o
-  where o.id::text = (storage.foldername(name))[2] and o.user_id::text = (storage.foldername(name))[1]
-  and ((o.user_id = (select auth.uid()) and o.status = 'requested' and (storage.filename(name)) like 'material-%') or (select public.is_platform_admin()))
-));
+with check (bucket_id = 'mado-pilot' and mado_private.can_upload_asset(name));
+
+insert into public.reserved_slugs(slug) values ('pilot') on conflict do nothing;

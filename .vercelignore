@@ -5,7 +5,7 @@
 docs
 scripts
 test
-supabase
+/supabase/
 *.tsbuildinfo
 HANDOFF.md
 CLAUDE.md
