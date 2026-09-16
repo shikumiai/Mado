@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "Mado｜クリエイターのためのオリジナルサイト制作";
+export const alt = "Mado｜AIでつくる。人の声で、選ぶ。";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -37,7 +37,7 @@ export default async function Image() {
 
         {/* Subtitle */}
         <div style={{ fontSize: "18px", color: "#00e5ff", letterSpacing: "0.3em", marginBottom: "20px" }}>
-          クリエイターのためのサイト制作
+          商品写真から、3つの制作案
         </div>
 
         {/* Main title */}
@@ -54,15 +54,16 @@ export default async function Image() {
 
         {/* Tagline */}
         <div style={{ fontSize: "20px", color: "#999999", marginTop: "28px", textAlign: "center" as const }}>
-          あなただけのオリジナルサイト
+          AIと人間では、分かることが違う。
         </div>
 
         {/* Description */}
         <div style={{ fontSize: "14px", color: "#666666", marginTop: "12px" }}>
-          制作費0円のホームページ制作SaaS — by Lyo Vision
+          人が選んだ理由まで届く、制作の窓口。
         </div>
       </div>
     ),
     { ...size }
   );
 }
+

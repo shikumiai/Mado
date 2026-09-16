@@ -1,0 +1,12 @@
+.git
+.npm-cache
+.verification
+.env*
+docs
+scripts
+test
+supabase
+*.tsbuildinfo
+HANDOFF.md
+CLAUDE.md
+AGENTS.md

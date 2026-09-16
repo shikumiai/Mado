@@ -18,6 +18,15 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 export async function proxy(request: NextRequest) {
+  if (["/api/start", "/api/checkout"].includes(request.nextUrl.pathname)) {
+    return NextResponse.json(
+      {
+        error:
+          "旧サービスの新規受付は終了しました。Madoの制作相談は /pilot からお申し込みください。",
+      },
+      { status: 410 },
+    );
+  }
   let response = NextResponse.next({ request });
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
