@@ -12,3 +12,14 @@
 - 検証・独立レビュー・公開: 未実施。既存のデプロイ依頼と今回の採用指示に基づき進める。
 - 直前の完了票: done/2026-09-17_MADO-PILOT-20260917.md
 - 共通運用: C:/Users/ryoya/OneDrive/AI/Claude/ai-collaboration/WORKFLOW.md
+
+## 検証・レビュー
+- 変更対象ESLint: PASS。TypeScript: PASS。URL境界のNode実行: PASS。
+- 全体lint: 既存65 errors / 221 warnings（旧コード）。今回の変更対象はエラーなし。
+- 初回build PASS。最終build実行中。
+- 独立レビュー: pilot_security_review、比較元cc00ff97de16d6401fbe0767e07dba3cd2319e6f、対象3bfa7ea、APPROVED。未解決P1/P2なし。
+- 指摘された下書き露出は、公開時のみ結果保存できるDB制約で解消。
+- Supabase tayfsmypscyndfekbzsxへmado_funnelを追加適用（20260916163632）。旧DBデータを変更しない。
+- 反映前Vercel: dpl_5pTBjkN5knT2ZJWwBx3A7Pn9vE4H / mado-2359fwymv-shikumiais-projects.vercel.app。
+- 最終build PASS。scripts/funnel-rls-test.sqlを実DBで実行しPASS（全テストデータをROLLBACK）。
+- 状態: レビュー待ち / 判定APPROVED / 次: マージ・デプロイ・ブラウザ検証。
