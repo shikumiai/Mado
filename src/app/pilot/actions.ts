@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+
 import sharp from "sharp";
 import { createServerSupabase } from "@/lib/supabase/ssr";
 import {
@@ -38,37 +38,11 @@ function refresh(id: string) {
   revalidatePath("/pilot/manage");
 }
 
-export async function createOrder(
-  _: ActionState,
-  form: FormData,
-): Promise<ActionState> {
-  const ctx = await context();
-  if (!ctx) return signedOut;
-  const title = field(form, "title", 100),
-    audience = field(form, "audience", 500),
-    facts = field(form, "facts", 4000),
-    goal = field(form, "goal", 1000);
-  if (!title || !audience || !facts || !goal || form.get("consent") !== "on")
-    return { error: "必須項目と素材の取り扱いへの同意をご確認ください。" };
-  const { data, error } = await ctx.db
-    .from("mado_pilot_orders")
-    .insert({
-      user_id: ctx.user.id,
-      title,
-      audience,
-      facts,
-      goal,
-      consent: true,
-    })
-    .select("id")
-    .single();
-  if (error || !data)
-    return {
-      error:
-        "依頼を保存できませんでした。受付は1アカウント5件までです。時間をおいて再度お試しください。",
-    };
-  revalidatePath("/pilot");
-  redirect(`/pilot/${data.id}`);
+export async function createOrder(): Promise<ActionState> {
+  return {
+    error:
+      "画像制作の新規受付は終了しました。依頼一覧から導線チェックをご相談ください。",
+  };
 }
 
 export async function uploadAsset(
@@ -297,16 +271,14 @@ export async function applyCreator(
     method = field(form, "method", 8000);
   if (!display_name || !specialty || !method || form.get("consent") !== "on")
     return { error: "必須項目と同意欄をご確認ください。" };
-  const { error } = await ctx.db
-    .from("mado_pilot_applications")
-    .insert({
-      user_id: ctx.user.id,
-      display_name,
-      contact_email: ctx.user.email,
-      specialty,
-      method,
-      consent: true,
-    });
+  const { error } = await ctx.db.from("mado_pilot_applications").insert({
+    user_id: ctx.user.id,
+    display_name,
+    contact_email: ctx.user.email,
+    specialty,
+    method,
+    consent: true,
+  });
   if (error)
     return { error: "応募を保存できませんでした。応募は1アカウント1件です。" };
   revalidatePath("/pilot/join");

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import ComparisonDemo from "@/components/pilot/ComparisonDemo";
+import FunnelDemo from "@/components/pilot/FunnelDemo";
 import "./pilot.css";
 export default function Home() {
   return (
@@ -16,40 +16,69 @@ export default function Home() {
       <main>
         <section className="m-hero">
           <div className="m-hero-copy">
-            <p className="m-pilot-label">小さく試す、Mado初期版</p>
+            <p className="m-pilot-label">Mado初期版 · 顧客の導線チェック</p>
             <h1>
-              AIでつくる。
+              できたサイト。
               <br />
-              人の声で、選ぶ。
+              お客さまは、
+              <br />
+              先へ進める？
             </h1>
             <p className="m-lead">
-              「できた。でも、これで伝わる？」
+              見つける。理解する。問い合わせる。
               <br />
-              商品写真から生まれる3つの案。
+              その途中の「分からない」を、
               <br />
-              人が選んだ理由まで届く、制作の窓口です。
+              人の実操作とAIの視点で確かめます。
             </p>
             <div className="m-hero-actions">
-              <Link href="/pilot" className="m-button">
-                商品の制作を相談する
+              <Link className="m-button" href="/pilot">
+                サイトの導線を相談する
               </Link>
-              <a href="#comparison" className="m-text-button">
-                比較のイメージを見る
+              <a className="m-text-button" href="#demo">
+                確認結果の例を見る
               </a>
             </div>
             <p className="m-small">
-              相談は無料。制作は内容と見積をご確認いただいてから。
+              相談は無料。確認範囲と金額への合意後に進めます。
             </p>
           </div>
-          <div className="m-window" aria-hidden="true">
-            <span>つくる</span>
-            <span>比べる</span>
-            <span>選ぶ</span>
-            <div className="m-window-line" />
+          <div className="m-journey-hero">
+            <p className="m-pilot-label">ひとつの導線を、順番に。</p>
+            <ol>
+              <li>
+                <span>01</span>
+                <div>
+                  <strong>紹介ページに入る</strong>
+                  <p>自分に関係があると分かる？</p>
+                </div>
+              </li>
+              <li className="m-journey-focus">
+                <span>02</span>
+                <div>
+                  <strong>内容・料金を理解する</strong>
+                  <p>「結局いくら？」で止まっていない？</p>
+                </div>
+              </li>
+              <li>
+                <span>03</span>
+                <div>
+                  <strong>問い合わせへ進む</strong>
+                  <p>次に何をすればいいか分かる？</p>
+                </div>
+              </li>
+              <li>
+                <span>04</span>
+                <div>
+                  <strong>送信・完了を確かめる</strong>
+                  <p>許可されたテスト環境で確認。</p>
+                </div>
+              </li>
+            </ol>
           </div>
         </section>
-        <section id="comparison" className="m-section">
-          <ComparisonDemo />
+        <section className="m-section" id="demo">
+          <FunnelDemo />
         </section>
         <section className="m-statement m-section">
           <h2>
@@ -59,100 +88,85 @@ export default function Home() {
           </h2>
           <div>
             <p>
-              AIは、いくつもの表現をつくれる。
-              <br />
-              人は、「どう見えたか」を自分の言葉で話せる。
+              AIには、説明の抜けやページ間の食い違いを。人には、実際に操作したときの迷いや疑問を。
             </p>
             <p>
-              Madoでは、つくり手ごとの制作方法で案を出し、人の感想を集めます。最後に選ぶのは、商品を届けたいあなたです。
+              誰が、どこで、何を確かめたかを分けてお届けします。AIの推測を、人のお客さまの声として扱いません。
             </p>
           </div>
         </section>
         <section id="how" className="m-section">
           <div className="m-section-heading">
-            <h2>
-              写真を送って、
-              <br />
-              使う1案が決まるまで。
-            </h2>
-            <p>初期版は、運営が一件ずつ進めます。</p>
+            <h2>まずは、ひとつの導線から。</h2>
+            <p>紹介ページ → 問い合わせに絞った小さな初期版です。</p>
           </div>
           <ol className="m-steps">
             <li>
-              <span>1</span>
-              <h3>商品のことを教える</h3>
+              <span>01</span>
+              <h3>URLと目的を伝える</h3>
               <p>
-                写真・商品の事実・届けたい相手を登録。制作内容と税込の見積をご案内します。
+                誰に、最後に何をしてほしいか。気になる箇所と一緒に教えてください。
               </p>
             </li>
             <li>
-              <span>2</span>
-              <h3>3案と、人の感想が届く</h3>
+              <span>02</span>
+              <h3>範囲と見積を確認する</h3>
               <p>
-                異なる制作方法から画像と見出しを3案。比較協力者が選んだ理由も確認できます。
+                人の人数、AIの観点、操作範囲と納期を運営が調整。内容と金額に合意してから進みます。
               </p>
             </li>
             <li>
-              <span>3</span>
-              <h3>1案を選び、仕上げる</h3>
+              <span>03</span>
+              <h3>直して、もう一度確かめる</h3>
               <p>
-                使いたい案と修正希望を伝えます。合意した範囲で1回調整し、画像をお渡しします。
+                観察・理由の仮説・改善案が届きます。修正後は前の結果を残して再確認を相談できます。
               </p>
             </li>
           </ol>
         </section>
-        <section className="m-invitation m-section">
-          <div>
-            <h2>まずは、ひとつの商品で。</h2>
+        <section className="m-section">
+          <h2>始める前に</h2>
+          <details className="m-panel">
+            <summary>いくらかかりますか？</summary>
             <p>
-              ネットショップの商品紹介や、SNSでのお知らせに。
-              <br />
-              最初の5件を目安に、無理のない規模で試します。
+              確認する人数・条件・範囲に合わせて個別に見積します。相談の送信だけでは料金は発生しません。再確認も別途見積です。
             </p>
-            <p className="m-small">
-              料金・納期・比較人数はご依頼ごとに提示します。受付状況や素材の内容により、お受けできない場合があります。
+          </details>
+          <details className="m-panel">
+            <summary>実際に問い合わせが送られますか？</summary>
+            <p>
+              通常は送信直前までです。送信後まで確認する場合は、依頼者が許可したテスト環境で実施します。
             </p>
+          </details>
+          <details className="m-panel">
+            <summary>売上や成約率も分かりますか？</summary>
+            <p>
+              初期版で届けるのは、確認時の観察と改善の仮説です。実際の訪問者の離脱率や成約率を計測する機能はありません。改善の効果は、修正後に別途確かめる必要があります。
+            </p>
+          </details>
+          <details className="m-panel">
+            <summary>すべて自動で確認されますか？</summary>
+            <p>
+              初期版は運営が依頼を確認し、協力者とAIの方法を組み合わせて進めます。対象者を確保できない場合も含め、実施できる内容を見積時にお伝えします。
+            </p>
+          </details>
+        </section>
+        <section className="m-invitation">
+          <div>
+            <h2>「できた」の先を、一緒に。</h2>
+            <p>まずは、いちばん気になる導線をひとつ。</p>
           </div>
           <Link href="/pilot" className="m-button">
-            制作を相談する
+            導線を相談する
           </Link>
-        </section>
-        <section className="m-section m-faq">
-          <h2>依頼する前に</h2>
-          <details>
-            <summary>まだ料金が決まっていないのですか？</summary>
-            <p>
-              初期版は一件ごとの見積です。税込金額・制作範囲・納期を提示し、同意をいただいてから進めます。相談を送るだけで課金されることはありません。
-            </p>
-          </details>
-          <details>
-            <summary>人の感想は、AIが書くのですか？</summary>
-            <p>
-              人の比較コメントは、実際の回答を運営が匿名で記録します。AIの分析を人の回答として扱いません。人数や回答者の条件は見積時に確認します。
-            </p>
-          </details>
-          <details>
-            <summary>売れる画像になりますか？</summary>
-            <p>
-              伝わり方を考える材料は得られますが、売上の向上は保証しません。少人数の感想と実際の購買行動には違いがあります。
-            </p>
-          </details>
-          <details>
-            <summary>制作方法を提供する側で参加できますか？</summary>
-            <p>
-              プロンプトや制作手順を持つ方を募集しています。利用範囲と報酬は個別に合意します。
-            </p>
-            <Link href="/pilot/join">つくり手として応募する</Link>
-          </details>
         </section>
       </main>
       <footer className="m-footer">
         <Link className="m-logo" href="/">
           mado
         </Link>
-        <Link href="/pilot/join">つくり手として参加</Link>
-        <Link href="/pilot/privacy">素材と個人情報の取り扱い</Link>
-        <span>© 2026 Lyo Vision</span>
+        <Link href="/pilot/join">確認の方法・協力者として参加</Link>
+        <Link href="/pilot/privacy">情報の取り扱い</Link>
       </footer>
     </div>
   );

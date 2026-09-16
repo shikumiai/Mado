@@ -851,3 +851,130 @@ fieldset:disabled .m-button {
     transform: none;
   }
 }
+
+/* Journey checks share the existing Mado typography and color system. */
+.m-journey-hero {
+  padding: 34px;
+  background: var(--m-paper);
+  border: 1px solid var(--m-line);
+  border-radius: 24px;
+}
+.m-journey-hero ol {
+  list-style: none;
+  margin: 22px 0 0;
+  padding: 0;
+}
+.m-journey-hero li {
+  display: flex;
+  gap: 18px;
+  padding: 20px 14px;
+  border-bottom: 1px solid var(--m-line);
+}
+.m-journey-hero li:last-child {
+  border-bottom: 0;
+}
+.m-journey-hero li > span {
+  color: var(--m-accent);
+  font-family: var(--font-mono), monospace;
+}
+.m-journey-hero strong {
+  font-size: 19px;
+}
+.m-journey-hero li p {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--m-muted);
+}
+.m-journey-focus {
+  background: var(--m-tint);
+  border-radius: 12px;
+}
+.m-funnel-demo {
+  padding: 34px;
+  background: var(--m-paper);
+  border: 1px solid var(--m-line);
+  border-radius: 20px;
+}
+.m-funnel-demo > h2 {
+  font-size: clamp(24px, 3vw, 36px);
+  margin: 12px 0;
+}
+.m-funnel-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 28px 0;
+}
+.m-funnel-tabs button {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+  padding: 18px;
+  border: 1px solid var(--m-line);
+  border-radius: 10px;
+  background: var(--m-bg);
+  color: var(--m-ink);
+  cursor: pointer;
+}
+.m-funnel-tabs button span {
+  color: var(--m-muted);
+  font-family: var(--font-mono), monospace;
+}
+.m-funnel-tabs button[aria-pressed="true"] {
+  border: 2px solid var(--m-accent);
+  padding: 17px;
+  background: var(--m-tint);
+}
+.m-finding {
+  border-left: 3px solid var(--m-accent);
+  padding: 22px;
+  background: var(--m-tint);
+  margin: 22px 0;
+  border-radius: 0 12px 12px 0;
+  overflow-wrap: anywhere;
+}
+.m-finding h3 {
+  font-size: 21px;
+  line-height: 1.7;
+  margin: 12px 0;
+}
+.m-finding h4 {
+  font-size: 14px;
+  color: var(--m-muted);
+  margin: 20px 0 8px;
+}
+.m-funnel-path {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  list-style: decimal inside;
+  padding: 0;
+  margin: 22px 0;
+}
+.m-funnel-path li {
+  padding: 15px;
+  background: var(--m-tint);
+  border-radius: 8px;
+  font-size: 14px;
+}
+.m-panel {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 760px) {
+  .m-journey-hero,
+  .m-funnel-demo {
+    padding: 22px;
+  }
+  .m-funnel-tabs,
+  .m-funnel-path {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .m-funnel-tabs button {
+    font-size: 14px;
+    padding: 12px;
+  }
+  .m-funnel-tabs button[aria-pressed="true"] {
+    padding: 11px;
+  }
+}
