@@ -250,7 +250,7 @@ export function FunnelView({
                     </>
                   ) : (
                     <p className="text-xs text-ink3">
-                      追跡リンクはまだありません。「いま確かめる」を押すと発行されます。
+                      追跡リンクはまだありません。導線を保存し直すと発行されます。
                     </p>
                   )}
 
