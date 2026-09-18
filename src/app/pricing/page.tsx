@@ -35,7 +35,7 @@ export const metadata: Metadata = {
 /* ── 比較表のデータ（値は [おためし, おまかせ, おまかせプロ]） ── */
 const COMPARE: { label: string; values: (boolean | string)[] }[] = [
   { label: "業種別テンプレート", values: [true, true, true] },
-  { label: "施工写真の掲載", values: [true, true, true] },
+  { label: "写真の掲載", values: [true, true, true] },
   { label: "お問い合わせ・電話タップ", values: [true, true, true] },
   { label: "スマホ対応・SSL（https）", values: [true, true, true] },
   { label: "独自ドメイン", values: [true, true, true] },

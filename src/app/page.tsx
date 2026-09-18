@@ -175,12 +175,12 @@ function Hero() {
           className="mado-load relative mx-auto w-full max-w-xl"
           style={{ animationDelay: "180ms" }}
         >
-          <WindowFrame caption="施工事例が主役のサイト（実物プレビュー）">
+          <WindowFrame caption="予約と担当者が先に見えるサロンのサイト（実物プレビュー）">
             <LazyIframe
-              src="/portfolio-templates/warm-craft"
-              title="完成サイトの例（ウォームクラフト）"
-              fallbackBg="#fbf7f0"
-              fallbackColors={["#c2703d", "#e8dccb"]}
+              src="/portfolio-templates/velvet"
+              title="完成サイトの例（美容・サロン）"
+              fallbackBg="#f8f2f0"
+              fallbackColors={["#7A2E45", "#C08A6A"]}
               className="h-80 sm:h-[26rem]"
               iframeWidth={1280}
               iframeHeight={1120}
@@ -429,25 +429,25 @@ function FunnelCheckPanel() {
 /* ═══════════════ テンプレート（窓の中にライブプレビュー・非対称に並べる） ═══════════════ */
 const TEMPLATES = [
   {
-    id: "warm-craft",
-    name: "ウォームクラフト",
-    tag: "温もりと地域密着。工務店・リフォーム向け。",
-    fallbackBg: "#fbf7f0",
-    fallbackColors: ["#c2703d", "#e8dccb"],
+    id: "velvet",
+    name: "美容・サロン",
+    tag: "料金と担当者が先に分かる。美容室・ネイル・エステ向け。",
+    fallbackBg: "#f8f2f0",
+    fallbackColors: ["#7A2E45", "#C08A6A"],
   },
   {
-    id: "trust-navy",
-    name: "トラストネイビー",
-    tag: "堅実で信頼感。建設会社・ゼネコン向け。",
-    fallbackBg: "#0f1e33",
-    fallbackColors: ["#5680c0", "#dbe4f0"],
+    id: "saveur",
+    name: "飲食店",
+    tag: "品書きと店の空気で、今夜の一軒に選ばれる。カフェ・居酒屋向け。",
+    fallbackBg: "#faf3ea",
+    fallbackColors: ["#B23A2E", "#D9A441"],
   },
   {
-    id: "clean-arch",
-    name: "クリーンアーチ",
-    tag: "洗練とミニマル。設計事務所向け。",
-    fallbackBg: "#f4f4f2",
-    fallbackColors: ["#2b2b2b", "#d8d8d4"],
+    id: "beacon",
+    name: "教室・スクール",
+    tag: "コースと月謝を、そのまま並べる。教室・塾・レッスン向け。",
+    fallbackBg: "#f1f5f8",
+    fallbackColors: ["#2C5F7C", "#E8963A"],
   },
 ];
 
@@ -490,28 +490,38 @@ function TemplateWindow({
 }
 
 function Templates() {
-  const [warmCraft, trustNavy, cleanArch] = TEMPLATES;
+  const [velvet, saveur, beacon] = TEMPLATES;
   return (
     <Section id="templates" tone="surface">
       <div className="max-w-2xl">
         <Eyebrow>テンプレート</Eyebrow>
         <h2 className="font-serif text-3xl font-bold leading-snug text-ink sm:text-4xl">
-          業種に合わせた、3つの窓。
+          業種に合わせた、10の窓。
         </h2>
         <p className="mt-4 text-sm leading-relaxed text-ink2">
-          下はどれも実際に動くサイトです。窓ごしに中を見て、しっくりくる一枚を選んでください。
+          下はどれも実際に動くサイトです。窓ごしに中を見て、しっくりくる一枚を選んでください。美容・飲食・教室のほか、ジム・士業・医療・小売・工務店・建設・設計事務所があります。
         </p>
       </div>
 
       <div className="mt-14 grid gap-6 lg:grid-cols-12 lg:items-start">
         <div className="lg:col-span-7">
-          <TemplateWindow t={warmCraft} big />
+          <TemplateWindow t={velvet} big />
         </div>
         <div className="flex flex-col gap-8 lg:col-span-5">
-          <TemplateWindow t={trustNavy} />
-          <TemplateWindow t={cleanArch} />
+          <TemplateWindow t={saveur} />
+          <TemplateWindow t={beacon} />
         </div>
       </div>
+
+      <p className="mt-8 text-sm">
+        <Link
+          href="/portfolio-templates"
+          className="inline-flex items-center gap-1.5 font-medium text-ink2 underline-offset-4 transition-colors hover:text-ink hover:underline"
+        >
+          10業種すべての実物を見る
+          <ArrowRight className="size-4" aria-hidden />
+        </Link>
+      </p>
     </Section>
   );
 }
@@ -641,7 +651,7 @@ const FAQ_ITEMS: FaqItem[] = [
   },
   {
     q: "どんな業種でも対応していますか？",
-    a: "工務店・建設会社・設計事務所を中心に、幅広い業種に対応します。まずはお気軽にご相談ください。",
+    a: "美容・飲食・教室・ジム・士業・医療・小売・工務店・建設・設計事務所の10業種に、それぞれ専用の作りがあります。近い業種を選べば、他の商売でも使えます。",
   },
 ];
 
