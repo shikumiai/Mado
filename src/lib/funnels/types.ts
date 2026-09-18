@@ -1,33 +1,39 @@
 /**
- * 導線チェックの型の契約。
+ * 導線チェックで使う言葉の形（型の正）。
  *
- * 設計の正は docs/FUNNEL_CHECK_V1.md §8。画面も裏側もこのファイルだけを見る。
- * ここを変えると両方が同時に壊れるので、変えるときは設計書から直す。
+ * 設計書: docs/FUNNEL_CHECK_V1.md の §8。
+ * 画面もサーバーもここの形だけを見る。ここを変えるときは設計書も直す。
+ *
+ * 言葉の対応
+ *   導線（funnel） … 入口から目的地までの段の並び
+ *   段（hop）      … 導線の1つの場所（X・LINE・Web・自分のサイト・会員ページ・Discord）
+ *   チェック（run）… 導線を上から順に確かめた1回の実行
+ *   追跡リンク     … 段ごとに発行する短い URL。通った人数を数える
  */
 
-/** 段の種類。宣言できる場所の種類（§3） */
+/** 段の種類 */
 export type HopKind = "x" | "line" | "web" | "mado" | "member" | "discord";
 
-/** 導線の1つの場所 */
+/** 段1つ */
 export interface Hop {
   kind: HopKind;
   /** 画面に出す名前 */
   label: string;
-  /** 宣言した URL。mado のときは siteId を入れる */
+  /** 宣言した URL（mado は siteId） */
   url: string;
 }
 
-/** 段の結果。skipped は「確かめていない」 */
+/** 3値。確かめていないものは ok でも ng でもなく skipped */
 export type HopStatus = "ok" | "ng" | "skipped";
 
-/** 段の中で確かめた1項目 */
+/** 確かめたこと1件 */
 export interface HopCheck {
-  /** 「URL が生きている」「次の段へのリンクがある」など */
+  /** 「URL が生きている」「次の段へのリンクがある」 */
   name: string;
   status: HopStatus;
   /** ng / skipped の理由。一文 */
   reason?: string;
-  /** 根拠。あるものだけ */
+  /** 根拠。取れたものだけ */
   evidence?: {
     statusCode?: number;
     finalUrl?: string;
@@ -37,9 +43,10 @@ export interface HopCheck {
   };
 }
 
-/** 段1つ分の結果。status は checks の最悪値 */
+/** 段1つぶんの結果 */
 export interface HopResult {
   hopIndex: number;
+  /** checks の最悪値 */
   status: HopStatus;
   checks: HopCheck[];
 }
@@ -47,7 +54,7 @@ export interface HopResult {
 /** チェック1回の状態 */
 export type RunStatus = "running" | "done" | "failed";
 
-/** チェック1回分 */
+/** チェック1回 */
 export interface FunnelRun {
   id: string;
   status: RunStatus;
@@ -56,7 +63,7 @@ export interface FunnelRun {
   finishedAt: string | null;
 }
 
-/** 一覧に出す導線1本の要約 */
+/** 一覧に出す導線1本 */
 export interface FunnelSummary {
   id: string;
   name: string;
@@ -66,18 +73,20 @@ export interface FunnelSummary {
   lastRun: {
     status: RunStatus;
     finishedAt: string | null;
+    /** 段の中でいちばん悪い状態 */
     worst: HopStatus | null;
   } | null;
 }
 
-/** 段ごとに発行する短い URL */
+/** 段ごとの追跡リンク */
 export interface TrackedLink {
   hopIndex: number;
   code: string;
+  /** https://mado.shikumiai.com/go/<code> */
   url: string;
 }
 
-/** 詳細画面が必要とする一式 */
+/** 導線1本の中身。runs は新しい順、最大10 */
 export interface FunnelDetail {
   id: string;
   name: string;
@@ -87,9 +96,11 @@ export interface FunnelDetail {
   runs: FunnelRun[];
 }
 
-/** 段ごとの人数（visitors が丸めた人数、clicks が生の数） */
+/** 段ごとの通過人数 */
 export interface HopClicks {
   hopIndex: number;
+  /** 同じ端末らしいものを1日1回に丸めた人数。画面に出すのはこちら */
   visitors: number;
+  /** 生のクリック数 */
   clicks: number;
 }

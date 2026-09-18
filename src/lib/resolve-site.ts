@@ -24,7 +24,7 @@ export const RESERVED_SLUGS = new Set([
   "auth", "logout", "signout", "callback", "account", "settings",
   "legal", "privacy", "features", "lp", "templates",
   "portfolio-templates", "preview", "order", "portfolio", "test",
-  "app", "sections", "pricing", "styleguide",
+  "app", "sections", "pricing", "styleguide", "go",
   "s", "images", "assets", "static", "public", "_next",
   "favicon.ico", "robots.txt", "sitemap.xml", "manifest.json",
 ]);
