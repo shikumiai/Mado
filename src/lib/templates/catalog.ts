@@ -87,6 +87,27 @@ export function planAllows(plan: string | undefined | null, needs?: PlanId): boo
 }
 
 /* ═══════════════════════════════════════
+   導線チェック（docs/FUNNEL_CHECK_V1.md §9）
+   ═══════════════════════════════════════ */
+
+/** プランごとに持てる導線の本数。-1 は無制限 */
+const PLAN_FUNNEL_LIMITS: Record<PlanId, number> = {
+  otameshi: 0,
+  omakase: 3,
+  "omakase-pro": -1,
+};
+
+/** 持てる導線の本数。-1 は無制限（おためしは 0 本。画面は鍵つきで見える） */
+export function funnelLimit(plan: string | undefined | null): number {
+  return PLAN_FUNNEL_LIMITS[normalizePlanId(plan || "otameshi")];
+}
+
+/** 追跡リンクと「いま確かめる」を使えるか（おまかせ以上） */
+export function planAllowsFunnelCheck(plan: string | undefined | null): boolean {
+  return planAllows(plan, "omakase");
+}
+
+/* ═══════════════════════════════════════
    初期色（正は src/lib/palette.ts）
    ═══════════════════════════════════════ */
 
