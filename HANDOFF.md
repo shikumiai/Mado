@@ -1,19 +1,20 @@
 # Mado — セッション引き継ぎメモ
 
-> 最終更新: 2026-09-04（Supabase マルチテナント移行 / サービス名を Mado に確定 / Phase 3 実装）
+> 最終更新: 2026-09-18（rebuild-v2 を本番へ切替 / 導線チェックを有料機能として実装中）
 
 ## ★ 次のセッションで最初にやること
 
 1. このファイルを読む
-2. `docs/07_ARCHITECTURE_V2_SUPABASE.md` を読む（**現行の設計書**。`02_ARCHITECTURE.md` は旧設計の記録）
-3. `.claude/memory/MEMORY.md` と、プロジェクトのメモリを読む
+2. `git fetch origin && git log --oneline -5 origin/main` と `gh pr list --repo shikumiai/Mado --state all` で、**本番（main）が誰の手で動いたか**を先に確かめる（下の「落とし穴」参照）
+3. 設計の正を読む: `docs/TEMPLATE_SYSTEM_V3.md`（テンプレ）／`docs/ONBOARDING_V1.md`（公開後）／`docs/FUNNEL_CHECK_V1.md`（導線チェック）／`docs/ai/DECISIONS.md`（判断の記録）
+4. `.claude/memory/MEMORY.md` と、プロジェクトのメモリを読む
 
 ---
 
 ## いま何をしているか（1行）
 
-**顧客サイトを「デプロイするもの」から「データベースを読んで描くもの」に作り替えている。**
-顧客ごとに GitHub リポと Vercel プロジェクトを作る旧方式をやめ、1つのアプリに集約した。
+**「サイトを作る。そこまでの道も、見える。」を1つの商品にしている。**
+ホームページ作成（rebuild-v2）は本番で稼働。導線チェック（X→LINE→サイト→Discord の配線と人数）を、おまかせ以上の機能として足している。
 
 ---
 
@@ -24,11 +25,12 @@
 | サービス名 | **Mado**（正規表記。カタカナ「マド」は使わない） |
 | 本番URL | **https://mado.shikumiai.com** |
 | 顧客サイト | `https://mado.shikumiai.com/{顧客のスラッグ}` |
-| GitHub | **shikumiai/Mado**（履歴は 2026-09-03 に切り直した） |
-| Vercel | `shikumiais-projects/mado`（Hobby） |
-| Supabase | `tayfsmypscyndfekbzsx`（東京・組織 shikumiai の `shikumiai's Project`。2026-09-15 に組織 `site` の `dralpswprcifzmgojgxu` から移設） |
+| 本番コード | `main`（2026-09-18 に `rebuild-v2` を PR #1 で統合。以後の作業は main から枝を切る） |
+| GitHub | **shikumiai/Mado** |
+| Vercel | `shikumiais-projects/mado`（Hobby）。main への push が本番デプロイ |
+| Supabase | `tayfsmypscyndfekbzsx`（東京・組織 shikumiai）。旧 `dralpswprcifzmgojgxu`（組織 site）は未削除 |
 | Stripe | `acct_1UBIUDCMwxuV78LX`（JP / JPY / サンドボックス） |
-| 旧リポジトリ | `AndoLyo/shikumiya`（116コミット。まだ消していない） |
+| Google OAuth | Google Cloud プロジェクト `site-507418`（表示名 Mado）。戻り先に新旧 Supabase の両方を登録済み |
 
 **アカウントは全部 shikumiai 側。** MCP コネクタは Tasuke 側に固定されているので、
 Vercel / Supabase / GitHub は **CLI で触る**（`vercel` / `supabase` / `gh`。導入・認証済み）。
@@ -37,80 +39,73 @@ Vercel / Supabase / GitHub は **CLI で触る**（`vercel` / `supabase` / `gh`�
 
 ## どこまで終わっているか
 
-| Phase | 状態 |
+| 領域 | 状態 |
 |---|---|
-| 0. 器（Supabase・10テーブル・RLS） | ✅ 実機検証済み |
-| 1. 描画（`/[siteSlug]` でDBから顧客サイト） | ✅ **本番で確認済み** |
-| 2. 認証（Supabase Auth） | ⌛ 実装済み。**通しの動作確認だけ未** |
-| 3. 編集（保存先をDBに） | ⌛ 実装済み。**動作確認は Phase 2 の後** |
-| 4. 申込（`/start` をDBに） | ❌ 未着手 |
-| 5. 管理（`/admin` を実データに） | ❌ 未着手 |
-| 6. テンプレ統合（9→3・trust-navy Renderer） | ❌ 未着手 |
-| 7. 掃除（旧コード・GAS・next-auth 削除） | ❌ 未着手 |
-
-**実証できていること**: 顧客サイトがDBから描ける／保存でビルドを挟まず反映される／
-同時編集の衝突を 0.058 秒で検出する／Stripe の webhook 署名検証。
+| 器（Supabase 12テーブル・RLS・RPC・バケット） | ✅ 新プロジェクトに適用済み（0001〜0006） |
+| 描画（DB から顧客サイト、10業種テンプレ、写真130枚） | ✅ 本番 |
+| 認証（メール／パスキー／Google） | ✅ Google はプレビューで通し確認済み（2026-09-16） |
+| 申込（名前先行・8ステップ・下書き再開・無料公開／Stripe） | ✅ プレビューで公開まで通し確認済み |
+| 編集（部品の追加・複製・削除・見せ方・色・写真差し替え） | ✅ 本番 |
+| 公開後の「次にやること」（見本のままの箇所を突き止めて1つずつ） | ✅ 実装済み（`src/lib/onboarding.ts`） |
+| 写真をまとめて入れる画面 | ❌ 未着手（`docs/ONBOARDING_V1.md` §3-4） |
+| 導線チェック | ⌛ 実装中（下記） |
+| Codex 版の導線チェック（`/pilot`） | 残置。入口から外した。テーブル `mado_pilot_orders` / `mado_pilot_applications` / `mado_funnel_orders` は残る |
 
 ---
 
 ## 次にやること（この順番）
 
-### ① ログインを通す ← ここから
+### ① 導線チェックの統合 ← ここから
 
-`https://mado.shikumiai.com/auth/login` で Google ログインを試す。
-設定はすべて済んでいる（クライアントID・リダイレクトURI・テストユーザー `ryoya112@gmail.com`）。
+2026-09-18 に Opus 5 のサブエージェント3体へ分担して実装中（Fable が設計・検収）。
+それぞれ自分の worktree のブランチにコミットしている（push はしない約束）。
 
-通ったら:
-1. Supabase → Authentication → Users に出る **UID** を控える
-2. `platform_admins` に入れて、Lyo を管理者にする
-   ```sql
-   insert into public.platform_admins (user_id, note)
-   values ('<UID>', 'Lyo') on conflict do nothing;
-   ```
-3. `orgs` / `org_members` / `sites` にテスト用の1件を作って、
-   `/member/site` → 編集 → 保存 → 顧客サイトに反映、を通しで確認する
+| 担当 | 中身 | 主なファイル |
+|---|---|---|
+| 裏側 | migration 0007・`/go/[code]`・チェック本体・Server Action・プラン判定 | `supabase/migrations/0007_funnels.sql` `src/lib/funnels/*` `src/app/go/[code]/route.ts` |
+| 画面 | `/app/funnels`・`/new`・`/[id]`・マイページの入口・公開前チェック | `src/app/app/funnels/*` |
+| 見せ方 | LP のヒーロー・料金表・OG 画像・metadata | `src/app/page.tsx` ほか |
 
-※ 現状 `sites` にある `test-koumuten`（`bad86234-19e8-45d0-8d13-9d3f36e510b9`）は
-`org_members` と紐づいていないので、ログインしても編集画面には出ない。紐付けが要る。
+統合の手順: main から `funnel-check` を切る → 3本を順に merge（`types.ts` は同じ内容なので衝突しない想定。画面側の `actions.ts` スタブがあれば裏側のもので置き換える）→ `tsc` / `build` → PR → 検収 → merge。
 
-### ② Phase 4 — 申込フローをDBに
+### ② migration 0007 を本番 DB に適用
 
-`/start` が今も「GitHubリポを作って Vercel にデプロイする」旧コードのまま。
-本番で動くと**要らないリポジトリを量産する**。
-安全装置として `GITHUB_TOKEN` / `VERCEL_TOKEN` を **Vercel の環境変数に入れていない**（意図的）。
+`supabase/migrations/0007_funnels.sql` を Supabase の SQL Editor で実行（これまでと同じやり方）。
+**適用は Lyo の確認を取ってから**（本番 DB 変更は 🔴）。
 
-やること: 申込 → `orgs` / `sites` / `site_configs` を INSERT するだけの形に書き換える。
-Stripe webhook も「`orgs` の1行を更新するだけ」に。あわせて `stripe_events` テーブルを足して
-`event.id` で重複を弾く（webhook の冪等性が未実装）。
+### ③ 本番で通し確認
 
-### ③ Phase 6 — テンプレート統合
+申込 → 公開 → 導線を1本登録 → 追跡リンク発行 → 「いま確かめる」→ 段ごとの状態。
+`docs/FUNNEL_CHECK_V1.md` §11 の合格条件をそのまま使う。
 
-`trust-navy` の Renderer が無い。新設計では **Renderer が無いテンプレは売れない**。
-9種を3系統に集約する（プラン差は `sections[]` の中身で表す）。
+### ④ テストデータの削除（Lyo の可否を取る）
+
+新 DB に残っているテスト: `mado-test-0916`（公開中）、`mado-test-0915`（申込途中）、
+Codex の動作確認2行（`mado_pilot_orders` 1・`mado_funnel_orders` 1）。
 
 ---
 
 ## Lyo にしかできないこと（残り）
 
-- **ログインを1回通す**（ブラウザでのアカウント選択）
-- Supabase プロジェクト名を `site` → `Mado` に（表示名だけ。影響なし）
-- 旧リポジトリ `AndoLyo/shikumiya` の後始末（新しい側が安定してから）
-- メール送信の移管先を決める（GAS を捨てると申込通知・完成通知が消える）
+- **SMTP の送信元**を決める（確認メールは今も Supabase 既定の送信元で、送信数に上限がある）
+- 旧 Supabase プロジェクト `dralpswprcifzmgojgxu` と組織 `site` の削除（取り消せない）
+- テストデータ削除の可否（上の④）
+- 旧リポジトリ `AndoLyo/shikumiya` の後始末
 
 ---
 
 ## 落とし穴（一度踏んだもの）
 
-- **空のリポジトリで Vercel プロジェクトを作らない。** フレームワークが `Other` で固定され、
-  ビルドは成功するのに全パス 404 になる。`vercel.json` に `"framework": "nextjs"` を書いて固定済み。
-- **`npm i -g` は Git Bash から失敗する。** PowerShell ツールを使う。
-- **DNS は「サーバーパネル」側の DNSレコード設定で編集する。** 会員ページ側の同名機能は効かない。
-- **開発サーバーを常駐させない。** 実装 → `tsc` / `npm run build` → 本番で確認、の順で進める
-  （2026-09-04 の Lyo の指示）。プロセスを落とすと子プロセスだけ死んで、
-  HTTP 200 を返すのに中身が作れない状態になる。
-- **Vercel のプロジェクト画面に出る短い URL は当てにならない。**
-  実際に配られている URL は `gh api repos/shikumiai/Mado/deployments/<ID>/statuses` の
-  `environment_url`、または `vercel ls mado`。
+- **本番リポに2つのエージェントが merge 権を持っていた。** 2026-09-16、Lyo が Codex に「そこにデプロイして」と言った一言で、Codex が main に4本のPRを merge し本番を差し替えた（旧申込は転送・旧決済は 410）。rebuild-v2 の PR #1 は衝突して開いたまま。以後の約束: **決定は `docs/ai/DECISIONS.md` に書く。本番への merge とデプロイは Claude Code に一本化。** Codex に本番を触らせるときは作業票に明記する。
+- **本体 checkout（`Shikumiai-HP`）の main は、2026-09-18 時点で古い（`ecf48fa`）。** 未コミットの料金カード作業（9/8〜13）は `wip/plancards-old-main` に退避してある。作業は `C:/dev/mado-rebuild` か main から切った新しい枝で。
+- **ファイルは CRLF。** `sed` / 正規表現で `\n` を当てると空振りする。置換は Edit ツールか `\r?\n` で。
+- **ブラウザの自動入力が Supabase の認証プロバイダ設定を汚す。** Google の Client ID / Secret に別サービス（tasuke）の値が入って `redirect_uri_mismatch` → `Unable to exchange external code` になった。保存前に Client ID の先頭（`1030602025638-`）を見る。
+- **プレビューは URL ごとに別ドメイン**なので、ログイン状態は持ち越せない。通し確認は毎回ログインから。
+- **押さえた名前を空き確認が「使用済み」と誤判定**していた（競合）。直したが、同種の「問い合わせ中に状態が変わる」処理は必ず `alive` フラグで古い返事を捨てる。
+- 空のリポジトリで Vercel プロジェクトを作らない（フレームワークが `Other` で固定される）。`vercel.json` に `"framework": "nextjs"` を書いて固定済み。
+- `npm i -g` は Git Bash から失敗する。PowerShell ツールを使う。
+- DNS は「サーバーパネル」側の DNSレコード設定で編集する。
+- 開発サーバーを常駐させない。実装 → `tsc` / `npm run build` → プレビュー/本番で確認。
 
 ---
 
@@ -119,9 +114,9 @@ Stripe webhook も「`orgs` の1行を更新するだけ」に。あわせて `s
 ```bash
 npx tsc --noEmit                              # 型チェック
 npm run build                                 # 本番ビルド
-vercel ls mado                                # デプロイ一覧
-vercel inspect <URL> --logs                   # ビルドログ
-vercel curl <URL>/path -s -o /dev/null -w '%{http_code}'   # 保護された本番を叩く
+vercel ls mado --scope shikumiais-projects    # デプロイ一覧
+vercel redeploy <URL> --scope shikumiais-projects   # 環境変数を変えたあとの作り直し
+gh pr list --repo shikumiai/Mado --state all  # PR と、誰が main を動かしたか
 supabase --version                            # 2.116.0
 
 STRIPE_SECRET_KEY=... node scripts/stripe-setup.mjs          # 商品と価格（冪等）
@@ -132,4 +127,3 @@ STRIPE_SECRET_KEY=... node scripts/stripe-webhook-setup.mjs  # Webhook 登録
 ## 手順書
 
 `docs/mado-setup-guide.html` — 公開までの7段（GitHub → Vercel → DNS → Google → Supabase）。
-チェックが保存されるので、途中から再開できる。
