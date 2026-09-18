@@ -137,14 +137,23 @@ async function handleCheckoutCompleted(
   const customerId = toId(session.customer);
   const subscriptionId = toId(session.subscription);
 
-  const { error: orgErr } = await admin
-    .from("orgs")
-    .update({
-      status: "active",
-      stripe_customer_id: customerId,
-      stripe_subscription_id: subscriptionId,
-    })
-    .eq("id", orgId);
+  // metadata.plan があれば org のプランもここで合わせる。
+  // 無料→有料の切り替え（既存 org を再利用した Checkout）でも、この1イベントで
+  // plan が active / live と一緒に反映され、subscription.updated の到着を待たずに済む。
+  const orgUpdate: {
+    status: string;
+    stripe_customer_id: string | null;
+    stripe_subscription_id: string | null;
+    plan?: Plan;
+  } = {
+    status: "active",
+    stripe_customer_id: customerId,
+    stripe_subscription_id: subscriptionId,
+  };
+  const metaPlan = session.metadata?.plan;
+  if (metaPlan) orgUpdate.plan = normalizePlanId(metaPlan);
+
+  const { error: orgErr } = await admin.from("orgs").update(orgUpdate).eq("id", orgId);
   if (orgErr) throw orgErr;
 
   const { error: siteErr } = await admin
@@ -246,17 +255,24 @@ async function handlePaymentFailed(admin: WriteClient, invoice: Stripe.Invoice) 
    小道具
    ═══════════════════════════════════════ */
 
-/** サブスクからプランを決める。metadata.plan を優先し、無ければ price の lookup_key から引く */
+/**
+ * サブスクからプランを決める。実際に契約している price の lookup_key を最優先にする。
+ *
+ * カスタマーポータルでプランを変えると price は変わるが、サブスクの metadata は据え置かれる。
+ * metadata を先に見ると「古いプランのまま」になってしまうので、lookup_key（＝今まさに
+ * 契約している価格）を先に見る。lookup_key の付いていない価格のときだけ metadata を控えに使う。
+ */
 function planFromSubscription(subscription: Stripe.Subscription): Plan | null {
-  const metaPlan = subscription.metadata?.plan;
-  if (metaPlan) return normalizePlanId(metaPlan);
-
   const lookupKey = subscription.items?.data?.[0]?.price?.lookup_key;
   if (lookupKey) {
     for (const [plan, key] of Object.entries(PLAN_LOOKUP_KEYS)) {
       if (key === lookupKey) return plan as Plan;
     }
   }
+
+  const metaPlan = subscription.metadata?.plan;
+  if (metaPlan) return normalizePlanId(metaPlan);
+
   return null;
 }
 

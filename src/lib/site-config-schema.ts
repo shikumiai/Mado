@@ -6,6 +6,8 @@
  * 顧客のデータ変更はこのJSONを更新するだけで即反映される。
  */
 
+import { defaultSectionsFor } from "@/lib/templates/catalog";
+
 /* ═══════════════════════════════════════
    会社情報（全テンプレート共通）
    ═══════════════════════════════════════ */
@@ -26,10 +28,21 @@ export interface CompanyInfo {
   license?: string;           // 許認可
   capital?: string;           // 資本金
   employees?: string;         // 従業員数
+  business?: string;          // 事業内容（会社概要の表に出す。無ければ services から作る）
+  founded?: string;           // 設立（法人化の年月。無ければ since を使う）
   iso?: string;               // ISO認証
   domain: string;             // yamada-koumuten.jp
   ceoPhoto?: string;          // /images/ceo.jpg
   mapEmbedUrl?: string;       // Google Maps embed URL
+  social?: SocialLink[];      // フッターに出す SNS・外部ページ
+}
+
+/* ═══════════════════════════════════════
+   SNS・外部ページ（フッターに出す）
+   ═══════════════════════════════════════ */
+export interface SocialLink {
+  label: string;              // Instagram / LINE公式アカウント
+  href: string;               // https://instagram.com/...
 }
 
 /* ═══════════════════════════════════════
@@ -51,7 +64,7 @@ export interface Project {
   afterDesc?: string;         // After説明
   // clean-arch用
   size?: "landscape" | "portrait" | "square";
-  // luminos（フォトグラファー）用
+  // 作品・撮影の詳細（設計事務所・写真）
   concept?: string;           // 撮影コンセプト
   location?: string;          // 撮影場所
   equipment?: string;         // 使用機材
@@ -133,6 +146,13 @@ export interface NewsItem {
   date: string;               // 2025.04.05
   category: string;           // 完成見学会 / お知らせ / メディア
   title: string;
+  // ── 一覧→詳細で使う（無くても一覧は成立する）──
+  id?: number;
+  slug?: string;              // spring-open-house（詳細ページURL用）
+  excerpt?: string;           // 一覧に出す短い前置き
+  body?: string;              // 本文（改行は\n\nで区切る）
+  image?: string;
+  link?: string;              // 外部記事へ飛ばす場合
 }
 
 /* ═══════════════════════════════════════
@@ -237,7 +257,7 @@ export interface StaffMember {
 }
 
 /* ═══════════════════════════════════════
-   撮影フロー（luminos用）
+   ご利用の流れ（flow セクション）
    ═══════════════════════════════════════ */
 export interface FlowStep {
   step: number;               // 1, 2, 3...
@@ -252,6 +272,16 @@ export interface FlowStep {
 export interface FAQItem {
   question: string;
   answer: string;
+  category?: string;          // 費用のこと / 工事のこと（分類タブで使う）
+}
+
+/* ═══════════════════════════════════════
+   沿革（会社概要の一部・日本の会社サイトの必須）
+   ═══════════════════════════════════════ */
+export interface HistoryEvent {
+  year: string;               // 1998
+  title: string;              // 松本市中央に工房を構える
+  description?: string;
 }
 
 /* ═══════════════════════════════════════
@@ -279,18 +309,50 @@ export type SectionType =
   | "staff"          // スタッフ紹介（美容・医療等）
   | "pricing"        // 料金表（士業・サービス業等）
   | "info"           // 店舗情報・地図（店舗型ビジネス）
-  | "contact";       // お問い合わせ
+  | "contact"        // お問い合わせ
+  // ── v3 の機能カタログで足した種類（旧い名前もそのまま残す） ──
+  | "voices"         // お客様の声・実績数値（旧 testimonials / stats）
+  | "flow"           // ご利用・相談・受診の流れ
+  | "faq"            // よくある質問
+  | "access"         // アクセス・営業/診療時間・地図（旧 info）
+  | "company";       // 会社概要・代表挨拶・沿革（旧 about）
 
 export interface Section {
   type: SectionType;
   visible: boolean;
   label: string;              // エディタ表示名（「施工実績」「会社案内」等）
+  /**
+   * 見せ方。同じ機能でもレイアウトの型を選べる（v3）。
+   * 例: works の "grid" / "masonry" / "feature-list" / "showcase" / "quiet"。
+   * 未指定・知らない名前なら、その機能の既定の見せ方で描く。
+   */
+  variant?: string;
+  /**
+   * そのセクションのデータ。無ければ config の同じ項目（projects / strengths …）を使う。
+   * 中身の形は src/components/sections/types.ts の *Data を参照。
+   */
+  data?: Record<string, unknown>;
+  /** アンカー。ページ内リンクの飛び先（未指定なら type を使う） */
+  id?: string;
 }
 
 /* ═══════════════════════════════════════
    スタイル設定
    ═══════════════════════════════════════ */
+/**
+ * お客さんが選んだ色。代表カラー1つ＋サブ最大2つ。
+ * ここが空なら、テンプレートの初期色で描く（古い config でも壊れない）。
+ * 実際に使う色一式は src/lib/palette.ts がここから組み立てる。
+ */
+export interface BrandStyle {
+  primary: string;            // 代表カラー #C05A2E
+  sub1?: string;              // サブ1
+  sub2?: string;              // サブ2
+}
+
 export interface StyleConfig {
+  /** 選んだ色（無ければテンプレートの初期色） */
+  brand?: BrandStyle;
   colors: {
     primary: string;          // #7BA23F
     accent: string;           // #D4A76A
@@ -344,9 +406,10 @@ export interface SiteConfig {
   news?: NewsItem[];
   awards?: Award[];           // clean-arch用
 
-  // luminos（フォトグラファー）用
-  flow?: FlowStep[];            // 撮影フロー
+  // v3 の機能カタログで使う一覧
+  flow?: FlowStep[];            // ご利用の流れ
   faq?: FAQItem[];              // よくある質問
+  history?: HistoryEvent[];     // 沿革（会社概要）
 
   // おまかせプロ
   bookingEvents?: BookingEvent[];
@@ -360,131 +423,18 @@ export interface SiteConfig {
   style: StyleConfig;
 }
 
-/* ═══════════════════════════════════════
-   デフォルトセクション構成
-   ═══════════════════════════════════════ */
-export const DEFAULT_SECTIONS: Record<string, Section[]> = {
-  "warm-craft": [
-    { type: "hero", visible: true, label: "メインビジュアル" },
-    { type: "works", visible: true, label: "施工実績" },
-    { type: "strengths", visible: true, label: "私たちの強み" },
-    { type: "about", visible: true, label: "会社案内" },
-    { type: "testimonials", visible: true, label: "お客様の声" },
-    { type: "news", visible: true, label: "お知らせ" },
-    { type: "contact", visible: true, label: "お問い合わせ" },
-  ],
-  "trust-navy": [
-    { type: "hero", visible: true, label: "メインビジュアル" },
-    { type: "services", visible: true, label: "事業内容" },
-    { type: "works", visible: true, label: "施工実績" },
-    { type: "stats", visible: true, label: "数字で見る実績" },
-    { type: "about", visible: true, label: "会社概要" },
-    { type: "testimonials", visible: true, label: "お客様の声" },
-    { type: "news", visible: true, label: "お知らせ" },
-    { type: "recruit", visible: true, label: "採用情報" },
-    { type: "contact", visible: true, label: "お問い合わせ" },
-  ],
-  "clean-arch": [
-    { type: "hero", visible: true, label: "メインビジュアル" },
-    { type: "works", visible: true, label: "作品一覧" },
-    { type: "awards", visible: true, label: "受賞歴" },
-    { type: "about", visible: true, label: "設計者紹介" },
-    { type: "contact", visible: true, label: "お問い合わせ" },
-  ],
-  "saveur": [
-    { type: "hero", visible: true, label: "メインビジュアル" },
-    { type: "menu", visible: true, label: "メニュー" },
-    { type: "about", visible: true, label: "お店について" },
-    { type: "gallery", visible: true, label: "ギャラリー" },
-    { type: "info", visible: true, label: "店舗情報" },
-    { type: "contact", visible: true, label: "ご予約・お問い合わせ" },
-  ],
-  "velvet": [
-    { type: "hero", visible: true, label: "メインビジュアル" },
-    { type: "gallery", visible: true, label: "スタイルギャラリー" },
-    { type: "menu", visible: true, label: "メニュー・料金" },
-    { type: "staff", visible: true, label: "スタイリスト紹介" },
-    { type: "about", visible: true, label: "サロンについて" },
-    { type: "info", visible: true, label: "サロン情報" },
-    { type: "contact", visible: true, label: "ご予約" },
-  ],
-  "credence": [
-    { type: "hero", visible: true, label: "メインビジュアル" },
-    { type: "services", visible: true, label: "取扱業務" },
-    { type: "about", visible: true, label: "代表紹介" },
-    { type: "pricing", visible: true, label: "料金" },
-    { type: "info", visible: true, label: "事務所情報" },
-    { type: "contact", visible: true, label: "お問い合わせ" },
-  ],
-  "clarity": [
-    { type: "hero", visible: true, label: "メインビジュアル" },
-    { type: "services", visible: true, label: "診療科目" },
-    { type: "staff", visible: true, label: "医師紹介" },
-    { type: "info", visible: true, label: "診療時間・アクセス" },
-    { type: "about", visible: true, label: "当院について" },
-    { type: "contact", visible: true, label: "ご予約" },
-  ],
-  "beacon": [
-    { type: "hero", visible: true, label: "メインビジュアル" },
-    { type: "services", visible: true, label: "コース紹介" },
-    { type: "strengths", visible: true, label: "選ばれる理由" },
-    { type: "pricing", visible: true, label: "料金" },
-    { type: "about", visible: true, label: "塾長紹介" },
-    { type: "info", visible: true, label: "教室情報" },
-    { type: "contact", visible: true, label: "お問い合わせ" },
-  ],
-  "luminos": [
-    { type: "hero", visible: true, label: "メインビジュアル" },
-    { type: "works", visible: true, label: "作品ギャラリー" },
-    { type: "services", visible: true, label: "撮影メニュー" },
-    { type: "about", visible: true, label: "フォトグラファー紹介" },
-    { type: "pricing", visible: true, label: "料金" },
-    { type: "contact", visible: true, label: "お問い合わせ" },
-  ],
-  "nexus": [
-    { type: "hero", visible: true, label: "メインビジュアル" },
-    { type: "services", visible: true, label: "サービス" },
-    { type: "works", visible: true, label: "制作実績" },
-    { type: "strengths", visible: true, label: "選ばれる理由" },
-    { type: "about", visible: true, label: "会社概要" },
-    { type: "contact", visible: true, label: "お問い合わせ" },
-  ],
-  "marche": [
-    { type: "hero", visible: true, label: "メインビジュアル" },
-    { type: "gallery", visible: true, label: "商品ギャラリー" },
-    { type: "about", visible: true, label: "ブランドについて" },
-    { type: "info", visible: true, label: "店舗情報" },
-    { type: "contact", visible: true, label: "お問い合わせ" },
-  ],
-  "forge": [
-    { type: "hero", visible: true, label: "メインビジュアル" },
-    { type: "services", visible: true, label: "プログラム" },
-    { type: "pricing", visible: true, label: "料金プラン" },
-    { type: "staff", visible: true, label: "トレーナー紹介" },
-    { type: "gallery", visible: true, label: "施設ギャラリー" },
-    { type: "info", visible: true, label: "ジム情報" },
-    { type: "contact", visible: true, label: "体験予約" },
-  ],
-  "prism": [
-    { type: "hero", visible: true, label: "メインビジュアル" },
-    { type: "services", visible: true, label: "サービス内容" },
-    { type: "strengths", visible: true, label: "選ばれる理由" },
-    { type: "about", visible: true, label: "代表紹介" },
-    { type: "pricing", visible: true, label: "料金" },
-    { type: "contact", visible: true, label: "無料相談" },
-  ],
-};
-
 /**
- * SiteConfigからセクション配列を取得。
- * config.sectionsがあればそれを使い、なければテンプレートのデフォルトを返す。
+ * その config で描くセクション一式。
+ * config.sections があればそれ。無ければテンプレート定義（10業種の構成の正）から作る。
+ *
+ * 描く側（SectionsRenderer）と同じところを見るので、
+ * 編集画面に出る「ページの構成」と、実際に描かれるサイトが食い違わない。
  */
 export function getSections(config: SiteConfig): Section[] {
   if (config.sections && config.sections.length > 0) {
     return config.sections;
   }
-  const base = (config.templateId || "warm-craft").replace(/-(?:mid|pro)$/, "");
-  return DEFAULT_SECTIONS[base] || DEFAULT_SECTIONS["warm-craft"];
+  return defaultSectionsFor(config.templateId, config.plan);
 }
 
 /* ═══════════════════════════════════════
@@ -539,18 +489,6 @@ export const DEFAULT_STYLE: Record<string, StyleConfig> = {
     sizes: { heading: "lg", body: "md" },
     weights: { heading: "bold", body: "normal" },
   },
-  "luminos": {
-    colors: { primary: "#1A1A1A", accent: "#B8956A", background: "#FAFAFA", text: "#1A1A1A", textMuted: "#888888", border: "#E5E5E5" },
-    fonts: { heading: "'Noto Sans JP', sans-serif", body: "'Noto Sans JP', sans-serif" },
-    sizes: { heading: "lg", body: "md" },
-    weights: { heading: "light", body: "normal" },
-  },
-  "nexus": {
-    colors: { primary: "#0F3460", accent: "#E94560", background: "#F8F9FC", text: "#1A1A2E", textMuted: "#6B7280", border: "#E2E5EB" },
-    fonts: { heading: "'Noto Sans JP', sans-serif", body: "'Noto Sans JP', sans-serif" },
-    sizes: { heading: "lg", body: "md" },
-    weights: { heading: "bold", body: "normal" },
-  },
   "marche": {
     colors: { primary: "#C45B28", accent: "#2E6B4A", background: "#FDF8F4", text: "#2A1F14", textMuted: "#7A6B5E", border: "#E8DFD3" },
     fonts: { heading: "'Noto Serif JP', serif", body: "'Noto Sans JP', sans-serif" },
@@ -560,12 +498,6 @@ export const DEFAULT_STYLE: Record<string, StyleConfig> = {
   "forge": {
     colors: { primary: "#1A1A1A", accent: "#FF6B35", background: "#F5F5F5", text: "#1A1A1A", textMuted: "#6B6B6B", border: "#E0E0E0" },
     fonts: { heading: "'Noto Sans JP', sans-serif", body: "'Noto Sans JP', sans-serif" },
-    sizes: { heading: "lg", body: "md" },
-    weights: { heading: "bold", body: "normal" },
-  },
-  "prism": {
-    colors: { primary: "#4A3F6B", accent: "#E8A449", background: "#FAF8F5", text: "#2D2640", textMuted: "#7A7090", border: "#E5E0ED" },
-    fonts: { heading: "'Noto Serif JP', serif", body: "'Noto Sans JP', sans-serif" },
     sizes: { heading: "lg", body: "md" },
     weights: { heading: "bold", body: "normal" },
   },

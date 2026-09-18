@@ -51,17 +51,33 @@ export default function LazyIframe({
       className={`relative overflow-hidden ${className}`}
       style={{ background: fallbackBg }}
     >
-      {/* Fallback color mockup (shows until iframe loads) */}
+      {/* 読み込み中の下敷き（サイトの輪郭に見せる。空白の箱にしない） */}
       {!loaded && (
-        <div className="absolute inset-3 flex flex-col gap-1.5 opacity-50">
-          <div className="h-1 w-10 rounded-full" style={{ background: fallbackColors[0] }} />
-          <div className="flex-1 flex gap-1.5 mt-1">
-            <div className="flex-[2] rounded" style={{ background: `${fallbackColors[0]}18` }} />
-            <div className="flex-1 rounded" style={{ background: `${(fallbackColors[1] || fallbackColors[0])}12` }} />
+        <div className="absolute inset-0 flex flex-col opacity-70">
+          {/* ヘッダー帯 */}
+          <div
+            className="flex items-center justify-between px-[6%] py-[3.5%]"
+            style={{ background: `${fallbackColors[0]}14` }}
+          >
+            <span className="h-1.5 w-[18%] rounded-full" style={{ background: `${fallbackColors[0]}66` }} />
+            <span className="flex gap-[3%]">
+              <span className="h-1 w-6 rounded-full" style={{ background: `${fallbackColors[0]}33` }} />
+              <span className="h-1 w-6 rounded-full" style={{ background: `${fallbackColors[0]}33` }} />
+            </span>
           </div>
-          <div className="flex gap-1">
-            <div className="h-0.5 w-8 rounded-full" style={{ background: `${(fallbackColors[1] || fallbackColors[0])}30` }} />
-            <div className="h-0.5 w-5 rounded-full" style={{ background: `${fallbackColors[0]}20` }} />
+          {/* ヒーロー（見出し＋絵の2枚） */}
+          <div className="flex flex-1 gap-[4%] px-[6%] py-[5%]">
+            <div className="flex flex-[1.05] flex-col justify-center gap-[6%]">
+              <span className="h-2.5 w-[70%] rounded" style={{ background: `${fallbackColors[0]}55` }} />
+              <span className="h-2.5 w-[52%] rounded" style={{ background: `${fallbackColors[0]}55` }} />
+              <span className="mt-[4%] h-1.5 w-[80%] rounded-full" style={{ background: `${(fallbackColors[1] || fallbackColors[0])}44` }} />
+              <span className="h-1.5 w-[64%] rounded-full" style={{ background: `${(fallbackColors[1] || fallbackColors[0])}44` }} />
+              <span className="mt-[5%] h-5 w-[42%] rounded-md" style={{ background: `${fallbackColors[0]}77` }} />
+            </div>
+            <div
+              className="flex-[0.95] rounded-lg"
+              style={{ background: `${(fallbackColors[1] || fallbackColors[0])}22` }}
+            />
           </div>
         </div>
       )}

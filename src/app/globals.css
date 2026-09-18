@@ -1,279 +1,363 @@
 @import "tailwindcss";
 
+/* ============================================================
+   Mado 設計トークン（rebuild-v2 / アートディレクション v2）
+   世界観 = 窓・職人・あたたかい光。
+   主表現は「暖かいライト」。ダークは上質な別表現として残す。
+   差し色は暖色オレンジの実面。紫〜ピンクのグラデは identity から撤去。
+   値の正は docs/ART_DIRECTION_V2.md。
+   ============================================================ */
+
+/* ---- ライト（既定・signature）: 生トークン ---- */
+:root {
+  color-scheme: light;
+
+  --bg: #fbf8f3;         /* 地: あたたかいクリーム */
+  --surface: #ffffff;    /* 面: 紙の白 */
+  --surface2: #f1ebe0;   /* 段: 一段落とした砂色 */
+  --ink: #1e2a44;        /* 文字: 濃紺 */
+  --ink2: #54607a;       /* 副文字 */
+  --ink3: #8a93a6;       /* 補足・プレースホルダ */
+  --brand: #25314f;      /* ブランド濃紺（枠線・見出しの芯） */
+
+  --accent: #e8873a;         /* 差し色: 暖色オレンジ（CTA・強調の実面） */
+  --accent-strong: #d9752a;  /* 押下・ホバーで一段深いオレンジ */
+  --accent-soft: #fbe7ce;    /* オレンジの淡い面（アイコン地など） */
+  --terracotta: #c06a3f;     /* 補助: テラコッタ（土・木のニュアンス） */
+
+  --line: rgba(30, 42, 68, 0.12);   /* 淡い罫 */
+  --ring: rgba(232, 135, 58, 0.5);  /* フォーカスの輪郭（暖色） */
+
+  /* オレンジの実面に載せる文字は常に濃紺で読ませる（5.4:1・Mado の署名） */
+  --on-accent: #1e2a44;
+
+  /* 共通（ライト/ダーク共有） */
+  --success: #2f9c73;
+  --warn: #d68a19;
+  --danger: #d8503a;
+  --info: #4a73c4;
+
+  /* 窓から差す光（装飾専用の暖色の放射。面には塗らない） */
+  --window-light: radial-gradient(
+    120% 92% at 50% -8%,
+    rgba(232, 135, 58, 0.20),
+    rgba(251, 231, 206, 0.12) 42%,
+    transparent 72%
+  );
+
+  /* 暖色の淡いグラデ（"光"の装飾だけに使う。紫は使わない） */
+  --gradient-accent: linear-gradient(118deg, #f4a35a 0%, #e8873a 46%, #c06a3f 100%);
+
+  /* 動きの尺 */
+  --dur1: 120ms;
+  --dur2: 200ms;
+  --dur3: 320ms;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* ---- ダーク: システム設定に従う（強制ライト時は除く） ---- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --bg: #121620;
+    --surface: #1a2030;
+    --surface2: #232b3d;
+    --ink: #f4eee3;        /* 温かい白 */
+    --ink2: #aeb6c6;
+    --ink3: #7c8598;
+    --brand: #e8dfd0;
+    --accent: #ef9347;     /* 暖色オレンジ（安いネオンにしない） */
+    --accent-strong: #e8873a;
+    --accent-soft: rgba(239, 147, 71, 0.16);
+    --terracotta: #ce7a4a;
+    --line: rgba(255, 248, 238, 0.13);
+    --ring: rgba(239, 147, 71, 0.55);
+    --on-accent: #201607;  /* 明るいオレンジの上は濃い焦げ茶で読ませる */
+  }
+}
+
+/* ---- ダークを明示指定（システムに関係なく強制） ---- */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #121620;
+  --surface: #1a2030;
+  --surface2: #232b3d;
+  --ink: #f4eee3;
+  --ink2: #aeb6c6;
+  --ink3: #7c8598;
+  --brand: #e8dfd0;
+  --accent: #ef9347;
+  --accent-strong: #e8873a;
+  --accent-soft: rgba(239, 147, 71, 0.16);
+  --terracotta: #ce7a4a;
+  --line: rgba(255, 248, 238, 0.13);
+  --ring: rgba(239, 147, 71, 0.55);
+  --on-accent: #201607;
+}
+
+/* ---- ライトを明示指定（media の後ろに置いて優先させる） ---- */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --bg: #fbf8f3;
+  --surface: #ffffff;
+  --surface2: #f1ebe0;
+  --ink: #1e2a44;
+  --ink2: #54607a;
+  --ink3: #8a93a6;
+  --brand: #25314f;
+  --accent: #e8873a;
+  --accent-strong: #d9752a;
+  --accent-soft: #fbe7ce;
+  --terracotta: #c06a3f;
+  --line: rgba(30, 42, 68, 0.12);
+  --ring: rgba(232, 135, 58, 0.5);
+  --on-accent: #1e2a44;
+}
+
+/* ---- マーケ面（LP・料金）は暖かいライトを signature に固定 ----
+   端末が暗くても第一印象はライトで作る。
+   ただし利用者が自分でダークを選んだ時だけ、その意思を尊重して暗くする。
+   （アプリ側のテーマ切替は data-theme のまま維持される） */
+[data-mado-marketing] {
+  color-scheme: light;
+
+  --bg: #fbf8f3;
+  --surface: #ffffff;
+  --surface2: #f1ebe0;
+  --ink: #1e2a44;
+  --ink2: #54607a;
+  --ink3: #8a93a6;
+  --brand: #25314f;
+  --accent: #e8873a;
+  --accent-strong: #d9752a;
+  --accent-soft: #fbe7ce;
+  --terracotta: #c06a3f;
+  --line: rgba(30, 42, 68, 0.12);
+  --ring: rgba(232, 135, 58, 0.5);
+  --on-accent: #1e2a44;
+}
+:root[data-theme="dark"] [data-mado-marketing] {
+  color-scheme: dark;
+
+  --bg: #121620;
+  --surface: #1a2030;
+  --surface2: #232b3d;
+  --ink: #f4eee3;
+  --ink2: #aeb6c6;
+  --ink3: #7c8598;
+  --brand: #e8dfd0;
+  --accent: #ef9347;
+  --accent-strong: #e8873a;
+  --accent-soft: rgba(239, 147, 71, 0.16);
+  --terracotta: #ce7a4a;
+  --line: rgba(255, 248, 238, 0.13);
+  --ring: rgba(239, 147, 71, 0.55);
+  --on-accent: #201607;
+}
+
+/* ---- Tailwind theme への割り当て（inline: 生トークンを直接参照） ---- */
 @theme inline {
-  --color-background: #0a0a0f;
-  --color-surface: rgba(15, 15, 25, 0.8);
-  --color-primary: #00e5ff;
-  --color-gold: #d4a853;
-  --color-gold-light: #e8c878;
-  --color-text-primary: #e5e5e5;
-  --color-text-secondary: #999999;
-  --color-text-muted: #777777;
-  --color-danger: #ff3333;
-  --color-border: rgba(0, 229, 255, 0.2);
-  --color-border-gold: rgba(212, 168, 83, 0.3);
-  --color-surface-elevated: rgba(20, 20, 30, 0.8);
-  --color-surface-hover: rgba(30, 30, 45, 0.8);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface2: var(--surface2);
+  --color-ink: var(--ink);
+  --color-ink2: var(--ink2);
+  --color-ink3: var(--ink3);
+  --color-brand: var(--brand);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-soft: var(--accent-soft);
+  --color-terracotta: var(--terracotta);
+  --color-line: var(--line);
+  --color-ring: var(--ring);
+  --color-on-accent: var(--on-accent);
 
-  --font-serif: var(--font-serif);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-mono);
+  --color-success: var(--success);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+
+  /* 角丸は強弱をつける（大面は小R、ボタンは中R、印だけピル） */
+  --radius-sm: 6px;
+  --radius-md: 11px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-2xl: 22px;
+  --radius-pill: 999px;
+
+  /* 影は暖色寄りのやわらかさ（焦げ茶を薄く重ねる） */
+  --shadow-sh1: 0 1px 2px rgba(74, 52, 30, 0.08);
+  --shadow-sh2: 0 10px 30px rgba(74, 52, 30, 0.1), 0 2px 6px rgba(74, 52, 30, 0.06);
+  --shadow-sh3: 0 26px 64px rgba(74, 52, 30, 0.17), 0 6px 16px rgba(74, 52, 30, 0.09);
+  /* CTA の"あかり"。オレンジのやわらかな放射（紫グラデの代わり） */
+  --shadow-glow: 0 10px 30px rgba(232, 135, 58, 0.34), 0 2px 8px rgba(232, 135, 58, 0.22);
+
+  --ease-brand: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  --font-sans: var(--font-sans-jp), "Noto Sans JP", system-ui, sans-serif;
+  --font-serif: var(--font-serif-mincho), "Zen Old Mincho", "Yu Mincho", "YuMincho", serif;
+  --font-display: var(--font-gothic-zen), var(--font-sans-jp), "Noto Sans JP", sans-serif;
+  --font-mono: var(--font-mono-jb), "JetBrains Mono", ui-monospace, monospace;
 }
 
-/* Base styles */
+/* ============================================================
+   基本スタイル
+   ============================================================ */
 body {
-  background: var(--color-background);
-  color: var(--color-text-primary);
-  font-family: var(--font-sans), "Noto Sans JP", sans-serif;
-  line-height: 1.8;
+  line-height: 1.7;
   font-feature-settings: "palt" 1, "kern" 1;
-  letter-spacing: 0.02em;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
+h1, h2, h3, h4, h5, h6 {
+  line-height: 1.18;
+  letter-spacing: -0.01em;
 }
 
-::-webkit-scrollbar-track {
-  background: #0a0a0f;
+/* 明朝見出し（職人・信頼）。字間・行間をつめて品を出す */
+.font-serif {
+  font-feature-settings: "palt" 1;
+  letter-spacing: -0.015em;
 }
 
-::-webkit-scrollbar-thumb {
-  background: rgba(0, 229, 255, 0.3);
-  border-radius: 3px;
+/* 数字・コードは等幅 + tabular-nums で桁を揃える */
+.tnum {
+  font-family: var(--font-mono-jb), "JetBrains Mono", ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 229, 255, 0.5);
-}
-
-/* Selection color */
 ::selection {
-  background: rgba(0, 229, 255, 0.3);
-  color: #ffffff;
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+  color: var(--ink);
 }
 
-/* Smooth scroll */
 html {
   scroll-behavior: smooth;
 }
 
-/* Font utility classes */
-.font-serif {
-  font-family: var(--font-serif), "Playfair Display", serif;
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--ink3) 45%, transparent);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--ink3) 70%, transparent);
+  background-clip: padding-box;
 }
 
-.font-mono {
-  font-family: var(--font-mono), "JetBrains Mono", monospace;
+/* ============================================================
+   ヘルパー
+   ============================================================ */
+
+/* 窓から差す暖色の光（ヒーロー等の装飾に敷く） */
+.window-light {
+  background-image: var(--window-light);
 }
 
-/* Decorative line */
-.deco-line {
-  width: 60px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--color-primary), transparent);
+/* 暖色グラデ（"光"の装飾だけ。面の塗りには使わない） */
+.grad-accent {
+  background-image: var(--gradient-accent);
+}
+.text-grad-accent {
+  background-image: var(--gradient-accent);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
-/* Glow effect */
-.glow-text {
-  text-shadow: 0 0 20px rgba(0, 229, 255, 0.5), 0 0 40px rgba(0, 229, 255, 0.2);
+/* 紙の微かな地紋（のっぺりを避ける・静止） */
+.paper-grain {
+  background-image:
+    radial-gradient(rgba(30, 42, 68, 0.035) 1px, transparent 1px);
+  background-size: 22px 22px;
 }
 
-.glow-gold {
-  text-shadow: 0 0 30px rgba(212, 168, 83, 0.5), 0 0 60px rgba(212, 168, 83, 0.2);
+/* ============================================================
+   ページロードの段階表示（設計された"1回だけ"の動き）
+   ============================================================ */
+@keyframes mado-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.mado-load {
+  opacity: 0;
+  animation: mado-rise 0.7s var(--ease) both;
 }
 
-/* Backdrop blur card */
-.glass-card {
-  background: rgba(15, 15, 25, 0.6);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(0, 229, 255, 0.1);
-  border-radius: 12px;
-}
-
-/* Animated gradient border */
-.glow-border {
+/* スケルトン（読み込み中のちらつき placeholder） */
+.skeleton {
   position: relative;
-  border-radius: 16px;
   overflow: hidden;
+  background: color-mix(in srgb, var(--ink3) 16%, transparent);
+  border-radius: var(--radius-md);
 }
-
-.glow-border::before {
+.skeleton::after {
   content: "";
   position: absolute;
   inset: 0;
-  border-radius: 16px;
-  padding: 1px;
-  background: linear-gradient(
-    135deg,
-    rgba(0, 229, 255, 0.3),
-    rgba(139, 92, 246, 0.2),
-    rgba(0, 229, 255, 0.1),
-    rgba(212, 168, 83, 0.2),
-    rgba(0, 229, 255, 0.3)
-  );
-  background-size: 300% 300%;
-  animation: borderGlow 6s ease-in-out infinite;
-  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  pointer-events: none;
-}
-
-@keyframes borderGlow {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-}
-
-/* Mesh gradient backgrounds */
-.mesh-gradient-1 {
-  background:
-    radial-gradient(ellipse 80% 50% at 20% 40%, rgba(0, 229, 255, 0.06) 0%, transparent 70%),
-    radial-gradient(ellipse 60% 40% at 80% 60%, rgba(139, 92, 246, 0.05) 0%, transparent 70%),
-    radial-gradient(ellipse 50% 30% at 50% 80%, rgba(212, 168, 83, 0.04) 0%, transparent 70%);
-}
-
-.mesh-gradient-2 {
-  background:
-    radial-gradient(ellipse 70% 50% at 70% 30%, rgba(0, 229, 255, 0.05) 0%, transparent 70%),
-    radial-gradient(ellipse 50% 50% at 20% 70%, rgba(212, 168, 83, 0.04) 0%, transparent 70%);
-}
-
-/* Shimmer animation for highlights */
-@keyframes shimmer {
-  0% { background-position: -200% center; }
-  100% { background-position: 200% center; }
-}
-
-.text-shimmer {
+  transform: translateX(-100%);
   background: linear-gradient(
     90deg,
-    rgba(0, 229, 255, 0.8) 0%,
-    rgba(255, 255, 255, 1) 50%,
-    rgba(0, 229, 255, 0.8) 100%
+    transparent,
+    color-mix(in srgb, var(--surface) 55%, transparent),
+    transparent
   );
-  background-size: 200% auto;
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: shimmer 4s ease-in-out infinite;
+  animation: mado-shimmer 1.4s ease-in-out infinite;
 }
 
-/* Section spacing */
-.section-padding {
-  padding-top: 120px;
-  padding-bottom: 120px;
-}
-
-@media (max-width: 768px) {
-  .section-padding {
-    padding-top: 80px;
-    padding-bottom: 80px;
+@keyframes mado-shimmer {
+  100% {
+    transform: translateX(100%);
   }
 }
 
-/* Section divider gradient */
-.section-divider {
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(0, 229, 255, 0.2) 20%,
-    rgba(0, 229, 255, 0.4) 50%,
-    rgba(0, 229, 255, 0.2) 80%,
-    transparent 100%
-  );
+/* Sheet / Toast のためのふわっと表示 */
+@keyframes mado-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-/* Icon glow on hover */
-.icon-glow {
-  transition: filter 0.3s ease, transform 0.3s ease;
-}
-
-.icon-glow:hover {
-  filter: drop-shadow(0 0 8px rgba(0, 229, 255, 0.5));
-  transform: scale(1.1);
-}
-
-/* ========== Template-specific styles ========== */
-
-/* Cinematic Dark: scroll snap */
-.tpl-snap-container {
-  height: 100vh;
-  overflow-y: scroll;
-  scroll-snap-type: y proximity;
-}
-
-@media (min-width: 768px) {
-  .tpl-snap-container {
-    scroll-snap-type: y mandatory;
-  }
-}
-
-.tpl-snap-section {
-  min-height: 100vh;
-  scroll-snap-align: start;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-@media (min-width: 768px) {
-  .tpl-snap-section {
-    height: 100vh;
-    min-height: auto;
-  }
-}
-
-.tpl-ornament-line {
-  width: 60px;
-  height: 2px;
-  background: linear-gradient(90deg, var(--color-accent-cyan, #00bbdd), var(--color-accent-pink, #d42d83));
-}
-
-/* Elegant Mono: viewport frame */
-.viewport-frame {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  pointer-events: none;
-  border: var(--frame-width, 6px) solid #111111;
-}
-
-@media (min-width: 768px) {
-  .viewport-frame {
-    border-width: var(--frame-width, 12px);
-  }
-}
-
-.corner-ornament {
-  position: absolute;
-  width: 40px;
-  height: 40px;
-}
-
-.corner-ornament.top-left { top: var(--frame-width, 6px); left: var(--frame-width, 6px); }
-.corner-ornament.top-right { top: var(--frame-width, 6px); right: var(--frame-width, 6px); transform: rotate(90deg); }
-.corner-ornament.bottom-left { bottom: var(--frame-width, 6px); left: var(--frame-width, 6px); transform: rotate(-90deg); }
-.corner-ornament.bottom-right { bottom: var(--frame-width, 6px); right: var(--frame-width, 6px); transform: rotate(180deg); }
-
-@media (min-width: 768px) {
-  .corner-ornament.top-left { top: var(--frame-width, 12px); left: var(--frame-width, 12px); }
-  .corner-ornament.top-right { top: var(--frame-width, 12px); right: var(--frame-width, 12px); }
-  .corner-ornament.bottom-left { bottom: var(--frame-width, 12px); left: var(--frame-width, 12px); }
-  .corner-ornament.bottom-right { bottom: var(--frame-width, 12px); right: var(--frame-width, 12px); }
-}
-
-/* Reduced motion accessibility */
+/* ============================================================
+   動きを止める（省エネ・目の負担軽減の設定を尊重）
+   ============================================================ */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+  .mado-load {
+    opacity: 1 !important;
+    animation: none !important;
+    transform: none !important;
+  }
+  .skeleton::after {
+    animation: none;
+    display: none;
   }
 }
