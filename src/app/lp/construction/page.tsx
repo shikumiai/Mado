@@ -106,6 +106,10 @@ function HeroSection() {
           あとは全部おまかせで、
           <br className="sm:hidden" />
           プロ品質のサイトが完成します。
+          <br />
+          X・LINE からサイトまでの道のりも、
+          <br className="sm:hidden" />
+          どこで切れているか確かめられます。
         </motion.p>
 
         {/* Trust */}

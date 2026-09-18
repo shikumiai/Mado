@@ -34,6 +34,7 @@ import {
   ShieldCheck,
   Check,
   ChevronRight,
+  AlertCircle,
 } from "lucide-react";
 
 /* ── 区切り。地の色を変えて密度に緩急をつける ── */
@@ -124,9 +125,10 @@ function Hero() {
             className="mado-load font-serif mt-6 text-4xl font-bold leading-[1.16] tracking-tight text-ink sm:text-5xl lg:text-[3.4rem]"
             style={{ animationDelay: "120ms" }}
           >
-            <span className="block whitespace-normal sm:whitespace-nowrap">写真を送るだけ。</span>
-            <span className="block whitespace-normal sm:whitespace-nowrap">
-              あとは<span className="text-accent">全部おまかせ</span>。
+            <span className="block">サイトを作る。</span>
+            <span className="block">そこまでの道も、</span>
+            <span className="block">
+              <span className="text-accent">見える</span>。
             </span>
           </h1>
 
@@ -134,8 +136,10 @@ function Hero() {
             className="mado-load mt-6 max-w-md text-base leading-relaxed text-ink2 sm:text-lg"
             style={{ animationDelay: "200ms" }}
           >
-            工務店・建設会社・設計事務所のホームページを、制作費0円・月額0円から。
-            独自ドメインも全プランで使えて、最短翌日に公開できます。
+            <span className="block">写真を送るだけで、ホームページができます。</span>
+            <span className="mt-2 block">
+              X・LINE・Discord から自分のサイトまでの道のりが、どこで切れているか・何人来ているか分かります。
+            </span>
           </p>
 
           {/* 主役。ここで名前を決めれば、そのまま作りはじめられる */}
@@ -291,7 +295,134 @@ function Steps() {
           );
         })}
       </ol>
+
+      <FunnelCheckPanel />
     </Section>
+  );
+}
+
+/* ═══════════════ 導線チェック（特徴を1枚。段を縦に並べ、切れた段だけ赤で示す） ═══════════════ */
+type DemoHop = { label: string; people: string; broken?: string };
+
+/* 画面の見本。数字も見本で、実際の計測値ではない */
+const FUNNEL_DEMO: DemoHop[] = [
+  { label: "X のプロフィール", people: "128人" },
+  { label: "LINE の友だち追加", people: "42人" },
+  {
+    label: "あなたのサイト",
+    people: "0人",
+    broken: "リンクが切れています（ページが見つかりません）",
+  },
+  { label: "お問い合わせ", people: "0人" },
+];
+
+const FUNNEL_POINTS = [
+  "切れている場所が赤で出ます。理由も一言そえます",
+  "追跡リンク（踏んだ人数を数えられる短いURL）を、段ごとに発行します",
+  "おまかせプラン以上で使えます",
+];
+
+function FunnelDiagram() {
+  return (
+    <ol className="flex flex-col">
+      {FUNNEL_DEMO.map((hop, i) => (
+        <li key={hop.label}>
+          {i > 0 && (
+            <span
+              aria-hidden
+              className={[
+                "ml-[18px] block h-5 w-0 border-l-2",
+                hop.broken
+                  ? "border-dashed border-danger/70"
+                  : "border-solid border-line",
+              ].join(" ")}
+            />
+          )}
+          <div
+            className={[
+              "flex items-center justify-between gap-3 rounded-lg border px-3.5 py-2.5",
+              hop.broken
+                ? "border-danger/45 bg-danger/[0.06]"
+                : "border-line bg-surface",
+            ].join(" ")}
+          >
+            <span className="flex min-w-0 items-center gap-2.5">
+              {hop.broken ? (
+                <AlertCircle
+                  className="size-4 shrink-0 text-danger"
+                  strokeWidth={2.25}
+                  aria-hidden
+                />
+              ) : (
+                <Check
+                  className="size-4 shrink-0 text-success"
+                  strokeWidth={2.5}
+                  aria-hidden
+                />
+              )}
+              <span
+                className={[
+                  "truncate text-sm",
+                  hop.broken ? "font-bold text-danger" : "text-ink",
+                ].join(" ")}
+              >
+                {hop.label}
+              </span>
+            </span>
+            <span
+              className={[
+                "tnum shrink-0 text-sm font-bold",
+                hop.broken ? "text-danger" : "text-ink2",
+              ].join(" ")}
+            >
+              {hop.people}
+            </span>
+          </div>
+          {hop.broken && (
+            <p className="mt-1.5 pl-[18px] text-xs leading-relaxed text-danger">
+              {hop.broken}
+            </p>
+          )}
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function FunnelCheckPanel() {
+  return (
+    <div className="mt-16 rounded-2xl border border-line bg-surface p-6 shadow-sh1 sm:mt-20 sm:p-8">
+      <div className="grid gap-9 lg:grid-cols-[1fr_0.82fr] lg:items-center lg:gap-14">
+        <div>
+          <h3 className="font-serif text-2xl font-bold leading-snug text-ink sm:text-3xl">
+            どこで切れているかも、
+            <br className="hidden sm:block" />
+            ひと目で。
+          </h3>
+          <p className="mt-4 max-w-md text-sm leading-relaxed text-ink2">
+            導線チェックを使うと、X・LINE・Discord からあなたのサイトにたどり着くまでの道のり（導線）を、上から順に確かめられます。
+            切れている場所と、それぞれの場所に何人来ているかが1画面で分かります。
+          </p>
+          <ul className="mt-6 flex flex-col gap-3">
+            {FUNNEL_POINTS.map((p) => (
+              <li key={p} className="flex items-start gap-2.5">
+                <Check
+                  className="mt-0.5 size-4 shrink-0 text-accent"
+                  strokeWidth={2.5}
+                  aria-hidden
+                />
+                <span className="text-sm leading-relaxed text-ink2">{p}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <FunnelDiagram />
+          <p className="mt-3 text-xs text-ink3">画面の見本です。数字も見本です。</p>
+        </div>
+      </div>
+    </div>
   );
 }
 
