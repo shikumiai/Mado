@@ -10,11 +10,17 @@
  *   ・短時間に何度も送られていないか
  * を必ず確かめてから1行入れる。
  *
- * 通知（メール等）は今は行わない。将来ここの notify() に足せば、
- * フォーム側を触らずに通知だけを増やせる。
+ * 届いたら、そのサイトの持ち主（会社の連絡先メール）に通知する。
+ * 通知が失敗しても保存は成功させる（メールより記録を優先）。
+ *
+ * 持ち主が見る側（マイページの一覧・対応済みの印）もここにまとめる。
  */
 
+import { revalidatePath } from "next/cache";
 import { getWriteClient } from "./supabase/server";
+import { createServerSupabase } from "./supabase/ssr";
+import { sendMail } from "./mail";
+import { SITE_BASE_URL } from "./resolve-site";
 
 /* ═══════════════════════════════════════
    型
@@ -91,12 +97,62 @@ function burstBlocked(key: string): boolean {
 }
 
 /* ═══════════════════════════════════════
-   通知（今は何もしない）
+   通知（サイトの持ち主へメール）
    ═══════════════════════════════════════ */
 
-/** 将来ここにメール送信などを足す。今は届いたことだけ記録しておく */
-async function notify(siteId: string, kind: InquiryKind): Promise<void> {
-  console.info("[inquiries] 受信", { siteId, kind });
+const KIND_LABEL: Record<InquiryKind, string> = { contact: "お問い合わせ", booking: "予約の希望" };
+
+interface NotifyBody {
+  name: string;
+  email: string;
+  phone: string;
+  message: string;
+  preferredText: string;
+  purpose: string;
+}
+
+/**
+ * 持ち主（会社の連絡先メール）に1通送る。返信先は送ってきた人にしておくので、
+ * 持ち主はメールの「返信」を押すだけで本人に返せる。
+ */
+async function notify(siteId: string, kind: InquiryKind, body: NotifyBody): Promise<void> {
+  const supabase = getWriteClient();
+  if (!supabase) return;
+
+  const site = await supabase.from("sites").select("slug, org_id").eq("id", siteId).maybeSingle();
+  if (site.error || !site.data) return;
+  const org = await supabase
+    .from("orgs")
+    .select("name, email")
+    .eq("id", site.data.org_id as string)
+    .maybeSingle();
+  if (org.error || !org.data?.email) return;
+
+  const label = KIND_LABEL[kind];
+  const lines = [
+    `${org.data.name} のサイトに${label}が届きました。`,
+    "",
+    `お名前: ${body.name}`,
+    `メール: ${body.email}`,
+    body.phone ? `電話: ${body.phone}` : null,
+    body.purpose ? `種類: ${body.purpose}` : null,
+    body.preferredText ? `希望日時: ${body.preferredText}` : null,
+    "",
+    "ご用件:",
+    body.message,
+    "",
+    "――――――――――",
+    `このメールに返信すると、${body.name} さんに直接届きます。`,
+    `届いた一覧: ${SITE_BASE_URL}/app/inquiries`,
+    `サイト: ${SITE_BASE_URL}/${site.data.slug}`,
+  ].filter((l): l is string => l !== null);
+
+  await sendMail({
+    to: org.data.email as string,
+    subject: `【Mado】${label}が届きました — ${org.data.name}`,
+    text: lines.join("\n"),
+    replyTo: body.email,
+  });
 }
 
 /* ═══════════════════════════════════════
@@ -176,7 +232,7 @@ export async function submitInquiry(input: InquiryInput): Promise<InquiryResult>
     return { ok: false, reason: "failed", message: "送信できませんでした。時間をおいてもう一度お試しください。" };
   }
 
-  await notify(siteId, kind);
+  await notify(siteId, kind, { name, email, phone, message, preferredText: preferredRaw, purpose });
 
   return {
     ok: true,
@@ -185,4 +241,104 @@ export async function submitInquiry(input: InquiryInput): Promise<InquiryResult>
         ? "ご予約の希望をお預かりしました。折り返しご連絡します。"
         : "お問い合わせをお預かりしました。1営業日以内にご返信します。",
   };
+}
+
+/* ═══════════════════════════════════════
+   持ち主が見る側（マイページ）
+   ═══════════════════════════════════════ */
+
+export type InquiryStatus = "new" | "read" | "done" | "spam";
+
+export interface InquiryRow {
+  id: string;
+  kind: InquiryKind;
+  name: string;
+  email: string;
+  phone: string;
+  message: string;
+  preferredAt: string | null;
+  preferredText: string | null;
+  purpose: string | null;
+  status: InquiryStatus;
+  createdAt: string;
+  siteSlug: string;
+}
+
+/** 自分の会社のサイトに届いたものを新しい順に。読めるかどうかは RLS が決める */
+export async function listMyInquiries(): Promise<
+  { ok: true; rows: InquiryRow[]; unread: number } | { ok: false; reason: "unauthenticated" }
+> {
+  const supabase = await createServerSupabase();
+  if (!supabase) return { ok: false, reason: "unauthenticated" };
+
+  const { data, error } = await supabase
+    .from("inquiries")
+    .select("id, kind, name, email, phone, message, preferred_at, payload, status, created_at, sites(slug)")
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (error) {
+    console.error("[inquiries] 一覧の取得に失敗", error);
+    return { ok: true, rows: [], unread: 0 };
+  }
+
+  const rows: InquiryRow[] = (data ?? []).map((r) => {
+    const payload = (r.payload ?? {}) as Record<string, unknown>;
+    const site = Array.isArray(r.sites) ? r.sites[0] : r.sites;
+    return {
+      id: r.id as string,
+      kind: (r.kind as InquiryKind) === "booking" ? "booking" : "contact",
+      name: r.name as string,
+      email: r.email as string,
+      phone: (r.phone as string) || "",
+      message: r.message as string,
+      preferredAt: (r.preferred_at as string | null) ?? null,
+      preferredText: typeof payload.preferred_text === "string" ? payload.preferred_text : null,
+      purpose: typeof payload.purpose === "string" ? payload.purpose : null,
+      status: (r.status as InquiryStatus) || "new",
+      createdAt: r.created_at as string,
+      siteSlug: ((site as { slug?: string } | null)?.slug as string) || "",
+    };
+  });
+
+  return { ok: true, rows, unread: rows.filter((r) => r.status === "new").length };
+}
+
+/** マイページの上に出す「未対応の数」だけ */
+export async function countNewInquiries(): Promise<number> {
+  const supabase = await createServerSupabase();
+  if (!supabase) return 0;
+  const { count, error } = await supabase
+    .from("inquiries")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "new");
+  return error ? 0 : count ?? 0;
+}
+
+/**
+ * 対応済み・未対応の印を付ける。
+ * 書き込みの権限は RLS に無いので、まず Cookie のセッションで「自分のもの」と確かめてから
+ * service_role で書く（site-editor と同じ流儀）。
+ */
+export async function setInquiryStatus(
+  id: string,
+  status: InquiryStatus,
+): Promise<{ ok: true } | { ok: false; reason: "unauthenticated" | "forbidden" | "failed" }> {
+  if (!UUID_RE.test(id)) return { ok: false, reason: "failed" };
+
+  const session = await createServerSupabase();
+  if (!session) return { ok: false, reason: "unauthenticated" };
+  const own = await session.from("inquiries").select("id").eq("id", id).maybeSingle();
+  if (own.error || !own.data) return { ok: false, reason: "forbidden" };
+
+  const supabase = getWriteClient();
+  if (!supabase) return { ok: false, reason: "failed" };
+  const { error } = await supabase.from("inquiries").update({ status }).eq("id", id);
+  if (error) {
+    console.error("[inquiries] 状態の更新に失敗", { id, status, error });
+    return { ok: false, reason: "failed" };
+  }
+
+  revalidatePath("/app/inquiries");
+  revalidatePath("/app");
+  return { ok: true };
 }

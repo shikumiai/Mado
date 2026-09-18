@@ -13,10 +13,11 @@ import { PLAN_LABELS, PLAN_PRICES, normalizePlanId } from "@/lib/stripe";
 import { loadSiteForEdit } from "@/lib/site-editor";
 import { onboardingState } from "@/lib/onboarding";
 import { runSiteCheck } from "@/lib/funnels/site-check";
+import { countNewInquiries } from "@/lib/inquiries";
 import { Card, Badge } from "@/components/ui";
 import {
   ExternalLink, Pencil, Plus, ArrowRight, ShieldCheck, KeyRound, Sparkles,
-  Route, Lock, Check, AlertCircle, MinusCircle,
+  Route, Lock, Check, AlertCircle, MinusCircle, Inbox,
 } from "lucide-react";
 
 export const metadata = { title: "マイページ｜Mado" };
@@ -59,6 +60,9 @@ export default async function AppHome() {
 
   // 導線（§6・§9）。おためしは画面は見えるが作れない
   const funnelsLocked = plan === "otameshi";
+
+  // 届いた問い合わせのうち、まだ対応していない数
+  const newInquiries = await countNewInquiries();
 
   return (
     <div className="flex flex-col gap-8">
@@ -129,6 +133,35 @@ export default async function AppHome() {
             </div>
             <Link href={`/app/sites/${mainSite?.id}/editor`} className={secondaryLink}>
               編集する <ArrowRight className="size-4" aria-hidden />
+            </Link>
+          </Card>
+        </section>
+      )}
+
+      {/* 届いた問い合わせ: 未対応があれば先に目に入る位置に */}
+      {sites.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-sm font-semibold text-ink2">届いた問い合わせ</h2>
+          <Card className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span
+                className={`grid size-9 shrink-0 place-items-center rounded-full ${
+                  newInquiries > 0 ? "bg-accent-soft text-accent" : "bg-surface2 text-ink3"
+                }`}
+              >
+                <Inbox className="size-[18px]" aria-hidden />
+              </span>
+              <div>
+                <p className="text-sm font-medium text-ink">
+                  {newInquiries > 0 ? `未対応が ${newInquiries} 件あります。` : "未対応の問い合わせはありません。"}
+                </p>
+                <p className="mt-0.5 text-sm text-ink2">
+                  サイトのフォームから届いたものは、ここと登録メールの両方に届きます。
+                </p>
+              </div>
+            </div>
+            <Link href="/app/inquiries" className={newInquiries > 0 ? primaryLink : secondaryLink}>
+              一覧を見る <ArrowRight className="size-4" aria-hidden />
             </Link>
           </Card>
         </section>
