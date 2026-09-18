@@ -12,8 +12,13 @@ import { customerSiteUrl, customerSiteLabel } from "@/lib/resolve-site";
 import { PLAN_LABELS, PLAN_PRICES, normalizePlanId } from "@/lib/stripe";
 import { loadSiteForEdit } from "@/lib/site-editor";
 import { onboardingState } from "@/lib/onboarding";
+import { runSiteCheck } from "@/lib/funnels/site-check";
+import { countNewInquiries } from "@/lib/inquiries";
 import { Card, Badge } from "@/components/ui";
-import { ExternalLink, Pencil, Plus, ArrowRight, ShieldCheck, KeyRound, Sparkles } from "lucide-react";
+import {
+  ExternalLink, Pencil, Plus, ArrowRight, ShieldCheck, KeyRound, Sparkles,
+  Route, Lock, Check, AlertCircle, MinusCircle, Inbox,
+} from "lucide-react";
 
 export const metadata = { title: "マイページ｜Mado" };
 
@@ -48,6 +53,16 @@ export default async function AppHome() {
     mainSite && next
       ? `/app/sites/${mainSite.id}/editor${next.anchor ? `?focus=${encodeURIComponent(next.anchor)}` : ""}`
       : "";
+
+  // 公開前チェック（docs/FUNNEL_CHECK_V1.md §7）。設定を読むだけなので全プランで出せる。
+  const siteChecks = loaded?.ok ? runSiteCheck(loaded.config) : null;
+  const siteChecksOk = siteChecks?.filter((c) => c.status === "ok").length ?? 0;
+
+  // 導線（§6・§9）。おためしは画面は見えるが作れない
+  const funnelsLocked = plan === "otameshi";
+
+  // 届いた問い合わせのうち、まだ対応していない数
+  const newInquiries = await countNewInquiries();
 
   return (
     <div className="flex flex-col gap-8">
@@ -123,6 +138,76 @@ export default async function AppHome() {
         </section>
       )}
 
+      {/* 届いた問い合わせ: 未対応があれば先に目に入る位置に */}
+      {sites.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-sm font-semibold text-ink2">届いた問い合わせ</h2>
+          <Card className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span
+                className={`grid size-9 shrink-0 place-items-center rounded-full ${
+                  newInquiries > 0 ? "bg-accent-soft text-accent" : "bg-surface2 text-ink3"
+                }`}
+              >
+                <Inbox className="size-[18px]" aria-hidden />
+              </span>
+              <div>
+                <p className="text-sm font-medium text-ink">
+                  {newInquiries > 0 ? `未対応が ${newInquiries} 件あります。` : "未対応の問い合わせはありません。"}
+                </p>
+                <p className="mt-0.5 text-sm text-ink2">
+                  サイトのフォームから届いたものは、ここと登録メールの両方に届きます。
+                </p>
+              </div>
+            </div>
+            <Link href="/app/inquiries" className={newInquiries > 0 ? primaryLink : secondaryLink}>
+              一覧を見る <ArrowRight className="size-4" aria-hidden />
+            </Link>
+          </Card>
+        </section>
+      )}
+
+      {/* 公開前チェック: 設定を読んで分かることだけを、項目ごとに出す */}
+      {siteChecks && mainSite && (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-sm font-semibold text-ink2">公開前チェック</h2>
+          <Card className="flex flex-col gap-4">
+            <div className="flex items-baseline justify-between gap-3">
+              <p className="text-sm text-ink2">サイトの中を確かめました。</p>
+              <p className="tnum text-xs text-ink3">
+                {siteChecksOk} / {siteChecks.length}
+              </p>
+            </div>
+
+            <ul className="flex flex-col gap-2.5">
+              {siteChecks.map((c) => (
+                <li key={c.name} className="flex items-start gap-2.5">
+                  {c.status === "ok" ? (
+                    <Check className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />
+                  ) : c.status === "ng" ? (
+                    <AlertCircle className="mt-0.5 size-4 shrink-0 text-danger" aria-hidden />
+                  ) : (
+                    <MinusCircle className="mt-0.5 size-4 shrink-0 text-ink3" aria-hidden />
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-sm text-ink">{c.name}</p>
+                    {c.reason && <p className="mt-0.5 text-sm text-ink2">{c.reason}</p>}
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            {siteChecksOk < siteChecks.length && (
+              <div>
+                <Link href={`/app/sites/${mainSite.id}/editor`} className={secondaryLink}>
+                  <Pencil className="size-4" aria-hidden /> 直す
+                </Link>
+              </div>
+            )}
+          </Card>
+        </section>
+      )}
+
       {/* 自分のサイト一覧 */}
       <section className="flex flex-col gap-3">
         <h2 className="text-sm font-semibold text-ink2">あなたのサイト</h2>
@@ -175,6 +260,38 @@ export default async function AppHome() {
             })}
           </ul>
         )}
+      </section>
+
+      {/* 導線: サイトまでの道 */}
+      <section className="flex flex-col gap-3">
+        <h2 className="text-sm font-semibold text-ink2">導線</h2>
+        <Card className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <span
+              className={[
+                "grid size-9 shrink-0 place-items-center rounded-full",
+                funnelsLocked ? "bg-surface2 text-ink3" : "bg-accent-soft text-accent",
+              ].join(" ")}
+            >
+              {funnelsLocked ? (
+                <Lock className="size-[18px]" aria-hidden />
+              ) : (
+                <Route className="size-[18px]" aria-hidden />
+              )}
+            </span>
+            <div>
+              <p className="text-sm font-medium text-ink">サイトまでの道</p>
+              <p className="mt-0.5 text-sm text-ink2">
+                {funnelsLocked
+                  ? "おまかせプランで使えます。どこで道が切れているかが分かります。"
+                  : "X や LINE からサイトまで、どこで切れているかと、何人通ったかが出ます。"}
+              </p>
+            </div>
+          </div>
+          <Link href="/app/funnels" className={secondaryLink}>
+            導線を見る <ArrowRight className="size-4" aria-hidden />
+          </Link>
+        </Card>
       </section>
 
       {/* プラン概要 + 支払いへ */}

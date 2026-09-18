@@ -45,20 +45,22 @@ const jetbrainsMono = JetBrains_Mono({
 const SITE_URL = "https://mado.shikumiai.com";
 
 export const metadata: Metadata = {
-  title: "Mado｜ホームページ制作 制作費0円・月額0円から",
+  title: "Mado｜サイトを作る。そこまでの道も、見える。",
   description:
-    "全業種対応のホームページ制作SaaS。制作費0円、月額0円から。写真を送るだけで最短翌日完成。独自ドメイン全プラン対応。",
+    "写真を送るだけでホームページができます。さらに X・LINE・Discord から自分のサイトまでの道のりが、どこで切れているか・何人来ているか分かります。制作費0円、月額0円から。",
   keywords: [
     "ホームページ制作 安い",
     "ホームページ制作 0円",
     "ウェブサイト制作 月額",
-    "工務店 ホームページ",
-    "建設会社 ホームページ",
+    "個人事業主 ホームページ",
+    "サロン ホームページ",
+    "教室 ホームページ",
+    "導線 チェック LINE",
   ],
   openGraph: {
-    title: "Mado｜ホームページ制作 制作費0円・月額0円から",
+    title: "Mado｜サイトを作る。そこまでの道も、見える。",
     description:
-      "写真を送るだけでホームページが完成。制作費0円、月額0円から。全業種対応。",
+      "写真を送るだけでホームページができます。X・LINE・Discord からサイトまでの道のりも、どこで切れているか確かめられます。制作費0円、月額0円から。",
     url: SITE_URL,
     type: "website",
     siteName: "Mado",
@@ -66,9 +68,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Mado｜ホームページ制作 制作費0円",
+    title: "Mado｜サイトを作る。そこまでの道も、見える。",
     description:
-      "写真を送るだけでホームページが完成。制作費0円、月額0円から。全業種対応。",
+      "写真を送るだけでホームページができます。X・LINE・Discord からサイトまでの道のりも、どこで切れているか確かめられます。制作費0円、月額0円から。",
     creator: "@Lyo_shikumiai",
   },
   metadataBase: new URL(SITE_URL),
@@ -81,18 +83,19 @@ const jsonLd = {
       "@type": "WebSite",
       name: "Mado",
       url: SITE_URL,
-      description: "全業種対応のホームページ制作サービス。制作費0円、月額0円から。",
+      description:
+        "写真を送るだけでホームページができ、X・LINE・Discord からサイトまでの道のりも確かめられる。制作費0円、月額0円から。",
     },
     {
       "@type": "Service",
-      name: "Mado ホームページ制作",
+      name: "Mado ホームページ作成と導線チェック",
       provider: {
         "@type": "Organization",
         name: "Mado",
         url: SITE_URL,
       },
       description:
-        "全業種対応のホームページ制作。写真を送るだけで最短翌日完成。制作費0円。",
+        "美容・飲食・教室・ジム・士業・医療・小売・工務店・建設・設計事務所の10業種に専用の作り。写真を送るだけで公開でき、導線チェックで X・LINE・Discord からサイトまでの道がどこで切れているか分かる。",
       offers: [
         {
           "@type": "Offer",
@@ -100,14 +103,15 @@ const jsonLd = {
           price: "0",
           priceCurrency: "JPY",
           description:
-            "テンプレート選択、写真掲載、会社概要、お問い合わせフォーム、独自ドメイン対応。無料。",
+            "10業種の作りから選んで公開。写真の差し替え、お問い合わせフォーム、公開前チェック、独自ドメイン対応。無料。",
         },
         {
           "@type": "Offer",
           name: "おまかせプラン",
           price: "1480",
           priceCurrency: "JPY",
-          description: "実績詳細、お客様の声、ブログ、Google Maps、SEO強化。月額。",
+          description:
+            "部品の追加、AI編集 月3回、導線チェック 3本と追跡リンク。月額。",
         },
         {
           "@type": "Offer",
@@ -115,7 +119,7 @@ const jsonLd = {
           price: "4980",
           priceCurrency: "JPY",
           description:
-            "AIチャットボット、予約システム、採用ページ、多言語対応。月額。",
+            "AI編集 無制限、導線チェック 無制限、予約と採用の部品。月額。",
         },
       ],
       areaServed: { "@type": "Country", name: "JP" },

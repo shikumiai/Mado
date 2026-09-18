@@ -41,3 +41,9 @@
 - 捨てた案: Codex 版を本番に残したまま rebuild-v2 を待つ案（その間、申込が止まったまま）。人3名を手配する手動運用を商品にする案。
 - 影響するファイル: next.config.ts（/start→/pilot の転送を外す）、src/proxy.ts（/api/checkout の 410 を外す）、src/app/opengraph-image.tsx（切替前の版へ）、src/app/auth/callback/route.ts（会社がある人は /app、無い人は /start）、docs/FUNNEL_CHECK_V1.md（新設）
 - 運転の約束: 決定はこのファイルに書く。本番への merge とデプロイは Claude Code の担当に一本化する。Codex に本番を触らせるときは、その作業票に「本番へ出してよい」と明記する。
+
+## 2026-09-19 — サービス全体の設計を先に固める（SERVICE_DESIGN_V1）と、その決定
+- 決めたこと: 機能追加の前に `docs/SERVICE_DESIGN_V1.md` を全体の正とする。Lyo の決定: ①LP の顔は SNS で集客する個人事業主・小さな店 ②送信元メールは `info@shikumiai.com` ③Stripe 本番化は穴（問い合わせ通知・確認メール・AI編集の鍵）が塞がった日 ⑤`/pilot`（画像生成の案件）は Codex に任せ、Codex のサブスク範囲で動かす。Mado の入口とは混ぜない ⑥数字の門は置かず、表に出せるレベルにして出す。
+- 理由: 部分最適の機能追加が先に走ると、約束・画面・運営の時間が食い違う。Lyo は全体を1枚で見てから進めたい。
+- 捨てた案: 6週間の数値基準で続行を判断する案（まず出すことを優先）。送信専用業者（Resend 等）を新たに契約する案（既存の `info@shikumiai.com` を使う）。
+- 影響するファイル: `docs/SERVICE_DESIGN_V1.md`、`docs/00_INDEX.md`。以後の実装は全て Fable 5.1 が直接行う（Lyo 指示「全て5.1にやらせて」）。

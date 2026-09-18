@@ -35,11 +35,12 @@ const PLANS: PlanMeta[] = [
     tagline: "まずは無料で、サイトを持つ。",
     features: [
       "業種に合ったテンプレート",
-      "施工写真の掲載",
+      "写真の掲載",
       "会社概要・お問い合わせ",
       "スマホ・タブレット対応",
       "SSL（https）標準",
       "独自ドメイン対応",
+      "サイト内の公開前チェック",
     ],
     note: "更新はご自身で（AIおまかせ編集は含みません）",
     ctaLabel: "無料ではじめる",
@@ -54,6 +55,7 @@ const PLANS: PlanMeta[] = [
       "Googleマップの表示",
       "検索で見つかりやすく（SEO）",
       "AIにおまかせで編集（月3回）",
+      "導線チェック 3本・追跡リンク",
     ],
     ctaLabel: "このプランではじめる",
     ctaVariant: "cta",
@@ -68,6 +70,7 @@ const PLANS: PlanMeta[] = [
       "採用ページ",
       "多言語対応",
       "AIにおまかせで編集（無制限）",
+      "導線チェック 無制限・毎日の自動チェック（準備中）",
     ],
     ctaLabel: "このプランではじめる",
     ctaVariant: "secondary",
@@ -206,7 +209,11 @@ export function PricingCards({ className = "" }: { className?: string }) {
         ))}
       </div>
 
-      <p className="mt-4 text-center text-xs text-ink3">
+      <p className="mx-auto mt-4 max-w-2xl text-center text-xs leading-relaxed text-ink3">
+        導線チェック＝X・LINE・Discord からあなたのサイトまでの道のり（導線）を、上から順に確かめる機能です。
+        追跡リンク＝踏んだ人数を数えられる短いURLです。
+      </p>
+      <p className="mt-2 text-center text-xs text-ink3">
         表示はすべて税込・月額です。プランの変更・解約はいつでもご自身の画面から。
       </p>
     </div>

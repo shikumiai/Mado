@@ -35,13 +35,17 @@ export const metadata: Metadata = {
 /* ── 比較表のデータ（値は [おためし, おまかせ, おまかせプロ]） ── */
 const COMPARE: { label: string; values: (boolean | string)[] }[] = [
   { label: "業種別テンプレート", values: [true, true, true] },
-  { label: "施工写真の掲載", values: [true, true, true] },
+  { label: "写真の掲載", values: [true, true, true] },
   { label: "お問い合わせ・電話タップ", values: [true, true, true] },
   { label: "スマホ対応・SSL（https）", values: [true, true, true] },
   { label: "独自ドメイン", values: [true, true, true] },
   { label: "実績・お客様の声・ブログ", values: [false, true, true] },
   { label: "Googleマップ・SEO強化", values: [false, true, true] },
   { label: "AIにおまかせで編集", values: ["—", "月3回", "無制限"] },
+  { label: "サイト内の公開前チェック", values: [true, true, true] },
+  { label: "導線チェック（サイトまでの道のり）", values: ["—", "3本", "無制限"] },
+  { label: "追跡リンク（人数を数える短いURL）", values: [false, true, true] },
+  { label: "毎日の自動チェック", values: [false, false, "準備中"] },
   { label: "予約・問い合わせの自動化", values: [false, false, true] },
   { label: "採用ページ", values: [false, false, true] },
   { label: "多言語対応", values: [false, false, true] },
@@ -189,6 +193,11 @@ export default function PricingPage() {
                 </tbody>
               </table>
             </div>
+
+            <p className="mx-auto mt-5 max-w-2xl text-center text-xs leading-relaxed text-ink3">
+              導線チェックは、X・LINE・Discord からあなたのサイトにたどり着くまでの道のりを、上から順に確かめる機能です。
+              切れている場所と、それぞれの場所に何人来ているかが分かります。
+            </p>
 
             <div className="mt-10 flex justify-center">
               <LinkButton href="/start" variant="cta" size="lg">
