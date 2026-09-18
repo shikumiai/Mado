@@ -1,10 +1,10 @@
 # 現在の作業票
 
 - 作業ID: MADO-FUNNEL-CHECK-20260918
-- 状態: レビュー待ち
+- 状態: レビュー待ち（本番へ merge 済み。Codex の独立レビューは公開後の監査として行い、指摘は別 PR で直す）
 - 現在の担当: Claude Code（実装・統合・本番 DB 適用まで）
 - 次の担当: Codex（独立レビュー）
-- 次の作業: PR #6 の最終レビュー。認証・権限（RLS）・DB・`/go` の転送・外部 URL 取得の安全装置に集中する。問題がなければコードを変えない。判定・比較元・対象コミットをこの票に記録する
+- 次の作業: PR #6（main へ merge 済み）の最終レビュー。認証・権限（RLS）・DB・`/go` の転送・外部 URL 取得の安全装置に集中する。問題がなければコードを変えない。判定・比較元・対象コミットをこの票に記録する
 - ブランチ: `funnel-check`（比較元 `main` = `301c841`、対象コミット `aa743ef`）
 - PR: https://github.com/shikumiai/Mado/pull/6
 - 共通運用: C:/Users/ryoya/OneDrive/AI/Claude/ai-collaboration/WORKFLOW.md
@@ -52,8 +52,9 @@
 - `npm run build` … 通過。`/app/funnels` `/app/funnels/new` `/app/funnels/[id]` `/go/[code]` が動的ルートとして生成
 - `node scripts/funnel-check-smoke.mjs` … 切れた `lin.ee`・期限切れ `discord.gg`・404 の Web がそれぞれ `ng` と一文の理由＋根拠。`x` は `skipped` と理由
 - OG 画像はビルド出力（`.next/server/app/opengraph-image.body`）を目視。日本語は化けず、Mado の色と新見出し
-- 本番 DB への `0007` 適用は Claude Code が担当（`supabase db query --linked -f`）。適用結果と通し確認の結果は PR #6 に記録する
-- 未実施: 390px 実機の目視、`/go` の実クリック→翌日の人数、実在の `site.config` に対する `runSiteCheck`
+- 本番 DB へ `0007` を適用済み（2026-09-18、`supabase db query --linked -f`。テーブル4・関数3・ポリシー11・予約スラッグ `go` を確認）
+- 通し確認（プレビュー `mado-zt0bvypmd`、2026-09-18）… 完了条件 §11 をすべて満たした。おためしは鍵つき／おまかせで5段を登録し追跡リンク発行／`/go` は 302 と記録（ボット UA は数えない）／「いま確かめる」で LINE 404・Discord 期限切れ・Web の次段リンク無し・自分のサイトの連絡先空を、理由と根拠つきで `ng` 表示／過去のチェック1件／`skipped` に理由。詳細は PR #6 のコメント
+- 未実施: 390px 実機の目視、翌日の人数集計の目視
 
 ## 未解決事項
 
