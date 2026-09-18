@@ -38,7 +38,8 @@ export async function GET(request: Request) {
   }
 
   // 行き先が指定されていればそこへ。ただし外部URLへは飛ばさない
-  if (next && next.startsWith("/") && !next.startsWith("//")) {
+  // （"//" と "/\" は別ホスト扱いになるので弾く。改行も入れさせない）
+  if (next && /^\/(?![/\\])/.test(next) && !/[\\\r\n]/.test(next)) {
     return NextResponse.redirect(`${origin}${next}`);
   }
 
