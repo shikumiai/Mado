@@ -13,6 +13,7 @@
 
 import type { SiteConfig } from "./site-config-schema";
 import { sampleSectionData } from "./templates/sample-content";
+import { photoSlots } from "./editor/photo-slots";
 
 /** テンプレートに付いてくる写真の置き場 */
 const TEMPLATE_PHOTO_PREFIX = "/images/templates/";
@@ -59,16 +60,6 @@ export function isTemplatePhoto(src: unknown): boolean {
   return typeof src === "string" && src.startsWith(TEMPLATE_PHOTO_PREFIX);
 }
 
-/** 設定の中に残っている、見本の写真の枚数を数える */
-function countTemplatePhotos(value: unknown): number {
-  if (typeof value === "string") return isTemplatePhoto(value) ? 1 : 0;
-  if (Array.isArray(value)) return value.reduce<number>((n, v) => n + countTemplatePhotos(v), 0);
-  if (value && typeof value === "object") {
-    return Object.values(value).reduce<number>((n, v) => n + countTemplatePhotos(v), 0);
-  }
-  return 0;
-}
-
 function text(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
@@ -106,9 +97,11 @@ export function onboardingState(config: SiteConfig): OnboardingState {
   const hero = heroData(config);
   const heroSample = sampleSectionData(config.templateId, "hero") as Record<string, unknown>;
   const list = mainList(config);
-  const templatePhotos = countTemplatePhotos(config);
-
-  const heroPhotoDone = Boolean(hero.data.image) && !isTemplatePhoto(hero.data.image);
+  const photos = photoSlots(config);
+  const templatePhotos = photos.filter((photo) => !photo.src || isTemplatePhoto(photo.src)).length;
+  const heroPhotos = photos.filter((photo) => photo.kind === "hero");
+  // 写真を使わないヒーローは、この作業自体が不要。
+  const heroPhotoDone = heroPhotos.every((photo) => Boolean(photo.src) && !isTemplatePhoto(photo.src));
 
   const heroTitle = text(hero.data.title) || text(config.company.tagline);
   const taglineDone = heroTitle !== "" && heroTitle !== text(heroSample.title);

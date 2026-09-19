@@ -17,7 +17,7 @@ import { countNewInquiries } from "@/lib/inquiries";
 import { Card, Badge } from "@/components/ui";
 import {
   ExternalLink, Pencil, Plus, ArrowRight, ShieldCheck, KeyRound, Sparkles,
-  Route, Lock, Check, AlertCircle, MinusCircle, Inbox,
+  Route, Lock, Check, AlertCircle, MinusCircle, Inbox, Camera,
 } from "lucide-react";
 
 export const metadata = { title: "マイページ｜Mado" };
@@ -51,7 +51,9 @@ export default async function AppHome() {
   const next = todo?.next ?? null;
   const nextHref =
     mainSite && next
-      ? `/app/sites/${mainSite.id}/editor${next.anchor ? `?focus=${encodeURIComponent(next.anchor)}` : ""}`
+      ? ["hero-photo", "rest-photos"].includes(next.id)
+        ? `/app/sites/${mainSite.id}/photos`
+        : `/app/sites/${mainSite.id}/editor${next.anchor ? `?focus=${encodeURIComponent(next.anchor)}` : ""}`
       : "";
 
   // 公開前チェック（docs/FUNNEL_CHECK_V1.md §7）。設定を読むだけなので全プランで出せる。
@@ -216,7 +218,7 @@ export default async function AppHome() {
           <Card className="flex flex-col items-center gap-4 py-12 text-center">
             <div>
               <p className="text-sm text-ink">まだサイトがありません。</p>
-              <p className="mt-1 text-sm text-ink2">写真を送るだけで、あとは全部おまかせです。</p>
+              <p className="mt-1 text-sm text-ink2">見本を選び、写真や文章を自分のものに入れ替えて公開できます。</p>
             </div>
             <Link href="/start" className={primaryLink}>
               <Plus className="size-4" aria-hidden /> サイトを作る
@@ -250,6 +252,9 @@ export default async function AppHome() {
                           <ExternalLink className="size-4" aria-hidden /> サイトを見る
                         </a>
                       )}
+                      <Link href={`/app/sites/${site.id}/photos`} className={`${secondaryLink} min-h-11`}>
+                        <Camera className="size-4" aria-hidden /> 写真を入れ替える
+                      </Link>
                       <Link href={`/app/sites/${site.id}/editor`} className={primaryLink}>
                         <Pencil className="size-4" aria-hidden /> 編集する
                       </Link>
