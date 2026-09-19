@@ -12,7 +12,7 @@ export interface HopKindInfo {
   label: string;
   /** 何を宣言するのか（入力欄の下に出す一言） */
   input: string;
-  /** 追跡リンクをどこに貼るか（コピーの横に出す一言） */
+  /** この段に貼る追跡リンクを、その段のどこに貼るか（コピーの横に出す一言）。押すと次の段へ飛ぶ */
   paste: string;
   /** 確かめないこと。空なら出さない */
   skips: string;

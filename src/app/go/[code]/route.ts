@@ -37,9 +37,13 @@ function safeTarget(value: string): string | null {
   }
 }
 
-/** 同じ端末らしいかの目印。日付を混ぜてあるので、日をまたぐと別に数える */
+/**
+ * 同じ端末らしいかの目印。人を特定するものではなく、同じブラウザ情報の別人は同じ値になる。
+ * 画面に出す数は「押された回数」で、この目印を人数としては使わない。
+ * 日付は集計（日本時間）と同じ区切りにする。
+ */
 function visitorHash(userAgent: string): string {
-  const day = new Date().toISOString().slice(0, 10);
+  const day = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
   return createHash("sha256").update(`${userAgent}|${day}|${SALT}`).digest("hex");
 }
 

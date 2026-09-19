@@ -3,12 +3,19 @@
 /**
  * 導線チェックの入口（設計書 FUNNEL_CHECK_V1.md の §8・§9）。
  *
- * 画面からはここだけを呼ぶ。作る・直す・消す・いま確かめる・人数を見る。
+ * 画面からはここだけを呼ぶ。作る・直す・消す・いま確かめる・押された回数を見る。
  *
  * 認可の流れは site-editor.ts / signup.ts と同じ。
  *   1. Cookie のセッションで「誰か」と「どの会社か」を確かめる（RLS 越しに読む）
  *   2. その会社のものだと分かってから service_role で書く
  * 順番を入れ替えると誰でも他人の導線を触れてしまう。必ずこの順で書く。
+ * 導線への書き込みは service_role にしか許していない（0008）。プランの上限・段の形の
+ * 検証・同時作成の歯止めはここが唯一の通り道になる。
+ *
+ * 追跡リンクの向き（Codex レビュー F03 で直した）
+ *   段 i の追跡リンク＝「段 i に貼るリンク」で、飛び先は段 i+1。
+ *   X のプロフィールに貼るリンクは LINE へ送り、LINE に貼るリンクはサイトへ送る。
+ *   最後の段には貼るリンクが無い。押された回数は「段 i から次へ進んだ回数」を意味する。
  */
 
 import { randomBytes } from "node:crypto";
@@ -18,7 +25,7 @@ import { funnelLimit, planAllowsFunnelCheck } from "../templates/catalog";
 import { getMyAccount } from "../auth";
 import { getWriteClient, isMissingTableError } from "../supabase/server";
 import { SITE_BASE_URL, customerSiteUrl } from "../resolve-site";
-import { runFunnelCheck } from "./check";
+import { runFunnelCheck, type CheckContext } from "./check";
 import type {
   FunnelDetail,
   FunnelRun,
@@ -47,8 +54,11 @@ const CODE_LENGTH = 8;
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** 画面に出す人数の既定の日数（今週ぶん） */
+/** 画面に出す回数の既定の日数（今週ぶん） */
 const DEFAULT_DAYS = 7;
+
+/** 同じ導線を続けて確かめられる間隔（相手のサイトへの連打を防ぐ） */
+const RUN_COOLDOWN_MS = 30_000;
 
 /* ═══════════════════════════════════════
    小さな道具
@@ -158,12 +168,14 @@ async function requireFunnel(
 
   const { data, error } = await supabase
     .from("funnels")
-    .select("id, org_id, site_id, name, hops, updated_at")
+    .select("id, org_id, site_id, name, hops, updated_at, archived_at")
     .eq("id", id)
     .maybeSingle();
 
   if (error || !data) return { ok: false, reason: "not_found" };
   if (data.org_id !== org.ctx.orgId) return { ok: false, reason: "forbidden" };
+  // しまった導線は無いものとして扱う（追跡リンクの行は残っていて /go は飛ぶ）
+  if (data.archived_at) return { ok: false, reason: "not_found" };
 
   return {
     ok: true,
@@ -241,9 +253,10 @@ function hopTarget(hop: Hop, ctx: OrgContext): string | null {
 }
 
 /**
- * 段の数だけ追跡リンクを用意する。
+ * 追跡リンクを用意する。段 i のリンクは「段 i に貼るもの」で、飛び先は段 i+1。
+ * 最後の段には貼るリンクが無い。
  * 既にある段のコードは変えない（貼ってある先が死ぬので、作り直さない）。
- * 飛び先だけ今の URL に合わせる。
+ * 飛び先だけ今の並びに合わせる。
  */
 async function issueLinks(funnelId: string, hops: Hop[], ctx: OrgContext): Promise<void> {
   const supabase = getWriteClient();
@@ -267,8 +280,9 @@ async function issueLinks(funnelId: string, hops: Hop[], ctx: OrgContext): Promi
     });
   }
 
-  for (let i = 0; i < hops.length; i++) {
-    const target = hopTarget(hops[i], ctx);
+  for (let i = 0; i < hops.length - 1; i++) {
+    // 段 i に貼るリンクの飛び先は、次の段
+    const target = hopTarget(hops[i + 1], ctx);
     if (!target) continue;
 
     const current = byIndex.get(i);
@@ -319,6 +333,7 @@ export async function listFunnels(): Promise<
     .from("funnels")
     .select("id, name, site_id, hops, updated_at")
     .eq("org_id", ctx.orgId)
+    .is("archived_at", null)
     .order("updated_at", { ascending: false });
 
   if (error) {
@@ -388,11 +403,15 @@ export async function loadFunnel(
       .limit(10),
   ]);
 
-  const links: TrackedLink[] = (linkRes.data ?? []).map((row) => ({
-    hopIndex: row.hop_index as number,
-    code: row.code as string,
-    url: trackedUrl(row.code as string),
-  }));
+  // 最後の段には貼るリンクが無い。昔の並びで発行した余りの行は画面に出さない（/go は飛ぶ）
+  const lastIndex = access.funnel.hops.length - 1;
+  const links: TrackedLink[] = (linkRes.data ?? [])
+    .filter((row) => (row.hop_index as number) < lastIndex)
+    .map((row) => ({
+      hopIndex: row.hop_index as number,
+      code: row.code as string,
+      url: trackedUrl(row.code as string),
+    }));
 
   const runs: FunnelRun[] = (runRes.data ?? []).map(toRun);
 
@@ -477,6 +496,26 @@ export async function createFunnel(input: {
   }
 
   const id = String(data.id);
+
+  // 同時に2つ作られて上限を越えたときは、あとから入った方を取り消す
+  if (limit > 0) {
+    const { data: rows } = await supabase
+      .from("funnels")
+      .select("id")
+      .eq("org_id", ctx.orgId)
+      .is("archived_at", null)
+      .order("created_at", { ascending: true });
+    const order = (rows ?? []).map((r) => String(r.id));
+    if (order.length > limit && order.indexOf(id) >= limit) {
+      await supabase.from("funnels").delete().eq("id", id);
+      return {
+        ok: false,
+        reason: "plan",
+        message: `導線は${limit}本まで作れます。増やすにはおまかせプロへの変更が必要です。`,
+      };
+    }
+  }
+
   await issueLinks(id, hops.hops, ctx);
   return { ok: true, id };
 }
@@ -492,13 +531,18 @@ export async function updateFunnel(
   | { ok: true }
   | {
       ok: false;
-      reason: "unauthenticated" | "forbidden" | "not_found" | "invalid" | "failed";
+      reason: "unauthenticated" | "forbidden" | "not_found" | "plan" | "invalid" | "failed";
       message?: string;
     }
 > {
   const access = await requireFunnel(id);
   if (!access.ok) return { ok: false, reason: access.reason };
   const { ctx } = access;
+
+  // 作るときと同じ判定。プランを落としたあとの導線は読めるが、直せない
+  if (funnelLimit(ctx.plan) === 0) {
+    return { ok: false, reason: "plan", message: "導線チェックはおまかせプラン以上で使えます。" };
+  }
 
   const patch: Record<string, unknown> = {};
 
@@ -548,7 +592,11 @@ export async function deleteFunnel(
   const supabase = getWriteClient();
   if (!supabase) return { ok: false, reason: "failed" };
 
-  const { error } = await supabase.from("funnels").delete().eq("id", id);
+  // 行は消さずに「しまう」。貼ってしまった追跡リンクの飛び先を残すため（0008）
+  const { error } = await supabase
+    .from("funnels")
+    .update({ archived_at: new Date().toISOString() })
+    .eq("id", id);
   if (error) {
     console.error("[funnels] 削除に失敗", { id, error });
     return { ok: false, reason: "failed" };
@@ -589,6 +637,28 @@ export async function startRun(
     hop.kind === "mado" && !ctx.sites.has(hop.url) ? { ...hop, url: "" } : hop,
   );
 
+  // 続けて押されても、相手のサイトを連打しない
+  const { data: recent } = await supabase
+    .from("funnel_runs")
+    .select("started_at, status")
+    .eq("funnel_id", id)
+    .order("started_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (recent && Date.now() - new Date(String(recent.started_at)).getTime() < RUN_COOLDOWN_MS) {
+    return {
+      ok: false,
+      reason: "failed",
+      message: "確かめたばかりです。30秒ほど待ってからもう一度押してください。",
+    };
+  }
+
+  // 確かめるための材料: 自分のサイトの公開 URL と、段ごとに貼る追跡リンクのコード
+  const context: CheckContext = { siteUrls: {}, codes: {} };
+  for (const [siteId, slug] of ctx.sites) context.siteUrls[siteId] = customerSiteUrl(slug);
+  const { data: linkRows } = await supabase.from("tracked_links").select("code, hop_index").eq("funnel_id", id);
+  for (const row of linkRows ?? []) context.codes[row.hop_index as number] = row.code as string;
+
   const { data: started, error: startError } = await supabase
     .from("funnel_runs")
     .insert({ funnel_id: id, status: "running", results: [] })
@@ -603,7 +673,7 @@ export async function startRun(
   const runId = String(started.id);
 
   try {
-    const results = await runFunnelCheck(hops);
+    const results = await runFunnelCheck(hops, context);
     const finishedAt = new Date().toISOString();
 
     const { error: saveError } = await supabase
@@ -631,7 +701,10 @@ export async function startRun(
 }
 
 /* ═══════════════════════════════════════
-   段ごとの人数
+   段ごとに押された回数
+   ───────────────────────────────────────
+   画面に出すのは clicks（押された回数）。visitors は「同じブラウザ情報を1日1回に
+   丸めた数」で、人数ではない（別人でも同じ値になる）。画面には出さない。
    ═══════════════════════════════════════ */
 
 export async function clicksByHop(
@@ -660,7 +733,7 @@ export async function clicksByHop(
   });
 
   if (error) {
-    if (!isMissingTableError(error)) console.error("[funnels] 人数の集計に失敗", { id, error });
+    if (!isMissingTableError(error)) console.error("[funnels] 回数の集計に失敗", { id, error });
     return { ok: true, days: span, hops };
   }
 

@@ -4,15 +4,17 @@
  * やること
  *   web     … 開けるか・最終 URL・タイトル・次の段への行き方が本文にあるか
  *   line    … 友だち追加 URL が生きているか・飛び先が LINE の友だち追加ページか
- *   discord … 公開の招待 API を叩いて、有効か・期限切れか・サーバー名と人数
+ *   discord … 公開の招待 API を叩いて、有効か・期限切れか・サーバー名と規模
  *   mado    … 自分のサイトの設定を読んで §7 のサイト内チェック
- *   x       … 見に行かない（規約）。通った人数は追跡リンクで数える
+ *   x       … 見に行かない（規約）。押された回数は追跡リンクで数える
  *   member  … 入口 URL が生きているかだけ。ログインの先は見ない
  *
  * 守ること
  *   ・1段あたり8秒で打ち切る。相手のサイトが重くても画面を待たせない
  *   ・ng には必ず理由を一文と、取れた根拠（状態コード・最終 URL・取得日時）を残す
- *   ・取りに行くのは公開されている URL だけ。社内向けのアドレスや IP は弾く
+ *   ・取りに行くのは公開されている URL だけ。転送は1段ずつ確かめて追い、
+ *     名前解決の結果が社内・自分自身のアドレスならつながない（fetch-safe.ts）
+ *   ・本文は読み込みながら上限で止める
  *
  * mado の段の url には siteId が入る。他人のサイトを覗けないように、
  * 呼ぶ側（actions.ts）で「その会社のサイトか」を確かめてから渡すこと。
@@ -20,6 +22,7 @@
 
 import type { SiteConfig } from "../site-config-schema";
 import { SITE_BASE_URL } from "../resolve-site";
+import { readCapped, safeFetch } from "./fetch-safe";
 import type { Hop, HopCheck, HopResult, HopStatus } from "./types";
 
 /** 相手のサーバーに名乗る名前 */
@@ -31,9 +34,24 @@ const HOP_TIMEOUT_MS = 8_000;
 /** 読み込む本文の上限（重いページで詰まらせない） */
 const MAX_BODY = 512 * 1024;
 
-/** 追跡リンクの置き場（ここへのリンクも「次の段への行き方」として認める） */
+/** 追う転送の数の上限 */
+const MAX_REDIRECTS = 5;
+
+/** 追跡リンクの置き場 */
 const TRACK_PATH = "/go/";
 const TRACK_HOST = new URL(SITE_BASE_URL).hostname.toLowerCase().replace(/^www\./, "");
+
+/**
+ * 呼ぶ側が渡す、確かめるための材料。
+ *   siteUrls … mado の段の siteId → 公開 URL（自分の会社のサイトだけ）
+ *   codes    … 段の番号 → その段に貼る追跡リンクのコード（次の段へ送るもの）
+ */
+export interface CheckContext {
+  siteUrls: Record<string, string>;
+  codes: Record<number, string>;
+}
+
+const EMPTY_CONTEXT: CheckContext = { siteUrls: {}, codes: {} };
 
 /* ═══════════════════════════════════════
    小さな道具
@@ -46,7 +64,6 @@ function now(): string {
 /**
  * 段の状態。ng が1つでもあれば ng。
  * 1つも確かめられなかったとき（全部 skipped）だけ skipped にする。
- * こうしないと「最後の段なので次は無い」のような注記だけで灰色になってしまう。
  */
 function worstOf(checks: HopCheck[]): HopStatus {
   if (checks.some((c) => c.status === "ng")) return "ng";
@@ -68,11 +85,12 @@ async function withTimeout<T>(work: Promise<T>, ms: number, onTimeout: () => T):
 }
 
 /**
- * 取りに行ってよい URL か。
+ * 取りに行ってよい URL か（形の検査）。
  * 公開されている http / https のページだけを通す。
- * 社内のアドレス・IP 直打ち・変わったポートは弾く（サーバーから内側を覗かせない）。
+ * IP 直打ち・変わったポート・認証情報つき・社内向けの名前は弾く。
+ * 名前解決の結果は接続の瞬間に fetch-safe.ts が別に検査する。
  */
-function publicUrl(value: string): URL | null {
+export function publicUrl(value: string): URL | null {
   const raw = (value || "").trim();
   if (!raw || raw.length > 2000) return null;
   let url: URL;
@@ -86,7 +104,7 @@ function publicUrl(value: string): URL | null {
   if (url.username || url.password || url.port) return null;
   if (!host.includes(".") || host.startsWith("[")) return null;
   if (/^[\d.]+$/.test(host)) return null;
-  if (host === "localhost" || /\.(local|localhost|internal|test|invalid)$/.test(host)) return null;
+  if (host === "localhost" || /\.(local|localhost|internal|test|invalid|home|lan)$/.test(host)) return null;
   return url;
 }
 
@@ -97,35 +115,70 @@ interface Fetched {
   title?: string;
   body: string;
   /** 取りに行けなかったときの言い分 */
-  failure?: "blocked" | "network";
+  failure?: "blocked" | "network" | "redirects";
 }
 
-/** ページを1枚取ってくる。落ちても例外は投げない */
-async function getPage(value: string): Promise<Fetched> {
-  const url = publicUrl(value);
-  if (!url) return { ok: false, body: "", failure: "blocked" };
+const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 
-  try {
-    const res = await fetch(url.href, {
-      redirect: "follow",
-      headers: {
-        "user-agent": USER_AGENT,
-        accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-      },
-      signal: AbortSignal.timeout(HOP_TIMEOUT_MS),
-    });
-    const raw = await res.text().catch(() => "");
-    const body = raw.slice(0, MAX_BODY);
+/**
+ * ページを1枚取ってくる。落ちても例外は投げない。
+ * 転送は自動で追わず、飛び先を1段ずつ形と名前解決で確かめてから追う。
+ */
+export async function getPage(value: string): Promise<Fetched> {
+  let current = publicUrl(value);
+  if (!current) return { ok: false, body: "", failure: "blocked" };
+
+  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+    let res: Response;
+    try {
+      res = await safeFetch(current, {
+        headers: {
+          "user-agent": USER_AGENT,
+          accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        },
+        timeoutMs: HOP_TIMEOUT_MS,
+      });
+    } catch (err) {
+      const code = (err as NodeJS.ErrnoException | undefined)?.code;
+      return {
+        ok: false,
+        body: "",
+        finalUrl: current.href,
+        failure: code === "EBLOCKEDADDRESS" ? "blocked" : "network",
+      };
+    }
+
+    if (REDIRECT_STATUSES.has(res.status)) {
+      // 転送先も同じ基準で確かめる。社内向けや形の変な先へは追わない
+      await res.body?.cancel().catch(() => undefined);
+      const location = res.headers.get("location");
+      if (!location) {
+        return { ok: false, statusCode: res.status, finalUrl: current.href, body: "", failure: "redirects" };
+      }
+      let nextUrl: URL | null = null;
+      try {
+        nextUrl = publicUrl(new URL(location, current).href);
+      } catch {
+        nextUrl = null;
+      }
+      if (!nextUrl) {
+        return { ok: false, statusCode: res.status, finalUrl: current.href, body: "", failure: "blocked" };
+      }
+      current = nextUrl;
+      continue;
+    }
+
+    const body = await readCapped(res, MAX_BODY);
     return {
       ok: res.status < 400,
       statusCode: res.status,
-      finalUrl: res.url || url.href,
+      finalUrl: current.href,
       title: titleOf(body),
       body,
     };
-  } catch {
-    return { ok: false, body: "", finalUrl: url.href, failure: "network" };
   }
+
+  return { ok: false, body: "", finalUrl: current.href, failure: "redirects" };
 }
 
 /** ページのタイトル */
@@ -145,23 +198,40 @@ function hrefsOf(html: string): string[] {
   return out;
 }
 
-/**
- * 見比べるために URL をホスト名と道筋に割る。
- * http / https・www・末尾の / ・後ろに付く ?... の違いは無視する。
- * 本文の中の "/about" のような書き方は、そのページの住所を土台にして解く。
- */
-function splitUrl(value: string, base?: string): { host: string; path: string } | null {
-  const raw = (value || "").trim();
+/** 本文の中の書き方（"/line" など）を、そのページの住所を土台にして URL にする */
+function resolveHref(href: string, base?: string): URL | null {
+  const raw = (href || "").trim();
   if (!raw || /^(#|mailto:|tel:|javascript:|data:)/i.test(raw)) return null;
   try {
-    const url = new URL(raw, base || undefined);
-    return {
-      host: url.hostname.toLowerCase().replace(/^www\./, ""),
-      path: url.pathname.toLowerCase().replace(/\/+$/, ""),
-    };
+    return new URL(raw, base || undefined);
   } catch {
     return null;
   }
+}
+
+function hostOf(url: URL): string {
+  return url.hostname.toLowerCase().replace(/^www\./, "");
+}
+
+function pathOf(url: URL): string {
+  return url.pathname.replace(/\/+$/, "") || "/";
+}
+
+/**
+ * 本文のリンクが「次の段の URL そのもの」か。
+ * ホスト名は大文字小文字を区別しない。道筋（path）は区別する。
+ * 次の段の URL に ?… が付いていれば、それも同じでなければ同一と見ない。
+ */
+function sameTarget(link: URL, expected: URL): boolean {
+  if (hostOf(link) !== hostOf(expected)) return false;
+  if (pathOf(link) !== pathOf(expected)) return false;
+  if (expected.search && link.search !== expected.search) return false;
+  return true;
+}
+
+/** 本文のリンクが「この段に貼る追跡リンク」そのものか（コードは大文字小文字を区別する） */
+function isOwnTrackedLink(link: URL, code: string): boolean {
+  return hostOf(link) === TRACK_HOST && link.pathname === `${TRACK_PATH}${code}`;
 }
 
 /** 取りに行った結果を根拠の形にする */
@@ -177,7 +247,10 @@ function evidenceOf(page: Fetched): HopCheck["evidence"] {
 /** 取りに行けなかった理由の文（誰が読んでも分かる一文にする） */
 function failureReason(page: Fetched, what: string): string {
   if (page.failure === "blocked") {
-    return "URL の形が正しくないか、外から開けないアドレスです。https から始まる URL を入れてください。";
+    return "外から開けないアドレス（社内向けの名前や IP、またはそこへの転送）なので取りに行っていません。公開されている https の URL を入れてください。";
+  }
+  if (page.failure === "redirects") {
+    return `${what}の転送が多すぎるか、転送先が分かりません。URL を直接のものにしてください。`;
   }
   if (page.failure === "network") {
     return `${what}につながりませんでした。URL が合っているか確かめてください。`;
@@ -185,12 +258,19 @@ function failureReason(page: Fetched, what: string): string {
   return `${what}が開きません（${page.statusCode}）。URL を確かめてください。`;
 }
 
+/** 次の段へ行くための材料（次の段の URL と、この段に貼る追跡リンクのコード） */
+interface NextExpectation {
+  next: Hop | undefined;
+  url: URL | null;
+  code: string | null;
+}
+
 /* ═══════════════════════════════════════
    段の種類ごとの確かめ方
    ═══════════════════════════════════════ */
 
 /** web — 任意のページ */
-async function checkWeb(hop: Hop, next: Hop | undefined): Promise<HopCheck[]> {
+async function checkWeb(hop: Hop, expect: NextExpectation): Promise<HopCheck[]> {
   const page = await getPage(hop.url);
   const checks: HopCheck[] = [];
 
@@ -205,52 +285,41 @@ async function checkWeb(hop: Hop, next: Hop | undefined): Promise<HopCheck[]> {
         },
   );
 
-  checks.push(nextLinkCheck(page, next));
+  checks.push(nextLinkCheck(page, expect));
   return checks;
 }
 
-/** 次の段への行き方が本文にあるか。追跡リンクが貼ってあればそれでよい */
-function nextLinkCheck(page: Fetched, next: Hop | undefined): HopCheck {
-  if (!next) {
-    return {
-      name: "次の段へのリンクがある",
-      status: "skipped",
-      reason: "ここが最後の段なので、次の行き先はありません。",
-    };
+/**
+ * 次の段への行き方が本文にあるか。
+ * 認めるのは「この段に貼る追跡リンク」か「次の段の URL そのもの」だけ。
+ * 他の追跡リンクや、似たドメインの別ページでは通さない。
+ */
+export function nextLinkCheck(page: Fetched, expect: NextExpectation): HopCheck {
+  const name = "次の段へのリンクがある";
+  if (!expect.next) {
+    return { name, status: "skipped", reason: "ここが最後の段なので、次の行き先はありません。" };
   }
   if (!page.ok || !page.body) {
-    return {
-      name: "次の段へのリンクがある",
-      status: "skipped",
-      reason: "ページを開けなかったので、中のリンクは確かめていません。",
-    };
+    return { name, status: "skipped", reason: "ページを開けなかったので、中のリンクは確かめていません。" };
+  }
+  if (!expect.url && !expect.code) {
+    return { name, status: "skipped", reason: "次の段の URL が分からないので、リンクは確かめていません。" };
   }
 
-  // 本文のリンクを、そのページの住所を土台にして解く（"/line" のような書き方も見る）
   const links = hrefsOf(page.body)
-    .map((href) => splitUrl(href, page.finalUrl))
-    .filter((v): v is { host: string; path: string } => v !== null);
+    .map((href) => resolveHref(href, page.finalUrl))
+    .filter((v): v is URL => v !== null);
 
-  // 追跡リンク（mado.shikumiai.com/go/…）が貼ってあれば、それで道はつながっている
-  const hasTracked = links.some((l) => l.host === TRACK_HOST && l.path.startsWith(TRACK_PATH));
-
-  // 次の段の URL そのもの。自分の Mado サイトは URL の代わりに siteId が入っているので見比べられない
-  const target = next.kind === "mado" ? null : splitUrl(next.url);
-  const hasDirect =
-    target !== null &&
-    links.some(
-      (l) =>
-        l.host === target.host &&
-        (target.path === "" || l.path === target.path || l.path.startsWith(target.path + "/")),
-    );
+  const hasTracked = expect.code !== null && links.some((l) => isOwnTrackedLink(l, expect.code as string));
+  const hasDirect = expect.url !== null && links.some((l) => sameTarget(l, expect.url as URL));
 
   if (hasTracked || hasDirect) {
-    return { name: "次の段へのリンクがある", status: "ok", evidence: evidenceOf(page) };
+    return { name, status: "ok", evidence: evidenceOf(page) };
   }
   return {
-    name: "次の段へのリンクがある",
+    name,
     status: "ng",
-    reason: `このページに「${next.label}」へのリンクが見つかりません。ここで道が切れています。`,
+    reason: `このページに「${expect.next.label}」へのリンク（この段の追跡リンクか、次の段の URL）が見つかりません。ここで道が切れています。`,
     evidence: evidenceOf(page),
   };
 }
@@ -334,7 +403,6 @@ function discordInviteCode(value: string): string | null {
     }
     return null;
   }
-  // 「abcDEF12」のようにコードだけ書かれていたとき
   const raw = (value || "").trim();
   return /^[a-z0-9-]{2,64}$/i.test(raw) ? raw : null;
 }
@@ -342,7 +410,6 @@ function discordInviteCode(value: string): string | null {
 interface DiscordInvite {
   guild?: { name?: string };
   approximate_member_count?: number;
-  approximate_presence_count?: number;
   expires_at?: string | null;
 }
 
@@ -362,18 +429,26 @@ async function checkDiscord(hop: Hop): Promise<HopCheck[]> {
     return checks;
   }
 
-  const api = `https://discord.com/api/v10/invites/${encodeURIComponent(code)}?with_counts=true`;
+  const api = new URL(`https://discord.com/api/v10/invites/${encodeURIComponent(code)}?with_counts=true`);
   let status: number | undefined;
   let invite: DiscordInvite | null = null;
 
   try {
-    const res = await fetch(api, {
-      redirect: "follow",
+    const res = await safeFetch(api, {
       headers: { "user-agent": USER_AGENT, accept: "application/json" },
-      signal: AbortSignal.timeout(HOP_TIMEOUT_MS),
+      timeoutMs: HOP_TIMEOUT_MS,
     });
     status = res.status;
-    if (res.ok) invite = (await res.json().catch(() => null)) as DiscordInvite | null;
+    if (res.ok) {
+      const text = await readCapped(res, 64 * 1024);
+      try {
+        invite = JSON.parse(text) as DiscordInvite;
+      } catch {
+        invite = null;
+      }
+    } else {
+      await res.body?.cancel().catch(() => undefined);
+    }
   } catch {
     status = undefined;
   }
@@ -393,14 +468,12 @@ async function checkDiscord(hop: Hop): Promise<HopCheck[]> {
       evidence: { ...base, ...(name ? { title: name } : {}) },
     });
     checks.push({
-      name: "サーバー名と人数が取れる",
+      name: "サーバー名が取れる",
       status: name ? "ok" : "skipped",
-      ...(name
-        ? {}
-        : { reason: "サーバー名が取れませんでした。招待の設定をご確認ください。" }),
+      ...(name ? {} : { reason: "サーバー名が取れませんでした。招待の設定をご確認ください。" }),
       evidence: {
         ...base,
-        ...(name ? { title: members !== undefined ? `${name}（${members}人）` : name } : {}),
+        ...(name ? { title: members !== undefined ? `${name}（参加 ${members}）` : name } : {}),
       },
     });
   } else if (status === 404) {
@@ -460,7 +533,7 @@ function checkX(): HopCheck[] {
     {
       name: "X のページの中身",
       status: "skipped",
-      reason: "X のページは見に行きません。規約で禁じられています。通った人数は追跡リンクで数えます。",
+      reason: "X のページは見に行きません。規約で禁じられています。ここに貼った追跡リンクが押された回数だけを数えます。",
     },
   ];
 }
@@ -479,7 +552,6 @@ async function checkMado(hop: Hop): Promise<HopCheck[]> {
     ];
   }
 
-  // データベースと §7 の判定はここでしか使わないので、必要になってから読み込む
   const [{ getWriteClient }, { runSiteCheck }] = await Promise.all([
     import("../supabase/server"),
     import("./site-check"),
@@ -520,11 +592,21 @@ async function checkMado(hop: Hop): Promise<HopCheck[]> {
    本体
    ═══════════════════════════════════════ */
 
+/** 次の段の URL を、確かめられる形にする（mado は呼ぶ側が渡した公開 URL に置き換える） */
+function nextUrlOf(next: Hop | undefined, context: CheckContext): URL | null {
+  if (!next) return null;
+  if (next.kind === "mado") {
+    const url = context.siteUrls[next.url];
+    return url ? publicUrl(url) : null;
+  }
+  return publicUrl(next.url);
+}
+
 /** 段1つを確かめる */
-async function checkHop(hop: Hop, next: Hop | undefined): Promise<HopCheck[]> {
+async function checkHop(hop: Hop, expect: NextExpectation): Promise<HopCheck[]> {
   switch (hop.kind) {
     case "web":
-      return checkWeb(hop, next);
+      return checkWeb(hop, expect);
     case "line":
       return checkLine(hop);
     case "discord":
@@ -536,13 +618,7 @@ async function checkHop(hop: Hop, next: Hop | undefined): Promise<HopCheck[]> {
     case "x":
       return checkX();
     default:
-      return [
-        {
-          name: "この段の確かめ方",
-          status: "skipped",
-          reason: "この種類の段はまだ確かめられません。",
-        },
-      ];
+      return [{ name: "この段の確かめ方", status: "skipped", reason: "この種類の段はまだ確かめられません。" }];
   }
 }
 
@@ -550,13 +626,19 @@ async function checkHop(hop: Hop, next: Hop | undefined): Promise<HopCheck[]> {
  * 導線を丸ごと確かめる。
  * 段は同時に確かめる。1段でも 8 秒を超えたら、その段だけ打ち切って先へ進む。
  */
-export async function runFunnelCheck(hops: Hop[]): Promise<HopResult[]> {
+export async function runFunnelCheck(hops: Hop[], context: CheckContext = EMPTY_CONTEXT): Promise<HopResult[]> {
   const list = Array.isArray(hops) ? hops : [];
 
   return Promise.all(
     list.map(async (hop, hopIndex) => {
+      const next = list[hopIndex + 1];
+      const expect: NextExpectation = {
+        next,
+        url: nextUrlOf(next, context),
+        code: context.codes[hopIndex] ?? null,
+      };
       const checks = await withTimeout(
-        checkHop(hop, list[hopIndex + 1]).catch((err): HopCheck[] => {
+        checkHop(hop, expect).catch((err): HopCheck[] => {
           console.error("[funnel-check] 段の確認に失敗", { hopIndex, kind: hop?.kind, err });
           return [
             {

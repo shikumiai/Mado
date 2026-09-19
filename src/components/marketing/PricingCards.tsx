@@ -211,7 +211,7 @@ export function PricingCards({ className = "" }: { className?: string }) {
 
       <p className="mx-auto mt-4 max-w-2xl text-center text-xs leading-relaxed text-ink3">
         導線チェック＝X・LINE・Discord からあなたのサイトまでの道のり（導線）を、上から順に確かめる機能です。
-        追跡リンク＝踏んだ人数を数えられる短いURLです。
+        追跡リンク＝押された回数を数えられる短いURLです。
       </p>
       <p className="mt-2 text-center text-xs text-ink3">
         表示はすべて税込・月額です。プランの変更・解約はいつでもご自身の画面から。

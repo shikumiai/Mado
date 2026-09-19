@@ -47,7 +47,7 @@ const SITE_URL = "https://mado.shikumiai.com";
 export const metadata: Metadata = {
   title: "Mado｜サイトを作る。そこまでの道も、見える。",
   description:
-    "写真を送るだけでホームページができます。さらに X・LINE・Discord から自分のサイトまでの道のりが、どこで切れているか・何人来ているか分かります。制作費0円、月額0円から。",
+    "写真を送るだけでホームページができます。さらに X・LINE・Discord から自分のサイトまでの道のりが、どこで切れているか・どの段のリンクが何回押されたか分かります。制作費0円、月額0円から。",
   keywords: [
     "ホームページ制作 安い",
     "ホームページ制作 0円",
