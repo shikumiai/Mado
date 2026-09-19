@@ -47,3 +47,10 @@
 - 理由: 部分最適の機能追加が先に走ると、約束・画面・運営の時間が食い違う。Lyo は全体を1枚で見てから進めたい。
 - 捨てた案: 6週間の数値基準で続行を判断する案（まず出すことを優先）。送信専用業者（Resend 等）を新たに契約する案（既存の `info@shikumiai.com` を使う）。
 - 影響するファイル: `docs/SERVICE_DESIGN_V1.md`、`docs/00_INDEX.md`。以後の実装は全て Fable 5.1 が直接行う（Lyo 指示「全て5.1にやらせて」）。
+
+## 2026-09-20 — Codex レビューの取り込みと、merge 前の約束
+- 決めたこと: Codex の独立レビュー（PR #6・CHANGES_REQUESTED・F01〜F07）を全部受け入れ、PR #10 で直す。追跡リンクは「段 i に貼り、押すと段 i+1 へ」。画面と文書は「押された回数」だけを出し、人数・離脱率・成約率は出さない。導線への書き込みは service_role だけ（0008）。削除は archived_at で「しまう」。外部取得は転送を1段ずつ検証し、接続時に名前解決の結果を検査する。
+- 理由: 指摘はどれも再現コードつきで正しかった。とくに人数の表示は、測っていないものを売り文句にしていた。
+- 捨てた案: 転送先の検査を「公開ページ前提」で省く案。人数表示を注記つきで残す案。
+- 影響するファイル: `src/lib/funnels/{fetch-safe,check,actions,types,kinds}.ts`、`src/app/go/[code]/route.ts`、`src/app/app/funnels/**`、`src/app/page.tsx`、`src/app/layout.tsx`、料金表、`supabase/migrations/0008_funnels_hardening.sql`、`docs/FUNNEL_CHECK_V1.md`、`docs/SERVICE_DESIGN_V1.md`
+- 運転の約束（追加）: **本番へ merge する前に、その PR のコメントとレビューを読む。** 作業票の「merge 済み」は GitHub の実状態を確かめてから書く。DB の締め直し（0008）はポリシーを外すだけで既存の書き込み経路（service_role）に影響しないため、再レビューを待たずに本番へ当てた。

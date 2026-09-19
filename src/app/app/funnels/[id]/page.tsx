@@ -2,7 +2,7 @@
  * 導線の詳細 /app/funnels/[id]（docs/FUNNEL_CHECK_V1.md §6）。
  *
  * データを取って渡すだけ。見せ方は FunnelView（client）が持つ。
- * 人数は直近7日ぶん（画面には丸めた人数だけを出す）。
+ * 押された回数は直近7日ぶん（人数としては出さない）。
  */
 
 import Link from "next/link";

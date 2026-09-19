@@ -3,9 +3,10 @@
 /**
  * 導線の詳細（docs/FUNNEL_CHECK_V1.md §6）。この画面が主役。
  *
- * 段を縦一列に並べ、1段ずつ「状態の丸」「名前と URL」「追跡リンク」「今週の人数」を出す。
- * 総合点は出さない（§12）。出すのは段ごとの状態と人数だけ。
- * 確かめていない段には、確かめていない理由を必ず書く（できるふりをしない）。
+ * 段を縦一列に並べ、1段ずつ「状態の丸」「名前と URL」「この段に貼る追跡リンク」「押された回数」を出す。
+ * 追跡リンクは段 i に貼るもので、押すと段 i+1 へ飛ぶ。最後の段には無い。
+ * 出す数は「押された回数」。人数・離脱率・成約率は出さない（測っていない）。
+ * 総合点は出さない（§12）。確かめていない段には、確かめていない理由を必ず書く。
  */
 
 import { useState, useTransition } from "react";
@@ -63,7 +64,7 @@ function skippedReason(result: HopResult | null, fallback: string): string {
   const fromCheck = result?.checks.find((c) => c.status === "skipped" && c.reason)?.reason;
   if (fromCheck) return fromCheck;
   if (fallback !== "") return fallback;
-  return "自動で見に行けない場所のため、通った人数だけを数えています。";
+  return "自動で見に行けない場所のため、ここに貼った追跡リンクが押された回数だけを数えています。";
 }
 
 /** 根拠を1行にする。あるものだけ並べる */
@@ -238,31 +239,30 @@ export function FunnelView({
                   </p>
                 )}
 
-                {/* 追跡リンクと人数 */}
+                {/* この段に貼る追跡リンクと、押された回数（＝次の段へ進んだ回数） */}
                 <div className="flex flex-col gap-2 border-t border-line pt-3">
-                  {link ? (
+                  {isLast ? (
+                    <p className="text-xs text-ink3">ここが道の終わりなので、貼るリンクはありません。</p>
+                  ) : link ? (
                     <>
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <p className="tnum min-w-0 break-all text-xs text-ink2">{link.url}</p>
                         <CopyLink url={link.url} />
                       </div>
-                      <p className="text-xs text-ink3">{info.paste}</p>
+                      <p className="text-xs text-ink3">
+                        {info.paste}。押した人は次の「{funnel.hops[i + 1]?.label}」へ飛びます。
+                      </p>
+                      <p className="text-sm text-ink2">
+                        この{clickDays}日間に押された回数{" "}
+                        <span className="tnum font-bold text-ink">{count?.clicks ?? 0}</span>
+                        <span className="ml-2 text-xs text-ink3">（人数や離脱率は出しません。測っていないので）</span>
+                      </p>
                     </>
                   ) : (
                     <p className="text-xs text-ink3">
                       追跡リンクはまだありません。導線を保存し直すと発行されます。
                     </p>
                   )}
-
-                  <p className="text-sm text-ink2">
-                    この{clickDays}日間{" "}
-                    <span className="tnum font-bold text-ink">{count?.visitors ?? 0}</span> 人
-                    {count && count.clicks !== count.visitors && (
-                      <span className="tnum ml-2 text-xs text-ink3">
-                        （押された回数 {count.clicks}）
-                      </span>
-                    )}
-                  </p>
                 </div>
               </Card>
             </li>

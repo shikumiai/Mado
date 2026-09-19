@@ -8,7 +8,7 @@
  *   導線（funnel） … 入口から目的地までの段の並び
  *   段（hop）      … 導線の1つの場所（X・LINE・Web・自分のサイト・会員ページ・Discord）
  *   チェック（run）… 導線を上から順に確かめた1回の実行
- *   追跡リンク     … 段ごとに発行する短い URL。通った人数を数える
+ *   追跡リンク     … 段 i に貼る短い URL。押すと段 i+1 へ飛び、押された回数を数える
  */
 
 /** 段の種類 */
@@ -96,10 +96,10 @@ export interface FunnelDetail {
   runs: FunnelRun[];
 }
 
-/** 段ごとの通過人数 */
+/** 段ごとに押された回数。画面に出すのは clicks */
 export interface HopClicks {
   hopIndex: number;
-  /** 同じ端末らしいものを1日1回に丸めた人数。画面に出すのはこちら */
+  /** 同じブラウザ情報を1日1回に丸めた数。人数ではない（別人でも同じ値になる）。画面には出さない */
   visitors: number;
   /** 生のクリック数 */
   clicks: number;

@@ -55,7 +55,7 @@ export default async function FunnelsPage() {
           {locked && <Badge tone="neutral">{PLAN_LABELS[plan]}プラン</Badge>}
         </div>
         <p className="mt-2 text-sm text-ink2">
-          X から LINE、サイト、Discord まで。お客さんが通る道を1本ずつ登録すると、どこで切れているかと、何人通ったかが出ます。
+          X から LINE、サイト、Discord まで。お客さんが通る道を1本ずつ登録すると、どこで切れているかと、段ごとのリンクが何回押されたかが出ます。
         </p>
       </div>
 
@@ -69,7 +69,7 @@ export default async function FunnelsPage() {
             <div className="min-w-0">
               <p className="text-sm font-medium text-ink">導線はおまかせプランで使えます。</p>
               <p className="mt-1 text-sm text-ink2">
-                登録した道を上から順に確かめて、切れている段と、その段に何人来たかを出します。追跡リンクも段ごとに発行します。
+                登録した道を上から順に確かめて、切れている段と、段ごとのリンクが何回押されたかを出します。追跡リンクは段ごとに発行します。
               </p>
             </div>
           </div>
@@ -77,7 +77,7 @@ export default async function FunnelsPage() {
           {/* 何ができるのかを、鍵つきの見本で見せる */}
           <ul className="flex flex-col gap-2 rounded-lg border border-line bg-surface2/60 p-4">
             {[
-              { kind: "X のプロフィール", note: "何人がリンクを踏んだか" },
+              { kind: "X のプロフィール", note: "貼ったリンクが何回押されたか" },
               { kind: "LINE の友だち追加", note: "URL が生きているか" },
               { kind: "自分の Mado サイト", note: "ボタンの飛び先・連絡先" },
               { kind: "Discord の招待", note: "期限が切れていないか" },

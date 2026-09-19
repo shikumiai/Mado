@@ -44,7 +44,7 @@ const COMPARE: { label: string; values: (boolean | string)[] }[] = [
   { label: "AIにおまかせで編集", values: ["—", "月3回", "無制限"] },
   { label: "サイト内の公開前チェック", values: [true, true, true] },
   { label: "導線チェック（サイトまでの道のり）", values: ["—", "3本", "無制限"] },
-  { label: "追跡リンク（人数を数える短いURL）", values: [false, true, true] },
+  { label: "追跡リンク（押された回数を数える短いURL）", values: [false, true, true] },
   { label: "毎日の自動チェック", values: [false, false, "準備中"] },
   { label: "予約・問い合わせの自動化", values: [false, false, true] },
   { label: "採用ページ", values: [false, false, true] },
@@ -196,7 +196,7 @@ export default function PricingPage() {
 
             <p className="mx-auto mt-5 max-w-2xl text-center text-xs leading-relaxed text-ink3">
               導線チェックは、X・LINE・Discord からあなたのサイトにたどり着くまでの道のりを、上から順に確かめる機能です。
-              切れている場所と、それぞれの場所に何人来ているかが分かります。
+              切れている場所と、段ごとのリンクが何回押されたかが分かります。
             </p>
 
             <div className="mt-10 flex justify-center">

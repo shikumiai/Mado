@@ -138,7 +138,7 @@ function Hero() {
           >
             <span className="block">写真を送るだけで、ホームページができます。</span>
             <span className="mt-2 block">
-              X・LINE・Discord から自分のサイトまでの道のりが、どこで切れているか・何人来ているか分かります。
+              X・LINE・Discord から自分のサイトまでの道のりが、どこで切れているか・どの段のリンクが何回押されたか分かります。
             </span>
           </p>
 
@@ -306,19 +306,19 @@ type DemoHop = { label: string; people: string; broken?: string };
 
 /* 画面の見本。数字も見本で、実際の計測値ではない */
 const FUNNEL_DEMO: DemoHop[] = [
-  { label: "X のプロフィール", people: "128人" },
-  { label: "LINE の友だち追加", people: "42人" },
+  { label: "X のプロフィール", people: "128回" },
+  { label: "LINE の友だち追加", people: "42回" },
   {
     label: "あなたのサイト",
-    people: "0人",
+    people: "0回",
     broken: "リンクが切れています（ページが見つかりません）",
   },
-  { label: "お問い合わせ", people: "0人" },
+  { label: "お問い合わせ", people: "0回" },
 ];
 
 const FUNNEL_POINTS = [
   "切れている場所が赤で出ます。理由も一言そえます",
-  "追跡リンク（踏んだ人数を数えられる短いURL）を、段ごとに発行します",
+  "追跡リンク（押された回数を数えられる短いURL）を、段ごとに発行します",
   "おまかせプラン以上で使えます",
 ];
 
@@ -401,7 +401,7 @@ function FunnelCheckPanel() {
           </h3>
           <p className="mt-4 max-w-md text-sm leading-relaxed text-ink2">
             導線チェックを使うと、X・LINE・Discord からあなたのサイトにたどり着くまでの道のり（導線）を、上から順に確かめられます。
-            切れている場所と、それぞれの場所に何人来ているかが1画面で分かります。
+            切れている場所と、段ごとのリンクが何回押されたかが1画面で分かります。
           </p>
           <ul className="mt-6 flex flex-col gap-3">
             {FUNNEL_POINTS.map((p) => (
