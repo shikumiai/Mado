@@ -25,6 +25,7 @@ type RendererProps = {
   editMode?: boolean;
   onFieldClick?: (fieldId: string, currentValue: string, fieldType: "text" | "image") => void;
   changedFields?: Set<string>;
+  onSectionEdit?: (index: number | "company") => void;
 };
 
 export { toTemplateFamily };

@@ -27,11 +27,11 @@ import type { Cta, HoursTable, InfoRow, SectionData } from "./types";
 /* ─── 小さな取り出し ─── */
 
 function str(v: unknown): string | undefined {
-  return typeof v === "string" && v.trim() !== "" ? v : undefined;
+  return typeof v === "string" ? v : undefined;
 }
 
 function list<T>(v: unknown): T[] | undefined {
-  return Array.isArray(v) && v.length > 0 ? (v as T[]) : undefined;
+  return Array.isArray(v) ? (v as T[]) : undefined;
 }
 
 /**
@@ -50,7 +50,7 @@ function withPhotos<T extends { image?: string }>(
 ): T[] {
   let changed = false;
   const out = items.map((item, i) => {
-    if (str(item.image)) return item;
+    if (typeof item.image === "string") return item;
     const photo = templateListPhoto(config.templateId, kind, i);
     if (!photo) return item;
     changed = true;
@@ -64,7 +64,7 @@ function cta(v: unknown): Cta | undefined {
   const o = v as Record<string, unknown>;
   const label = str(o.label);
   const href = str(o.href);
-  return label ? { label, href: href || "#contact" } : undefined;
+  return label !== undefined ? { label, href: href || "#contact" } : undefined;
 }
 
 /* ─── 1 hero ─── */
@@ -79,7 +79,7 @@ export function heroOf(config: SiteConfig, data?: SectionData) {
     lead: str(data?.lead) ?? c.description,
     image: str(data?.image) ?? templatePhoto(config.templateId, "hero"),
     primary: cta(data?.primaryCta) ?? { label: "相談してみる", href: "#contact" },
-    secondary: cta(data?.secondaryCta) ?? { label: "私たちについて", href: "#about" },
+    secondary: cta(data?.secondaryCta) ?? { label: "私たちについて", href: "#contact" },
     facts: list<string>(data?.facts) ?? [],
   };
 }
@@ -102,6 +102,7 @@ export function servicesOf(config: SiteConfig, data?: SectionData) {
     eyebrow: str(data?.eyebrow) ?? "SERVICE",
     heading: str(data?.heading) ?? "事業内容",
     lead: str(data?.lead),
+    primary: cta(data?.primaryCta) ?? { label: "お問い合わせ", href: "#contact" },
     items: list<Service>(data?.items) ?? config.services ?? [],
   };
 }
@@ -111,7 +112,7 @@ export function servicesOf(config: SiteConfig, data?: SectionData) {
 export function worksOf(config: SiteConfig, data?: SectionData) {
   return {
     eyebrow: str(data?.eyebrow) ?? "WORKS",
-    heading: str(data?.heading) ?? "施工実績",
+    heading: str(data?.heading) ?? "実績・事例",
     lead: str(data?.lead),
     items: withPhotos(config, "work", list<Project>(data?.items) ?? config.projects ?? []),
   };
@@ -125,6 +126,7 @@ export function menuOf(config: SiteConfig, data?: SectionData) {
     heading: str(data?.heading) ?? "メニュー",
     lead: str(data?.lead),
     note: str(data?.note),
+    priceNote: str(data?.priceNote) ?? "",
     items: withPhotos(config, "item", list<MenuItem>(data?.items) ?? config.menu ?? []),
   };
 }
@@ -169,7 +171,7 @@ export function voicesOf(config: SiteConfig, data?: SectionData) {
 export function flowOf(config: SiteConfig, data?: SectionData) {
   return {
     eyebrow: str(data?.eyebrow) ?? "FLOW",
-    heading: str(data?.heading) ?? "ご相談から完成までの流れ",
+    heading: str(data?.heading) ?? "ご利用の流れ",
     lead: str(data?.lead),
     note: str(data?.note),
     items: list<FlowStep>(data?.items) ?? config.flow ?? [],
@@ -262,6 +264,7 @@ export function accessOf(config: SiteConfig, data?: SectionData) {
     image: str(data?.image) ?? templatePhoto(config.templateId, "scene-1"),
     mapEmbedUrl: str(data?.mapEmbedUrl) ?? c.mapEmbedUrl,
     ways: list<string>(data?.ways) ?? [],
+    hoursHeading: str(data?.hoursHeading) ?? "営業・受付の時間",
     hoursTable:
       table && Array.isArray(table.head) && Array.isArray(table.rows) && table.rows.length > 0
         ? table
@@ -288,8 +291,12 @@ export function bookingOf(config: SiteConfig, data?: SectionData) {
     lead: str(data?.lead) ?? "日にちが決まっていなくても構いません。まずはご希望をお聞かせください。",
     note: str(data?.note) ?? "お電話でも承ります。受付時間は " + (c.hours || "営業時間内") + " です。",
     image: str(data?.image) ?? templatePhoto(config.templateId, "scene-2"),
-    primary: cta(data?.primaryCta) ?? { label: "予約を申し込む", href: "#booking-form" },
+    primary: cta(data?.primaryCta) ?? { label: "予約を申し込む", href: "#contact" },
     secondary: cta(data?.secondaryCta) ?? (c.phone ? { label: c.phone, href: `tel:${c.phone.replace(/[^\d+]/g, "")}` } : undefined),
+    guidanceHeading: str(data?.guidanceHeading) ?? "お申し込みについて",
+    guidance: list<string>(data?.guidance) ?? ["送信後、予約内容を確認してご連絡します。"],
+    messageLabel: str(data?.messageLabel) ?? "ご希望・ご相談内容",
+    formNote: str(data?.formNote) ?? "いただいた情報はお問い合わせへの対応に使用します。",
     items: list<BookingEvent>(data?.items) ?? config.bookingEvents ?? [],
     purposes: list<string>(data?.purposes) ?? ["見学・体験", "初回のご相談", "見積もりの依頼", "そのほか"],
   };
@@ -302,17 +309,20 @@ export function contactOf(config: SiteConfig, data?: SectionData) {
   return {
     eyebrow: str(data?.eyebrow) ?? "CONTACT",
     heading: str(data?.heading) ?? "お問い合わせ",
-    lead: str(data?.lead) ?? "小さなことでも構いません。1営業日以内にご返信します。",
+    lead: str(data?.lead) ?? "ご不明な点やご相談はこちらからお寄せください。",
     note: str(data?.note),
     purposes: list<string>(data?.purposes) ?? ["相談したい", "見積もりがほしい", "資料がほしい", "そのほか"],
-    primary: cta(data?.primaryCta) ?? { label: "この内容で送る", href: "#contact-form" },
+    primary: cta(data?.primaryCta) ?? (c.email ? { label: "メールで問い合わせる", href: `mailto:${c.email}` } : c.phone ? { label: "電話で問い合わせる", href: `tel:${c.phone.replace(/[^\d+]/g, "")}` } : { label: "お問い合わせ", href: "#contact-form" }),
     secondary: cta(data?.secondaryCta),
-    rows: rows([
+    rows: infoRows(data) ?? rows([
       ["電話", c.phone],
       ["メール", c.email],
       ["受付時間", c.hours],
       ["所在地", c.address],
     ]),
+    emailNote: str(data?.emailNote) ?? "",
+    visitNote: str(data?.visitNote) ?? "",
+    actionHeading: str(data?.actionHeading) ?? "メールでのお問い合わせ",
     company: c,
   };
 }
@@ -352,4 +362,35 @@ export function companyOf(config: SiteConfig, data?: SectionData) {
         ["認証", c.iso],
       ]),
   };
+}
+
+/** Do not link public navigation to list sections that render nothing. The editor still exposes them. */
+export function sectionHasContent(config: SiteConfig, type: string, variant?: string, value?: SectionData): boolean {
+  const resolvers: Record<string, () => { items: unknown[] }> = {
+    strengths: () => strengthsOf(config, value), services: () => servicesOf(config, value),
+    works: () => worksOf(config, value), menu: () => menuOf(config, value),
+    flow: () => flowOf(config, value), faq: () => faqOf(config, value), news: () => newsOf(config, value),
+  };
+  if (resolvers[type]) return resolvers[type]().items.length > 0;
+  if (type === "staff") {
+    const d = staffOf(config, value);
+    return variant === "lead-message" ? Boolean(d.items[0]?.name ?? config.company.ceo) : d.items.length > 0;
+  }
+  if (type === "voices") {
+    const d = voicesOf(config, value);
+    return d.items.length > 0 || (variant === "stats-band" && d.stats.length > 0);
+  }
+  if (type === "booking" && variant === "slots-cards") return bookingOf(config, value).items.length > 0;
+  if (type === "company") {
+    const d = companyOf(config, value);
+    if (variant === "history-timeline") return d.history.length > 0;
+    if (variant === "message-feature") return Boolean(d.message);
+    return d.rows.length > 0;
+  }
+  if (type === "access") {
+    const d = accessOf(config, value);
+    if (variant === "band") return Boolean(config.company.address || config.company.phone);
+    return d.rows.length > 0 || (variant === "map-table" && Boolean(d.mapEmbedUrl));
+  }
+  return true;
 }

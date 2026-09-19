@@ -61,17 +61,15 @@ export default function BookingForm(p: SectionProps) {
             withPreferred
             source="booking/form"
             submitLabel={d.primary.label}
-            messageLabel="ご希望・ご事情"
-            note="いただいた内容は予約のご連絡にだけ使います。"
+            messageLabel={d.messageLabel}
+            note={d.formNote}
           />
         </div>
 
         <aside className="bfm-side">
-          <h3 className="ms-serif">お申し込みの前に</h3>
+          <h3 className="ms-serif">{d.guidanceHeading}</h3>
           <ul className="bfm-points">
-            <li><b>1</b><span>この場では仮のお申し込みです。こちらから折り返して日時を確定します。</span></li>
-            <li><b>2</b><span>ご希望の日にちは第2希望まで書いていただけると、調整が早く済みます。</span></li>
-            <li><b>3</b><span>当日のご都合が変わっても、前日までにご連絡いただければ大丈夫です。</span></li>
+            {d.guidance.map((text, i) => <li key={i}><b>{i + 1}</b><span>{text}</span></li>)}
           </ul>
           <div className="bfm-contact">
             {c.phone && (

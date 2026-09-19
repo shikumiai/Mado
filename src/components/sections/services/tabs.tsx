@@ -50,8 +50,13 @@ export default function ServicesTabs(p: SectionProps) {
   const [active, setActive] = useState(0);
   const uid = useId().replace(/[^a-zA-Z0-9]/g, "");
   if (d.items.length === 0) return null;
-  const cur = d.items[Math.min(active, d.items.length - 1)];
-  const steps = cur.steps || cur.sessionContent || cur.expectedChanges || [];
+  const selected = Math.min(active, d.items.length - 1);
+  const cur = d.items[selected];
+  const lists = [
+    { label: "進め方", items: cur.steps },
+    { label: "実施内容", items: cur.sessionContent },
+    { label: "目指す変化", items: cur.expectedChanges },
+  ].filter(group => group.items?.length);
   return (
     <section id={p.id} className="ms vtb">
       <Base />
@@ -65,7 +70,7 @@ export default function ServicesTabs(p: SectionProps) {
               type="button"
               role="tab"
               id={`${uid}-tab-${i}`}
-              aria-selected={i === active}
+              aria-selected={i === selected}
               aria-controls={`${uid}-panel`}
               className="vtb-tab"
               onClick={() => setActive(i)}
@@ -79,29 +84,32 @@ export default function ServicesTabs(p: SectionProps) {
           className="vtb-body"
           role="tabpanel"
           id={`${uid}-panel`}
-          aria-labelledby={`${uid}-tab-${active}`}
+          aria-labelledby={`${uid}-tab-${selected}`}
         >
           <span className="vtb-icon"><Icon name={cur.icon} size={30} /></span>
-          <F p={p} at={["items", active, "title"]} v={cur.title}>
+          <F p={p} at={["items", selected, "title"]} v={cur.title}>
             <h3 className="vtb-title ms-serif">{cur.title}</h3>
           </F>
-          <F p={p} at={["items", active, "description"]} v={cur.description}>
+          <F p={p} at={["items", selected, "description"]} v={cur.description}>
             <p className="vtb-text">{cur.description}</p>
           </F>
-          {steps.length > 0 && (
+          {lists.map(group => (
+            <div key={group.label}>
+            <h4 className="ms-eyebrow" style={{ marginTop: 24 }}>{group.label}</h4>
             <ul className="vtb-steps">
-              {steps.map((t, i) => (
+              {group.items!.map((t, i) => (
                 <li key={i}>
                   <Check size={15} strokeWidth={2.4} />
                   <span>{t}</span>
                 </li>
               ))}
             </ul>
-          )}
+            </div>
+          ))}
           <div className="vtb-meta">
             {cur.price && <span className="vtb-price ms-serif ms-num">{cur.price}</span>}
             {cur.duration && <span className="ms-chip ms-chip-line">{cur.duration}</span>}
-            <span className="ms-btn-text">相談してみる <ArrowRight size={14} /></span>
+            <a className="ms-btn-text" href={d.primary.href}>{d.primary.label} <ArrowRight size={14} /></a>
           </div>
         </div>
       </div>

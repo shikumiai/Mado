@@ -351,6 +351,8 @@ export interface BrandStyle {
 }
 
 export interface StyleConfig {
+  /** 明示的に選んだ書体。未指定なら従来のテンプレートの書体。 */
+  fontChoice?: string;
   /** 選んだ色（無ければテンプレートの初期色） */
   brand?: BrandStyle;
   colors: {
@@ -379,6 +381,8 @@ export interface StyleConfig {
    メイン設定（全体）
    ═══════════════════════════════════════ */
 export interface SiteConfig {
+  /** 選んだ細目業種（既存サイトは未指定でも互換） */
+  industry?: string;
   // メタ情報
   templateId: string;         // warm-craft | trust-navy | clean-arch
   plan: "otameshi" | "omakase" | "omakase-pro";
@@ -431,7 +435,7 @@ export interface SiteConfig {
  * 編集画面に出る「ページの構成」と、実際に描かれるサイトが食い違わない。
  */
 export function getSections(config: SiteConfig): Section[] {
-  if (config.sections && config.sections.length > 0) {
+  if (config.sections) {
     return config.sections;
   }
   return defaultSectionsFor(config.templateId, config.plan);

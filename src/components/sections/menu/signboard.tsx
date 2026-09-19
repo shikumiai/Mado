@@ -79,7 +79,7 @@ export default function MenuSignboard(p: SectionProps) {
             <F p={p} at={["items", heroIndex, "price"]} v={hero.price}>
               <p className="msb-price ms-serif ms-num">
                 {hero.price}
-                <small>税込</small>
+                {d.priceNote && <small>{d.priceNote}</small>}
               </p>
             </F>
           </div>

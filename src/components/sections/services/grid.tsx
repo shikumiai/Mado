@@ -86,7 +86,7 @@ export default function ServicesGrid(p: SectionProps) {
               </div>
             )}
             <div className="vgr-foot">
-              <span className="ms-btn-text">くわしく <ArrowRight size={14} /></span>
+              <a className="ms-btn-text" href={d.primary.href}>{d.primary.label} <ArrowRight size={14} /></a>
             </div>
           </div>
         ))}

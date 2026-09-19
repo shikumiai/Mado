@@ -12,6 +12,11 @@
  * この画面は画面全体を覆う（fixed inset-0）専用の枠として立ち上げる。
  */
 
+import { industriesForTemplate } from "@/lib/industry-registry";
+import { toTemplateFamily } from "@/lib/templates/catalog";
+import { TEMPLATE_FONTS as FONTS } from "@/lib/templates/fonts";
+import ContentEditor from "@/components/editor/ContentEditor";
+import { setConfigValue as setNestedValue, uploadConfigImages, type ContentPatch } from "@/lib/editor/content-fields";
 import { AiEditor } from "@/components/editor/AiEditor";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
@@ -110,13 +115,7 @@ function remapChanges(
 /* ═══════════════════════════════════════
    フォント
    ═══════════════════════════════════════ */
-const FONTS = [
-  { id: "gothic", label: "ゴシック体", css: "'Noto Sans JP', 'Hiragino Kaku Gothic ProN', sans-serif" },
-  { id: "mincho", label: "明朝体", css: "'Noto Serif JP', 'Hiragino Mincho ProN', serif" },
-  { id: "maru", label: "丸ゴシック", css: "'M PLUS Rounded 1c', 'Noto Sans JP', sans-serif" },
-  { id: "mono", label: "等幅", css: "'JetBrains Mono', 'Noto Sans JP', monospace" },
-  { id: "elegant", label: "エレガント", css: "'Playfair Display', 'Noto Serif JP', serif" },
-];
+
 
 /* ═══════════════════════════════════════
    AI 質問（旧エディタと同じ）
@@ -126,15 +125,6 @@ const FONTS = [
    ═══════════════════════════════════════ */
 
 /** 設定の入れ子パスに値を書き込む（"company.tagline" など） */
-function setNestedValue(obj: Record<string, unknown>, path: string, value: unknown): void {
-  const keys = path.split(".");
-  let current: Record<string, unknown> = obj;
-  for (let i = 0; i < keys.length - 1; i++) {
-    if (!(keys[i] in current) || typeof current[keys[i]] !== "object") current[keys[i]] = {};
-    current = current[keys[i]] as Record<string, unknown>;
-  }
-  current[keys[keys.length - 1]] = value;
-}
 
 /* ═══════════════════════════════════════
    色（代表カラー＋サブ2）
@@ -458,6 +448,8 @@ export default function EditorPage() {
   const [sectionsOpen, setSectionsOpen] = useState(false);
   // カタログを開いている位置（null なら閉じている）
   const [catalogAt, setCatalogAt] = useState<number | null>(null);
+  const [contentAt, setContentAt] = useState<"company" | number | null>(null);
+  const [contentChanged, setContentChanged] = useState(false);
   const [brandOpen, setBrandOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [reviewing, setReviewing] = useState(false);
@@ -482,7 +474,7 @@ export default function EditorPage() {
 
   const aiLocked = plan === "otameshi";
   const changedFieldSet = new Set(changes.keys());
-  const totalChanges = changes.size + (sectionsChanged ? 1 : 0) + (brandChanged ? 1 : 0);
+  const totalChanges = changes.size + (contentChanged ? 1 : 0) + (sectionsChanged ? 1 : 0) + (brandChanged ? 1 : 0);
 
   /* ── 読み込み ───────────────────────── */
   const applyLoaded = useCallback((res: Extract<LoadResult, { ok: true }>) => {
@@ -492,6 +484,7 @@ export default function EditorPage() {
     const loadedPlan = normalizePlanId(res.plan || res.config.plan || "otameshi");
     const initialSections = getSections({ ...res.config, plan: loadedPlan });
     setSiteConfig({ ...res.config, plan: loadedPlan, sections: initialSections });
+    setSelectedFont(FONTS.find(f => f.id === res.config.style?.fontChoice) ?? FONTS[0]);
     setTemplateId(res.templateId || "warm-craft");
     setPlan(loadedPlan);
     setSlug(res.slug);
@@ -503,6 +496,7 @@ export default function EditorPage() {
     setInitialBrandJson(JSON.stringify(initialBrand));
     // 編集中の状態はまっさらに戻す
     setChanges(new Map());
+    setContentChanged(false);
     setSectionsChanged(false);
     setBrandChanged(false);
     setActiveFieldId(null);
@@ -549,6 +543,7 @@ export default function EditorPage() {
 
   const closePanels = useCallback(() => {
     setSectionsOpen(false);
+    setContentAt(null);
     setCatalogAt(null);
     setBrandOpen(false);
     setHistoryOpen(false);
@@ -702,7 +697,8 @@ export default function EditorPage() {
     setActiveFieldId(fieldId);
     setActiveFieldValue(currentValue);
     setActiveFieldType(fieldType);
-    setEditText(changes.get(fieldId)?.newValue || currentValue);
+    setEditText(changes.get(fieldId)?.newValue ?? currentValue);
+    setContentAt(null);
   }, [mode, changes]);
 
   const confirmEdit = useCallback(() => {
@@ -727,10 +723,26 @@ export default function EditorPage() {
       const updated = JSON.parse(JSON.stringify(siteConfig));
       setNestedValue(updated, t.path, stored);
       setSiteConfig(updated);
+      setSections(updated.sections);
     }
     setActiveFieldId(null);
     setEditText("");
   }, [activeFieldId, activeFieldValue, editText, siteConfig]);
+
+  function openContent(at: "company" | number) {
+    cancelEdit(); closePanels(); setContentAt(at);
+  }
+  function applyContent(patches: ContentPatch[]) {
+    if (!siteConfig) return;
+    const updated = structuredClone(siteConfig);
+    for (const patch of patches) setNestedValue(updated, patch.path, patch.value);
+    setSiteConfig(updated);
+    setSections(getSections(updated));
+    if (patches.length || changes.size) setContentChanged(true);
+    // Changes are already in updated. Old inline review entries may refer to removed list rows.
+    setChanges(new Map());
+    setContentAt(null);
+  }
 
   /* ── 履歴の取得（保存のたびに更新） ── */
   const refreshHistory = useCallback(async () => {
@@ -747,42 +759,22 @@ export default function EditorPage() {
     if (!siteConfig) return;
     setApplying(true);
     try {
-      const next: SiteConfig = JSON.parse(JSON.stringify(siteConfig));
-      const target = next as unknown as Record<string, unknown>;
-      const failed: Array<{ field: string; error: string }> = [];
-      let applied = 0;
-
-      for (const c of changes.values()) {
-        if (c.newValue.startsWith("data:image/")) {
-          const up = await uploadDataUrl(siteId, c.newValue);
-          if (!up.ok) {
-            failed.push({ field: fieldLabel(c.label), error: up.message });
-            continue;
-          }
-          setNestedValue(target, c.path, up.url);
-        } else {
-          setNestedValue(target, c.path, c.newValue);
-        }
-        applied++;
-      }
-
-      if (sectionsChanged) {
-        next.sections = sections;
-        applied++;
-      }
-
-      if (brandChanged) {
-        // 色は style.brand が正。style.colors も同じ色から作り直して食い違わせない
-        next.style = styleWithBrand(next.style, brandToColors(brand));
-        applied++;
-      }
+      // siteConfig is the latest complete draft. Never replay stale field paths or sections.
+      const next = await uploadConfigImages(siteConfig, async (dataUrl) => {
+        const result = await uploadDataUrl(siteId, dataUrl);
+        if (!result.ok) throw new Error(result.message);
+        return result.url;
+      });
+      const applied = totalChanges;
 
       const res = await saveSiteConfig(siteId, next, version, "編集画面から保存");
 
       if (res.ok) {
         setVersion(res.version);
         setSiteConfig(next);
+        setSections(getSections(next));
         setChanges(new Map());
+    setContentChanged(false);
         setSectionsChanged(false);
         setInitialSectionsJson(JSON.stringify(getSections(next)));
         const savedBrand = brandFromConfig(next);
@@ -790,16 +782,7 @@ export default function EditorPage() {
         setInitialBrandJson(JSON.stringify(savedBrand));
         setBrandChanged(false);
         setReviewing(false);
-        if (failed.length) {
-          toast({
-            title: "一部だけ反映しました",
-            description: `${applied}件を反映しました。写真 ${failed.length}件はうまく送れませんでした。もう一度お試しください。`,
-            tone: "warn",
-            duration: 8000,
-          });
-        } else {
-          toast({ title: "反映しました", description: `${applied}件の変更をサイトに反映しました。`, tone: "success" });
-        }
+        toast({ title: "反映しました", description: `${applied}件の変更をサイトに反映しました。`, tone: "success" });
         void refreshHistory();
       } else if (res.reason === "conflict") {
         setReviewing(false);
@@ -826,7 +809,7 @@ export default function EditorPage() {
     }
     // refreshHistory / toast は依存に含めない（関数は下で安定）
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [changes, siteId, version, siteConfig, sectionsChanged, sections, brandChanged, brand]);
+  }, [siteId, version, siteConfig, totalChanges]);
 
   /* ── 履歴 ───────────────────────────── */
   function openHistory() {
@@ -849,6 +832,7 @@ export default function EditorPage() {
       if (res.ok) {
         setVersion(res.version);
         setSiteConfig(cfg);
+        setSelectedFont(FONTS.find(f => f.id === cfg.style?.fontChoice) ?? FONTS[0]);
         const s = getSections(cfg);
         setSections(s);
         setInitialSectionsJson(JSON.stringify(s));
@@ -856,6 +840,7 @@ export default function EditorPage() {
         setBrand(restoredBrand);
         setInitialBrandJson(JSON.stringify(restoredBrand));
         setChanges(new Map());
+    setContentChanged(false);
         setSectionsChanged(false);
         setBrandChanged(false);
         setHistoryOpen(false);
@@ -921,7 +906,7 @@ export default function EditorPage() {
   return (
     <div className="fixed inset-0 z-40 flex flex-col bg-bg text-ink">
       {/* ── ヘッダー ── */}
-      <header inert={aiSaving} className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-surface px-3 py-2 sm:px-4">
+      <header inert={aiSaving || applying} className="relative z-10 flex flex-wrap items-center justify-between gap-2 border-b border-line bg-surface px-3 py-2 sm:px-4">
         <div className="flex min-w-0 items-center gap-2">
           <Link
             href="/app"
@@ -935,7 +920,8 @@ export default function EditorPage() {
           <Tabs tabs={modeTabs} value={mode} onValueChange={switchMode} aria-label="編集モード" />
 
           {mode === "edit" && (
-            <div className="hidden items-center gap-1 sm:flex">
+            <div className="flex flex-wrap items-center gap-1">
+              <Button size="sm" variant="ghost" onClick={() => openContent("company")}>内容・会社情報</Button>
               <button
                 type="button"
                 onClick={() => { cancelEdit(); closePanels(); setSectionsOpen(true); }}
@@ -1009,6 +995,7 @@ export default function EditorPage() {
               type="button"
               onClick={() => setShowFontMenu((v) => !v)}
               aria-haspopup="menu"
+              aria-label="書体を選ぶ"
               aria-expanded={showFontMenu}
               className="inline-flex h-8 items-center gap-1.5 rounded-md border border-line bg-surface px-2.5 text-xs text-ink outline-none transition hover:bg-surface2 focus-visible:ring-2 focus-visible:ring-ring"
             >
@@ -1025,7 +1012,7 @@ export default function EditorPage() {
                       role="menuitemradio"
                       aria-checked={selectedFont.id === f.id}
                       type="button"
-                      onClick={() => { setSelectedFont(f); setShowFontMenu(false); }}
+                      onClick={() => { setSelectedFont(f); setSiteConfig({ ...siteConfig, style: { ...siteConfig.style, fontChoice: f.id } }); setContentChanged(true); setShowFontMenu(false); }}
                       style={{ fontFamily: f.css }}
                       className={[
                         "block w-full rounded-md px-3 py-2 text-left text-sm outline-none transition focus-visible:ring-2 focus-visible:ring-ring",
@@ -1069,7 +1056,7 @@ export default function EditorPage() {
       </header>
 
       {/* ── メイン ── */}
-      <div className="flex-1 overflow-hidden">
+      <div inert={applying} className="relative z-0 flex-1 overflow-hidden">
         <div hidden={mode !== "ai"} className="h-full overflow-y-auto">
             <div className="mx-auto max-w-lg px-4 py-8">
               {renderAi()}
@@ -1090,6 +1077,7 @@ export default function EditorPage() {
                   config={siteConfig}
                   editMode={mode === "edit"}
                   onFieldClick={handleFieldClick}
+                  onSectionEdit={openContent}
                   changedFields={changedFieldSet}
                 />
               </div>
@@ -1152,6 +1140,7 @@ export default function EditorPage() {
         description="足す・外す・並べ替え・見せ方を決めます。変更はすぐプレビューに映ります。"
       >
         <SectionPanel
+          config={siteConfig}
           sections={sections}
           onChange={handleSectionsChange}
           templateId={templateId}
@@ -1173,6 +1162,26 @@ export default function EditorPage() {
           onPick={insertSection}
         />
       )}
+
+      <Sheet open={contentAt !== null && mode === "edit"} onClose={() => setContentAt(null)} side="right" title="サイトの内容" description="会社情報・ボタン・一覧などを編集できます。">
+        {contentAt !== null && <>
+          <label className="mb-4 block text-sm font-bold">編集する場所
+            <select className="mt-2 w-full rounded-md border border-line bg-surface p-2 text-ink" value={contentAt} onChange={(e) => setContentAt(e.target.value === "company" ? "company" : Number(e.target.value))}>
+              <option value="company">会社情報・ヘッダー・フッター</option>
+              {sections.map((s, i) => <option key={i} value={i}>{i + 1}. {s.label || s.type}{s.visible === false ? "（非表示）" : ""}</option>)}
+            </select>
+          </label>
+          {contentAt === "company" && <label className="mb-4 block text-sm font-bold">業種
+            <select className="mt-2 w-full rounded-md border border-line bg-surface p-2 text-ink" value={siteConfig.industry ?? ""} onChange={(e) => { setSiteConfig({ ...siteConfig, industry: e.target.value || undefined }); setContentChanged(true); }}>
+              <option value="">このテンプレートの共通ひな形</option>
+              {industriesForTemplate(toTemplateFamily(templateId)).map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
+            </select>
+            <span className="mt-1 block text-xs font-normal text-ink3">業種を変えても入力済みの内容は残ります。各部品で「ひな形に戻す」を選ぶと、この業種の文章に置き換えられます。</span>
+          </label>}
+          {typeof contentAt === "number" && <Field label="メニューに表示する部品名" value={sections[contentAt]?.label ?? ""} onChange={(e) => applySections(sections.map((s, i) => i === contentAt ? { ...s, label: e.target.value } : s))} />}
+          <ContentEditor key={contentAt} config={siteConfig} index={contentAt === "company" ? null : contentAt} onApply={applyContent} />
+        </>}
+      </Sheet>
 
       {/* ── 色（右から） ── */}
       <Sheet
@@ -1267,6 +1276,7 @@ export default function EditorPage() {
                 </div>
               </li>
             ))}
+            {contentChanged && <li className="p-3 text-sm">会社情報・部品の内容を変更</li>}
             {sectionsChanged && (
               <li className="flex items-start gap-2 p-3">
                 <Check className="mt-0.5 size-4 shrink-0 text-accent" aria-hidden />

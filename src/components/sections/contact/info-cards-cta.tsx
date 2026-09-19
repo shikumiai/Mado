@@ -85,7 +85,7 @@ export default function ContactInfoCardsCta(p: SectionProps) {
                 メール
               </span>
               <b>{c.email}</b>
-              <p>お急ぎでなければ、こちらでも承ります。</p>
+              <p>{d.emailNote}</p>
             </div>
           )}
           {c.address && (
@@ -95,7 +95,7 @@ export default function ContactInfoCardsCta(p: SectionProps) {
                 ご来社
               </span>
               <b>{c.address}</b>
-              <p>お越しの前にひとことご連絡ください。</p>
+              <p>{d.visitNote}</p>
             </div>
           )}
         </div>
@@ -103,7 +103,7 @@ export default function ContactInfoCardsCta(p: SectionProps) {
 
       <div className="cic-cta">
         <div>
-          <h3 className="ms-serif">書いて送るほうが気楽な方へ</h3>
+          <h3 className="ms-serif">{d.actionHeading}</h3>
           <p>{d.lead}</p>
         </div>
         <a className="cic-btn" href={d.primary.href}>

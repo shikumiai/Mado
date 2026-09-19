@@ -418,6 +418,11 @@ export function useSiteLink(): SiteLink | null {
 }
 
 /** 詳細ページを持てる機能 */
+const DetailScopeContext = createContext<string | null>(null);
+export function DetailScopeProvider({ scope, children }: { scope: string | null; children: ReactNode }) {
+  return <DetailScopeContext.Provider value={scope}>{children}</DetailScopeContext.Provider>;
+}
+
 export type DetailSection = "works" | "staff" | "menu" | "news";
 
 /** 一覧の1件を指す文字列。slug があればそれ、無ければ id、それも無ければ並び順 */
@@ -451,7 +456,9 @@ export function DetailLink({
   children: ReactNode;
 }) {
   const site = useSiteLink();
-  const href = detailHref(site, section, itemKeyOf(item, index));
+  const scope = useContext(DetailScopeContext);
+  const key = itemKeyOf(item, index);
+  const href = detailHref(site, section, scope ? `@${scope}~${key}` : key);
   if (!href) return <>{children}</>;
   return (
     <a className={`ms-dlink${className ? ` ${className}` : ""}`} href={href}>

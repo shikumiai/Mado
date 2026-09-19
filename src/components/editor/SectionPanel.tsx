@@ -32,7 +32,8 @@ import { CSS } from "@dnd-kit/utilities";
 import {
   GripVertical, Eye, EyeOff, LayoutTemplate, Check, Lock, Star, Copy, Trash2, Plus,
 } from "lucide-react";
-import type { Section } from "@/lib/site-config-schema";
+import type { Section, SiteConfig } from "@/lib/site-config-schema";
+import { duplicateSectionData } from "@/lib/editor/content-fields";
 import { SECTION_CATALOG, type SectionTypeEntry } from "@/components/sections";
 import {
   getTemplateOrDefault,
@@ -56,6 +57,7 @@ export interface SectionsChangeMeta {
 }
 
 interface Props {
+  config: SiteConfig;
   sections: Section[];
   onChange: (sections: Section[], meta?: SectionsChangeMeta) => void;
   /** 業種テンプレート（プランで増える機能を出すために使う） */
@@ -309,7 +311,7 @@ function SortableItem({
    本体
    ═══════════════════════════════════════ */
 
-export default function SectionPanel({ sections, onChange, templateId, plan, onRequestAdd }: Props) {
+export default function SectionPanel({ config, sections, onChange, templateId, plan, onRequestAdd }: Props) {
   const [openKey, setOpenKey] = useState<string | null>(null);
 
   const sensors = useSensors(
@@ -348,6 +350,7 @@ export default function SectionPanel({ sections, onChange, templateId, plan, onR
     const source = sections[index];
     if (!source) return;
     const copy: Section = JSON.parse(JSON.stringify(source));
+    copy.data = duplicateSectionData({ ...config, sections }, index);
     copy.id = uniqueAnchor(sections, String(source.id || source.type));
     const next = [...sections.slice(0, index + 1), copy, ...sections.slice(index + 1)];
     onChange(next, {

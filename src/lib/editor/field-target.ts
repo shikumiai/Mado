@@ -108,7 +108,7 @@ interface ResolvedSection {
 /** その番号のセクション（config に書かれていなければテンプレートの既定） */
 function sectionAt(config: SiteConfig, index: number): ResolvedSection | null {
   const list =
-    config.sections && config.sections.length > 0
+    config.sections
       ? config.sections
       : defaultSectionsFor(config.templateId, config.plan);
   const s = list[index];
@@ -118,7 +118,7 @@ function sectionAt(config: SiteConfig, index: number): ResolvedSection | null {
 
 /** そのセクションが自分でその配列を持っているか（持っていれば読む側も data） */
 function hasOwnList(data: SectionData | undefined, key: string): boolean {
-  return Array.isArray(data?.[key]) && (data[key] as unknown[]).length > 0;
+  return Array.isArray(data?.[key]);
 }
 
 /** 表の行（見出しと値）を、部品と同じやり方で組み立て直す */
@@ -148,9 +148,15 @@ export function resolveFieldTarget(config: SiteConfig, fieldId: string): FieldTa
   const { type, data } = section;
 
   /* ── 一覧の中身 ── */
-  const list = /^(items|stats|history)\.(\d+)\.(.+)$/.exec(rest);
+  const list = /^(items|stats|history)(?:\.(\d+)\.(.+))?$/.exec(rest);
   if (list) {
     const [, listName, at, field] = list;
+    const staffItems = hasOwnList(data, "items") ? data!.items as unknown[] : config.staff;
+    if (type === "staff" && listName === "items" && at === "0" && !staffItems?.length) {
+      const fields: Record<string, string> = { name: "ceo", role: "ceoTitle", image: "ceoPhoto", bio: "bio", philosophy: "bio" };
+      if (fields[field]) return { path: `company.${fields[field]}` };
+    }
+
     if (hasOwnList(data, listName)) return { path: inData };
 
     const source =
@@ -160,13 +166,17 @@ export function resolveFieldTarget(config: SiteConfig, fieldId: string): FieldTa
           ? HISTORY_SOURCE
           : ITEM_SOURCE[type];
 
-    return source ? { path: `${source}.${at}.${field}` } : { path: inData };
+    return source ? { path: at === undefined ? source : `${source}.${at}.${field}` } : { path: inData };
   }
 
   /* ── 表の行（会社情報から組み立てているもの） ── */
   const row = /^rows\.(\d+)\.value$/.exec(rest);
   if (row) {
-    if (hasOwnList(data, "rows")) return { path: inData };
+    if (hasOwnList(data, "rows")) {
+      const raw = data!.rows as InfoRow[];
+      const indices = raw.flatMap((r, i) => r.label?.trim() && r.value?.trim() ? [i] : []);
+      return { path: `sections.${index}.data.rows.${indices[Number(row[1])] ?? Number(row[1])}.value` };
+    }
     const rows = rowsOfSection(config, type, data);
     const label = rows[Number(row[1])]?.label;
     const field = label ? ROW_FIELD[label] : undefined;
@@ -177,7 +187,7 @@ export function resolveFieldTarget(config: SiteConfig, fieldId: string): FieldTa
       const title = config.company.ceoTitle;
       return {
         path: "company.ceo",
-        toStored: (v) => (title ? v.replace(new RegExp(`（${title}）\\s*$`), "").trim() : v),
+        toStored: (v) => title && v.trimEnd().endsWith(`（${title}）`) ? v.trimEnd().slice(0, -(`（${title}）`.length)).trim() : v,
       };
     }
     return { path: `company.${field}` };
@@ -186,7 +196,7 @@ export function resolveFieldTarget(config: SiteConfig, fieldId: string): FieldTa
   /* ── 1つだけの項目 ── */
   if (!rest.includes(".")) {
     const own = data?.[rest];
-    const written = typeof own === "string" && own.trim() !== "";
+    const written = typeof own === "string";
     const source = FIELD_SOURCE[type]?.[rest];
     if (!written && source) return { path: source };
   }

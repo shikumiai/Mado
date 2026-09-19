@@ -10,6 +10,7 @@ import { customerSiteUrl, customerSiteLabel } from "./resolve-site";
 import { type BrandColors, styleWithBrand } from "./palette";
 import { defaultSectionsFor } from "./templates/catalog";
 import { templatePhoto } from "./templates/photos";
+import { industryCopy } from "./templates/starter-content";
 import { sampleSectionSeed } from "./templates/sample-content";
 
 interface OrderFormData {
@@ -59,6 +60,7 @@ export function generateSiteConfig(formData: OrderFormData): SiteConfig {
 
   const base: SiteConfig = {
     templateId: formData.templateId,
+    industry: formData.industry,
     plan,
     orderId: formData.orderId,
     siteUrl,
@@ -67,6 +69,8 @@ export function generateSiteConfig(formData: OrderFormData): SiteConfig {
     // 書かなければ描く側が既定に落としてくれるが、書いておけば
     // 編集画面の「ページの構成」と公開サイトが最初から同じものを指す。
     sections: defaultSectionsFor(formData.templateId, plan).map((section) => {
+      const copy = industryCopy(formData.templateId, formData.industry);
+      section = { ...section, label: section.type === "works" ? copy.works : section.type === "menu" || section.type === "services" ? copy.menu : section.type === "booking" ? copy.booking : section.type === "flow" ? "ご利用の流れ" : section.type === "staff" ? "私たちについて" : section.type === "access" ? "アクセス・ご利用案内" : section.type === "voices" ? "お客様の声" : section.label };
       const role = SECTION_PHOTO[section.type];
       return role
         ? { ...section, data: { ...section.data, image: templatePhoto(baseTemplate, role) } }

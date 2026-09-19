@@ -76,7 +76,7 @@ export default function StaffEditorial(p: SectionProps) {
               </F>
               <p className="ted-role">{[lead.role, lead.experience].filter(Boolean).join("　/　")}</p>
               {(lead.philosophy || lead.bio) && (
-                <F p={p} at={["items", 0, "bio"]} v={lead.philosophy || lead.bio || ""}>
+                <F p={p} at={["items", 0, lead.philosophy ? "philosophy" : "bio"]} v={lead.philosophy || lead.bio || ""}>
                   <p className="ted-text">{lead.philosophy || lead.bio}</p>
                 </F>
               )}

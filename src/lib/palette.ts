@@ -570,8 +570,9 @@ export function templatePreviewUrl(
   templateId: string,
   brand?: Partial<BrandColors> | null,
   plan?: string | null,
+  industry?: string | null,
 ): string {
-  const q = [brandToQuery(brand), plan ? `plan=${plan}` : ""].filter(Boolean).join("&");
+  const q = [brandToQuery(brand), plan ? `plan=${plan}` : "", industry ? `industry=${encodeURIComponent(industry)}` : ""].filter(Boolean).join("&");
   return `/portfolio-templates/${templateId}${q ? `?${q}` : ""}`;
 }
 
