@@ -114,14 +114,8 @@ export const PLAN_YEARLY_PRICES: Record<Plan, string> = {
   "omakase-pro": "¥3,980",
 };
 
-/**
- * プランごとの月間編集依頼上限
- */
-export const PLAN_EDIT_LIMITS: Record<Plan, number> = {
-  otameshi: 0,        // AI編集不可（手動編集のみ）
-  omakase: 3,         // 月3回
-  "omakase-pro": 999, // 無制限
-};
+/** 月間AIクレジットは ai/policy.ts が正。 */
+export { AI_ALLOWANCE as PLAN_AI_CREDITS } from "./ai/policy";
 
 /**
  * プランの並び順（無料→上位）。プラン変更で「上げる／下げる」を見分けるのに使う。
@@ -146,6 +140,6 @@ export const PLAN_TAGLINES: Record<Plan, string> = {
  */
 export const PLAN_FEATURES: Record<Plan, string[]> = {
   otameshi: ["独自ドメインに対応", "自分で手動で編集", "AIでの編集はなし"],
-  omakase: ["独自ドメインに対応", "AIでの編集 月3回まで", "写真を送るだけでおまかせ"],
-  "omakase-pro": ["独自ドメインに対応", "AIでの編集 無制限", "予約・AIチャット・SEO設計つき"],
+  omakase: ["独自ドメインに対応", "AI 月30クレジット・会社情報の反映も対応", "写真を送るだけでおまかせ"],
+  "omakase-pro": ["独自ドメインに対応", "AI 月100クレジット・会社情報の反映も対応", "予約・AIチャット・SEO設計つき"],
 };

@@ -60,6 +60,7 @@ export interface SignupDraftPatch {
   phone?: string;
   /** 途中まで進んだ位置。再開に使う */
   step?: number;
+  flowVersion?: number;
 }
 
 /** サーバーに保存されている下書き一式 */
@@ -76,6 +77,7 @@ export interface SignupDraftState {
   email: string;
   phone: string;
   step: number;
+  flowVersion?: number;
 }
 
 export type SlugAvailability =
@@ -127,6 +129,7 @@ interface SignupMeta {
   family?: string | null;
   industryId?: string | null;
   step?: number;
+  flowVersion?: number;
   savedAt?: string;
 }
 
@@ -216,6 +219,7 @@ function toDraftState(row: DraftRow): SignupDraftState {
     companyName: row.org.name === row.slug ? "" : row.org.name || "",
     email: row.org.email || "",
     phone: row.org.phone || "",
+    flowVersion: meta.flowVersion,
     step: typeof meta.step === "number" ? meta.step : 0,
   };
 }
@@ -356,6 +360,7 @@ async function writeDraft(
     family: family ?? null,
     industryId: industryId ?? null,
     step,
+    flowVersion: patch.flowVersion ?? current.flowVersion,
     savedAt: new Date().toISOString(),
   };
 

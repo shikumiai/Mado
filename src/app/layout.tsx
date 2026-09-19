@@ -111,7 +111,7 @@ const jsonLd = {
           price: "1480",
           priceCurrency: "JPY",
           description:
-            "部品の追加、AI編集 月3回、導線チェック 3本と追跡リンク。月額。",
+            "部品の追加、AI 月30クレジット、導線チェック 3本と追跡リンク。月額。",
         },
         {
           "@type": "Offer",
@@ -119,7 +119,7 @@ const jsonLd = {
           price: "4980",
           priceCurrency: "JPY",
           description:
-            "AI編集 無制限、導線チェック 無制限、予約と採用の部品。月額。",
+            "AI 月100クレジット、導線チェック 無制限、予約と採用の部品。月額。",
         },
       ],
       areaServed: { "@type": "Country", name: "JP" },

@@ -103,17 +103,27 @@ export async function requireSiteAccess(
   const supabase = await createServerSupabase();
   if (!supabase) return { ok: false, reason: "unauthenticated" };
 
-  const { data: userData } = await supabase.auth.getUser();
-  if (!userData?.user) return { ok: false, reason: "unauthenticated" };
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData?.user) return { ok: false, reason: "unauthenticated" };
 
-  // RLS 越しに引く。自分の会社のサイトでなければ返ってこない
+  // 公開サイトは第三者にもSELECT可能。読めることを編集許可とみなさない。
   const { data, error } = await supabase
     .from("sites")
-    .select("id, slug, template_id, status")
+    .select("id, org_id, slug, template_id, status")
     .eq("id", siteId)
     .maybeSingle();
 
   if (error || !data) return { ok: false, reason: "forbidden" };
+
+  const [membership, admin] = await Promise.all([
+    supabase.from("org_members").select("role")
+      .eq("org_id", data.org_id).eq("user_id", userData.user.id).maybeSingle(),
+    supabase.from("platform_admins").select("user_id")
+      .eq("user_id", userData.user.id).maybeSingle(),
+  ]);
+  const canEdit = !membership.error && ["owner", "editor"].includes(membership.data?.role ?? "");
+  const isAdmin = !admin.error && Boolean(admin.data);
+  if (!canEdit && !isAdmin) return { ok: false, reason: "forbidden" };
 
   return {
     ok: true,
