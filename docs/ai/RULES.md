@@ -12,6 +12,6 @@
 - 検証: npm run lint / npx tsc --noEmit / npm run build / ブラウザで主要導線。
 - 認証・権限・DBは独立レビューを行う。ユーザーは今回の既存環境へのデプロイを依頼済み。
 - 秘密鍵をGit・ログへ記録しない。開発サーバーを常駐させない。
-- メール送信は `src/lib/mail.ts`（SMTP）。環境変数 `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `MAIL_FROM`。送信元は `info@shikumiai.com`（エックスサーバーのメール箱）。未設定なら送らずに記録だけ残す。
+- メール送信は `src/lib/mail.ts`（SMTP）。環境変数 `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `MAIL_FROM`。送信元は `support@shikumiai.com`（エックスサーバーのメール箱。`info@` は会社の代表窓口）。未設定なら送らずに記録だけ残す。
 - AI編集のモデルは `ANTHROPIC_MODEL`（既定 `claude-sonnet-5`）。鍵は `ANTHROPIC_API_KEY`。無ければ OpenAI かデモに落ちる。
 - 判断の記録は `docs/ai/DECISIONS.md`、全体の設計は `docs/SERVICE_DESIGN_V1.md`。本番への merge とデプロイは Claude Code が行う。
