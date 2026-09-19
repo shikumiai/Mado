@@ -35,17 +35,21 @@
 - reserve/finish/balance RPCはservice_role専用・SECURITY INVOKER。顧客は費用・plan・期間・枠を書き換えられない。
 - org行をFOR UPDATEして全サイトを直列化。一社一処理、予算予約後だけAPIへ。
 - requestId＋内容hash＋site＋userで二重生成防止。レスポンス不明時は同じIDで取得。新しい入力・新しい生成には新ID。
-- 5分過ぎた実行中記録は次の予約時に失敗扱い。ユーザー枠を返すが原価用の試行枠は返さない。
+- 5分過ぎた実行中記録は残高の再読込または次の予約時に失敗扱い。最後の残高を使い切っていても、画面を開き直すと利用枠を返す。原価用の試行枠は返さない。
 - 変更案はai_requests.resultへ保存、RLSで編集者だけ閲覧可能。入力全文・API鍵をログに出さない。
 - DB未適用/未接続、OPENAI_API_KEY未設定は503で停止。固定の偽デモ文章は返さない。
 
 ## 展開と検証
 
-追加migration: 20260919174341_site_editor_write_roles.sql（PR#11と同一）→20260919182602_ai_credits.sql。実DB未適用。
+追加migration: 20260919174341_site_editor_write_roles.sql（PR#11と同一）→20260919182602_ai_credits.sql。2026-09-20にtayfsmypscyndfekbzsxへMCPで適用済み。MCPが付けたDB履歴はそれぞれ20260919190735 / 20260919190822（同名・同内容）。ローカルファイルの時刻とは異なるため、次のCLI db pushの前に履歴照合が必要。
 現行ANTHROPIC_API_KEYがあっても自動的に高価なモデルへ切り替えない。OPENAI_API_KEYの存在を確認してから有効化。
 
-node scripts/ai-check.cjs / node scripts/ai-credits-check.mjs / node scripts/site-access-check.cjs / node scripts/site-editor-rls-check.mjs。
-SQL検証は@electric-sql/pglite@0.4.0を.verification/pg-testに入れ実migrationを実行。単一接続のPromise.allは実サーバーの多接続競合試験の代わりにはならない。実Postgresで同時トランザクション確認を展開前に行う。
+node scripts/ai-check.cjs / node scripts/ai-billing-check.cjs / node scripts/ai-credits-check.mjs / node scripts/site-access-check.cjs / node scripts/site-editor-rls-check.mjs。
+SQL検証は@electric-sql/pglite@0.4.0を.verification/pg-testに入れ実migrationを実行。加えてnative PostgreSQL 18.4で全SQLケースと多接続競合を検証済み。別backendのロック待ちをpg_stat_activityで確認し、残り5クレジットに会社生成を2件並行要求して、1件だけreserved・もう1件limit、使用量30を確認した。
+
+再実行: `npm install --prefix .verification/native-pg --no-audit --no-fund embedded-postgres@18.4.0-beta.17` → `node scripts/ai-native-check.mjs`。localhost:55467だけで一時DBを起動しfinallyで停止。プロジェクト外や本番DBへ接続しない。データフォルダは検証用ディレクトリ内に保持する。
+
+本番DBへの検証用org/site/仮subscription作成は自動承認で拒否された。代わりに上記の独立した一時DBで検証し、本番の検証データは0件であることを確認済み。実Stripe/OpenAI生成と実ユーザーの一連の操作は未試験。
 
 ## 続けてやる価値のあるタスク
 
