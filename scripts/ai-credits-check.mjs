@@ -42,6 +42,8 @@ try{
  assert.equal((await call()).status,'budget');
  await db.exec("update ai_requests set period='2020-01'");assert.equal((await call()).status,'reserved');
  await db.exec("update ai_requests set created_at=now()-interval '6 minutes' where status='running'");r=await call();assert.equal(r.status,'reserved');assert.equal(r.balance.used,1);assert.equal(r.balance.attempted,2);
+ await db.exec("update ai_requests set created_at=now()-interval '6 minutes' where status='running'");
+ const refreshed=(await db.query('select public.ai_credit_balance($1) r',[org])).rows[0].r;assert.equal(refreshed.used,0);assert.equal(refreshed.attempted,2);
  await db.query('delete from org_members where user_id=$1',[owner]);assert.equal((await call()).status,'forbidden');
  console.log('PASS SQL: repeat migration, RPC grants, paid subscription requirement, owner/editor/admin, viewer/outsider, shared multi-site budget, in-flight lock, idempotency, plan change, failure refunds/budget cap, stale settlement, month rollover, revoked membership');
 }finally{await db.close()}

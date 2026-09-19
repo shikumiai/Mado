@@ -22,16 +22,21 @@ create policy ai_requests_read on public.ai_requests for select to authenticated
   using (public.can_edit_site(site_id));
 
 create or replace function public.ai_credit_balance(p_org_id uuid) returns jsonb
-language sql stable security invoker set search_path = '' as $$
+language plpgsql volatile security invoker set search_path = '' as $$
+declare v_result jsonb;
+begin
+  perform 1 from public.orgs where id=p_org_id for update;
+  update public.ai_requests set status='failed' where org_id=p_org_id and status='running' and created_at < now()-interval '5 minutes';
   select jsonb_build_object(
     'limit', case when (o.status <> 'active' or o.stripe_subscription_id is null) then 0 when o.plan='omakase' then 30 when o.plan='omakase-pro' then 100 else 0 end,
     'used', coalesce(sum(r.credits) filter (where r.status <> 'failed'),0),
     'attempted', coalesce(sum(r.credits),0),
     'resetsAt', (date_trunc('month',now() at time zone 'Asia/Tokyo') + interval '1 month') at time zone 'Asia/Tokyo'
-  ) from public.orgs o left join public.ai_requests r on r.org_id=o.id
+  ) into v_result from public.orgs o left join public.ai_requests r on r.org_id=o.id
     and r.period=to_char(now() at time zone 'Asia/Tokyo','YYYY-MM')
   where o.id=p_org_id group by o.id,o.plan,o.status;
-$$;
+  return v_result;
+end $$;
 revoke all on function public.ai_credit_balance(uuid) from public, anon, authenticated;
 grant execute on function public.ai_credit_balance(uuid) to service_role;
 

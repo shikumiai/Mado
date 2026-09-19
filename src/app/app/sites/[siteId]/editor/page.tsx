@@ -453,6 +453,7 @@ export default function EditorPage() {
   const [device, setDevice] = useState<"mobile" | "desktop">("desktop");
 
   // モードとパネル
+  const [aiSaving, setAiSaving] = useState(false);
   const [mode, setMode] = useState<"view" | "edit" | "ai">("edit");
   const [sectionsOpen, setSectionsOpen] = useState(false);
   // カタログを開いている位置（null なら閉じている）
@@ -584,6 +585,7 @@ export default function EditorPage() {
   }, [loading, revealSection]);
 
   function switchMode(next: string) {
+    if (aiSaving) return;
     if (next === "ai" && aiLocked) {
       toast({
         title: "AI編集はおまかせプラン以上で使えます",
@@ -919,7 +921,7 @@ export default function EditorPage() {
   return (
     <div className="fixed inset-0 z-40 flex flex-col bg-bg text-ink">
       {/* ── ヘッダー ── */}
-      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-surface px-3 py-2 sm:px-4">
+      <header inert={aiSaving} className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-surface px-3 py-2 sm:px-4">
         <div className="flex min-w-0 items-center gap-2">
           <Link
             href="/app"
@@ -1068,13 +1070,12 @@ export default function EditorPage() {
 
       {/* ── メイン ── */}
       <div className="flex-1 overflow-hidden">
-        {mode === "ai" ? (
-          <div className="h-full overflow-y-auto">
+        <div hidden={mode !== "ai"} className="h-full overflow-y-auto">
             <div className="mx-auto max-w-lg px-4 py-8">
               {renderAi()}
             </div>
           </div>
-        ) : (
+        {mode !== "ai" && (
           <div className="h-full overflow-y-auto">
             <div className="flex min-h-full justify-center p-3 sm:p-5">
               <div
@@ -1305,7 +1306,8 @@ export default function EditorPage() {
   function renderAi() {
     if (!siteConfig) return null;
     return <AiEditor key={version} siteId={siteId} config={siteConfig} version={version}
-      hasUnsavedChanges={totalChanges > 0}
+      hasUnsavedChanges={totalChanges > 0 || reloading || applying || restoringVersion !== null}
+      onSavingChange={setAiSaving} onConflict={() => setNeedsReload(true)}
       onSaved={(config, nextVersion) => {
         applyLoaded({ ok: true, siteId, config, version: nextVersion, templateId, slug, status: "live", plan, orgName: "" });
         toast({ title: "AIの提案を反映しました", tone: "success" });

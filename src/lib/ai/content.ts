@@ -23,13 +23,22 @@ export function aiTargets(config: SiteConfig, kind: AiKind): AiTarget[] {
   const company = config.company as unknown as Record<string, unknown>;
   const targets = fields.map(field => ({ path: `company.${field}`, label: COMPANY_FIELDS[field], before: typeof company[field] === "string" ? company[field] as string : "" }));
   config.sections?.forEach((section, index) => {
-    if (!section.visible || section.type !== "hero" || !section.data) return;
-    for (const [key, label] of [["title", "トップの見出し"], ["lead", "トップの紹介文"]]) {
-      const value = section.data[key];
+    if (!section.visible) return;
+    const overrides = section.type === "hero" ? [["title", "トップの見出し"], ["lead", "トップの紹介文"]]
+      : section.type === "company" || section.type === "about" ? [["message", "会社概要の代表挨拶"], ["messageTitle", "代表挨拶の見出し"]] : [];
+    for (const [key, label] of overrides) {
+      const value = section.data?.[key];
       if (typeof value === "string" && value.trim()) targets.push({ path: `sections.${index}.data.${key}`, label, before: value });
     }
+    if (section.type === "staff" && section.variant === "lead-message") {
+      const ownItems = Array.isArray(section.data?.items) && section.data.items.length > 0;
+      const lead = (ownItems ? section.data!.items as Record<string, unknown>[] : config.staff)?.[0];
+      const field = lead?.philosophy ? "philosophy" : "bio";
+      const value = lead?.[field];
+      if (typeof value === "string" && value.trim()) targets.push({ path: ownItems ? `sections.${index}.data.items.0.${field}` : `staff.0.${field}`, label: "代表紹介の挨拶", before: value });
+    }
   });
-  return targets.slice(0, 20);
+  return Array.from(new Map(targets.map(target => [target.path, target])).values()).slice(0, 20);
 }
 
 /** Model output cannot choose arbitrary config keys or its own before value. */

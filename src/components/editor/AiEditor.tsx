@@ -20,9 +20,9 @@ const operations: AiOperations = {
   save: saveSiteConfig,
 };
 
-export function AiEditor({ siteId, config, version, hasUnsavedChanges, onSaved, api = operations }: {
+export function AiEditor({ siteId, config, version, hasUnsavedChanges, onSaved, onSavingChange, onConflict, api = operations }: {
   siteId: string; config: SiteConfig; version: number; hasUnsavedChanges: boolean;
-  onSaved(config: SiteConfig, version: number): void; api?: AiOperations;
+  onSaved(config: SiteConfig, version: number): void; onSavingChange?(saving: boolean): void; onConflict?(): void; api?: AiOperations;
 }) {
   const [kind, setKind] = useState<AiKind>("company");
   const [source, setSource] = useState("");
@@ -68,19 +68,19 @@ export function AiEditor({ siteId, config, version, hasUnsavedChanges, onSaved, 
 
   async function apply() {
     if (!proposal || hasUnsavedChanges || conflict || inFlight.current) return;
-    inFlight.current = true; setSaving(true); setError("");
+    inFlight.current = true; setSaving(true); onSavingChange?.(true); setError("");
     try {
       if (proposal.version !== version) { setConflict(true); setError("サイトが更新されています。最新の内容を読み込んでください。"); return; }
       const updated = applyAiSuggestions(config, proposal.suggestions.filter(s => selected.has(s.path)));
       const result = await api.save(siteId, updated, proposal.version, "会社情報のAI提案を確認して反映");
       if (!result.ok) {
-        if (result.reason === "conflict") setConflict(true);
+        if (result.reason === "conflict") { setConflict(true); onConflict?.(); }
         setError(result.reason === "conflict" ? "別の画面で保存されています。案は残しています。エディタで最新の内容を読み込んでください。" : "保存できませんでした。案は残しています。追加クレジットなしで保存を再試行できます。");
         return;
       }
       setDone(true); setProposal(null); request.current = null; onSaved(updated, result.version);
     } catch { setError("保存を確認できませんでした。案は残しています。再試行で追加クレジットは消費しません。"); }
-    finally { inFlight.current = false; setSaving(false); }
+    finally { inFlight.current = false; setSaving(false); onSavingChange?.(false); }
   }
 
   const cost = AI_COST[kind];

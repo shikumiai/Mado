@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports -- CommonJS loader hooks exercise the real TS modules without a test dependency. */
 const assert=require('node:assert/strict');
 const fs=require('node:fs'); const path=require('node:path'); const Module=require('node:module'); const ts=require('typescript');
 const root=path.resolve(__dirname,'..');
@@ -12,7 +13,19 @@ assert.equal(aiPeriod(new Date('2026-09-30T14:59:59Z')),'2026-09');assert.equal(
 for(const kind of ['text','company']) assert.ok(((AI_MAX_PROMPT_BYTES[kind]+500)*0.4+AI_MAX_OUTPUT_TOKENS[kind]*1.6)/1e6*200 < AI_COST[kind]*2);
 const {aiTargets,parseAiSuggestions,applyAiSuggestions}=require('../src/lib/ai/content.ts');
 const config={company:{name:'Test',tagline:'Old',description:'',bio:''},style:{brand:{primary:'#123456'}},sections:[{type:'hero',visible:true,data:{title:'Override',image:'original.jpg'}}]};
+const overridden={...config,sections:[{type:'company',visible:true,data:{message:'Sample message'}},{type:'staff',variant:'lead-message',visible:true,data:{items:[{philosophy:'Staff sample'}]}}]};
+const overrides=aiTargets(overridden,'company');assert.ok(overrides.some(t=>t.path==='sections.0.data.message'));assert.ok(overrides.some(t=>t.path==='sections.1.data.items.0.philosophy'));
 const source='京都で木の椅子を作る会社です。';
+const {generateSiteConfig}=require('../src/lib/template-config-generator.ts');
+const {companyOf}=require('../src/components/sections/data.ts');
+const generated=generateSiteConfig({orderId:'',companyName:'検証用会社',email:'test@example.invalid',templateId:'trust-navy-mid'});
+const generatedTargets=aiTargets(generated,'company');
+const companyIndex=generated.sections.findIndex(s=>s.type==='company');
+const messageTarget=generatedTargets.find(t=>t.path===`sections.${companyIndex}.data.message`);
+assert.ok(messageTarget,'generated company section overrides its representative message');
+const groundedMessage=parseAiSuggestions(JSON.stringify({suggestions:[{path:messageTarget.path,after:source,evidence:source}]}),generatedTargets,source);
+const reflected=applyAiSuggestions(generated,groundedMessage);
+assert.equal(companyOf(reflected,reflected.sections[companyIndex].data).message,source);
 const targets=aiTargets(config,'company');
 const suggestion={path:'company.tagline',after:'京都でつくる、木の椅子。',evidence:'京都で木の椅子を作る'};
 const parse=s=>parseAiSuggestions(JSON.stringify({suggestions:s}),targets,source);
