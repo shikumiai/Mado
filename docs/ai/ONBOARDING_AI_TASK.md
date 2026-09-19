@@ -1,6 +1,6 @@
 # MADO-ONBOARDING-AI-20260920
 
-- 状態: レビュー待ち
+- 状態: 完了（実Stripe/OpenAI生成の運用確認は下記の未検証項目として継続）
 - 担当: Codex
 - 作業場所: .verification/onboarding-ai
 - ブランチ: codex/mado-onboarding-ai
@@ -16,4 +16,6 @@
 - DB検証: PGliteでmigration再適用・認可・上限・返却等を実行。さらにnative PostgreSQL 18.4で同じSQLケースと実際の複数接続ロック待ちを検証。残り5クレジットの同時要求は1件reserved・もう1件limit、使用量30を確認。
 - 本番反映: tayfsmypscyndfekbzsxにsite_editor_write_roles/ai_credits適用成功（DB履歴20260919190735/20260919190822）。authenticatedのreserve RPC権限false、service_role trueを確認。検証用データの本番作成は自動承認に拒否され、0件を確認して一時DBに切替済み。
 - 未検証: 実Stripe/OpenAI経由の生成、実ユーザーのログインからの通し操作。Vercel Preview/ProductionのOPENAI_API_KEYの存在だけ確認（鍵の有効性は未確認）。課金APIは呼んでいない。
-- 次の一手: PR作成とアプリ反映。並行PR#10/#11は変更しない。PR#11の同名・同内容RLS migrationはこのタスクで適用済みとして引き継ぐ。
+- 公開結果: PR#12 https://github.com/shikumiai/Mado/pull/12 をマージ済み（0bee739cf34534b299f86c8db05df86b1ececb04）。Vercel本番 mado-9y846aoy2-shikumiais-projects.vercel.app READY、対象commit一致。https://mado.shikumiai.com/start?slug=test 200、/pricingで月30/100表示、未ログイン/api/ai-editのGETは403を確認。検証用プレビュー共有リンク2件は失効済み。
+- 追加レビュー: 5eebdd7のテスト・文書追加も別Codexが確認してAPPROVED維持。native PostgreSQLは実行後停止、55467のListenなしを確認。
+- 次の一手: 管理画面のAI原価可視化、会社情報の保存と再利用、見本文・見本写真の公開前チェック。実生成の通し操作を運用確認する。並行PR#10/#11は変更していない。PR#11の同名・同内容RLS migrationはこのタスクで適用済みとして引き継ぐ。
