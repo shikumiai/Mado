@@ -12,10 +12,25 @@ import { getMyAccount } from "@/lib/auth";
 import { createServerSupabase } from "@/lib/supabase/ssr";
 import { isMissingTableError } from "@/lib/supabase/server";
 import { PLAN_LABELS, PLAN_PRICES, normalizePlanId, type Plan } from "@/lib/stripe";
+import { onboardingState } from "@/lib/onboarding";
+import type { SiteConfig } from "@/lib/site-config-schema";
 import { Card } from "@/components/ui";
 import { AdminConsole, type OrgVM, type SiteVM, type RequestVM } from "./AdminConsole";
 import type { EditRequestStatus } from "@/lib/admin";
 import { Wallet, Users, FileEdit, Building2 } from "lucide-react";
+
+/** 件数だけ欲しいときの問い合わせ（表が無い・読めないときは 0） */
+async function countRows(
+  supabase: NonNullable<Awaited<ReturnType<typeof createServerSupabase>>>,
+  table: string,
+): Promise<number> {
+  const { count, error } = await supabase.from(table).select("id", { count: "exact", head: true });
+  if (error) {
+    if (!isMissingTableError(error)) console.error(`[admin] ${table} の件数取得に失敗`, error);
+    return 0;
+  }
+  return count ?? 0;
+}
 
 export const metadata = { title: "管理｜Mado" };
 
@@ -89,6 +104,53 @@ export default async function AdminPage({
     siteRows = (sitesRes.data as SiteRow[] | null) ?? [];
     reqRows = (reqRes.data as ReqRow[] | null) ?? [];
   }
+
+  // ── 段ごとの数（docs/SERVICE_DESIGN_V1.md §4）──
+  // 「知る」は解析を入れるまで出せない。それ以外は DB の行数で出す。
+  let funnelCount = 0;
+  let runCount = 0;
+  let clickCount = 0;
+  let inquiryCount = 0;
+  let finishedSites = 0;
+  const liveSiteIds = siteRows.filter((s) => s.status === "live").map((s) => s.id);
+  if (supabase) {
+    const [f, r, c, i, cfg] = await Promise.all([
+      countRows(supabase, "funnels"),
+      countRows(supabase, "funnel_runs"),
+      countRows(supabase, "tracked_clicks"),
+      countRows(supabase, "inquiries"),
+      liveSiteIds.length > 0
+        ? supabase.from("site_configs").select("site_id, config").in("site_id", liveSiteIds)
+        : Promise.resolve({ data: [] as { site_id: string; config: SiteConfig }[], error: null }),
+    ]);
+    funnelCount = f;
+    runCount = r;
+    clickCount = c;
+    inquiryCount = i;
+    // 「自分のものにした」＝ 次にやること5つが全部終わったサイト
+    for (const row of (cfg.data as { site_id: string; config: SiteConfig }[] | null) ?? []) {
+      try {
+        if (onboardingState(row.config).complete) finishedSites++;
+      } catch {
+        /* 設定が壊れていても数えるだけなので飛ばす */
+      }
+    }
+  }
+  const liveCount = liveSiteIds.length;
+  const paidLiveOrgIds = new Set(
+    orgRows.filter((o) => o.status === "active" && normalizePlanId(o.plan) !== "otameshi").map((o) => o.id),
+  );
+  const paidLiveSites = siteRows.filter((s) => s.status === "live" && paidLiveOrgIds.has(s.org_id)).length;
+
+  const stages: { no: string; label: string; value: string; note: string }[] = [
+    { no: "1", label: "知る（LP に来た）", value: "—", note: "解析を入れるまで出せません" },
+    { no: "2", label: "名前を取った（ログインして押さえた）", value: `${orgRows.length}`, note: "会社の行の数" },
+    { no: "3", label: "公開した", value: `${liveCount}`, note: `うち有料 ${paidLiveSites}` },
+    { no: "4", label: "自分のものにした（次にやること 5/5）", value: `${finishedSites} / ${liveCount}`, note: "公開中のサイトのうち" },
+    { no: "5", label: "道を見た（導線を登録）", value: `${funnelCount}`, note: `確かめた回数 ${runCount}・追跡リンクを通った ${clickCount}` },
+    { no: "6", label: "続けている（有料の契約）", value: `${paidLiveOrgIds.size}`, note: "おまかせ以上で稼働中" },
+    { no: "＋", label: "問い合わせが届いた", value: `${inquiryCount}`, note: "お客さんのサイトのフォームから" },
+  ];
 
   // 会社名の引き当て表
   const orgNameById = new Map(orgRows.map((o) => [o.id, o.name]));
@@ -227,6 +289,37 @@ export default async function AdminPage({
           </table>
           </div>
         </Card>
+      </section>
+
+      {/* 段ごとの数: お客さんの流れのどこで落ちているかを1つの表で */}
+      <section className="flex flex-col gap-3">
+        <h2 className="text-sm font-semibold text-ink2">段ごとの数（お客さんの流れ）</h2>
+        <Card padded={false} className="overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[26rem] text-sm">
+              <thead>
+                <tr className="border-b border-line text-left text-xs text-ink3">
+                  <th className="px-4 py-2.5 font-medium sm:px-5">段</th>
+                  <th className="px-4 py-2.5 text-right font-medium">数</th>
+                  <th className="px-4 py-2.5 font-medium sm:px-5">補足</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line">
+                {stages.map((s) => (
+                  <tr key={s.no}>
+                    <td className="px-4 py-3 sm:px-5">
+                      <span className="tnum mr-2 text-xs text-ink3">{s.no}</span>
+                      <span className="font-medium text-ink">{s.label}</span>
+                    </td>
+                    <td className="tnum px-4 py-3 text-right text-ink">{s.value}</td>
+                    <td className="px-4 py-3 text-xs text-ink3 sm:px-5">{s.note}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+        <p className="text-xs text-ink3">週に1回見れば足ります。どこで数が減っているかが、次に直す場所です。</p>
       </section>
 
       {/* 顧客 / サイト / 編集依頼 */}
