@@ -32,7 +32,7 @@
 | Supabase | `tayfsmypscyndfekbzsx`（東京・組織 shikumiai）。migration 0001〜0007 適用済み。旧 `dralpswprcifzmgojgxu`（組織 site）は未削除 |
 | Stripe | `acct_1UBIUDCMwxuV78LX`（JP / JPY / **サンドボックス**。実客はまだ払えない） |
 | Google OAuth | Google Cloud プロジェクト `site-507418`（表示名 Mado）。戻り先に新旧 Supabase の両方を登録済み |
-| メール送信元 | `info@shikumiai.com`（エックスサーバー `sv17051.xserver.jp`、465） |
+| メール送信元 | `support@shikumiai.com`（エックスサーバー `sv17051.xserver.jp`、465）。Vercel の `SMTP_*` / `MAIL_FROM` は設定済み・送信テスト済み（2026-09-19） |
 
 **アカウントは全部 shikumiai 側。** Vercel / Supabase / GitHub は **CLI で触る**（`vercel` / `supabase` / `gh`。導入・認証済み）。
 Supabase の SQL は `supabase db query --linked -f <file>`（Management API 経由・DB パスワード不要。`supabase link --project-ref tayfsmypscyndfekbzsx --password ""` 済み）。
@@ -65,8 +65,8 @@ Supabase の SQL は `supabase db query --linked -f <file>`（Management API 経
 
 | # | 何を | どこで |
 |---|---|---|
-| 1 | `SMTP_PASS`（`info@shikumiai.com` のメール箱のパスワード）を **Vercel の環境変数**に入れる（Production と Preview）。入れたら再デプロイ | Vercel → mado → Settings → Environment Variables。他の4つ（HOST/PORT/USER/FROM）は入れてある |
-| 2 | 同じ SMTP を **Supabase の確認メール**にも設定 | Supabase → Project Settings → Authentication → SMTP Settings。Host `sv17051.xserver.jp` / Port `465` / User `info@shikumiai.com` / Sender email `info@shikumiai.com` / Sender name `Mado` |
+| 1 | ~~`SMTP_PASS` を Vercel に~~ → **済み（2026-09-19）**。問い合わせ通知は本番で送れる状態 | — |
+| 2 | 同じ SMTP を **Supabase の確認メール**にも設定 | Supabase → Authentication → Emails → SMTP。Host `sv17051.xserver.jp` / Port `465` / Username `support@shikumiai.com` / Password（メール箱の）/ Sender email `support@shikumiai.com` / Sender name `Mado` |
 | 3 | `ANTHROPIC_API_KEY` を Vercel に入れる（AI編集が Claude で動く。無いと OpenAI かデモ） | 同上。モデルは `ANTHROPIC_MODEL`（既定 `claude-sonnet-5`） |
 | 4 | Stripe を本番に（本番鍵・Webhook・価格の作り直し）。これが実客受付の開始日 | `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` を本番鍵に。`node scripts/stripe-setup.mjs` は冪等（Lyo の端末で本番鍵を付けて実行） |
 
