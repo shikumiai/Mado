@@ -139,7 +139,9 @@ export async function getPage(value: string): Promise<Fetched> {
         timeoutMs: HOP_TIMEOUT_MS,
       });
     } catch (err) {
-      const code = (err as NodeJS.ErrnoException | undefined)?.code;
+      // fetch は失敗を TypeError("fetch failed") に包み、元の理由は cause に入る
+      const e = err as (NodeJS.ErrnoException & { cause?: NodeJS.ErrnoException }) | undefined;
+      const code = e?.cause?.code ?? e?.code;
       return {
         ok: false,
         body: "",
