@@ -41,7 +41,7 @@ const COMPARE: { label: string; values: (boolean | string)[] }[] = [
   { label: "独自ドメイン", values: [true, true, true] },
   { label: "実績・お客様の声・ブログ", values: [false, true, true] },
   { label: "Googleマップ・SEO強化", values: [false, true, true] },
-  { label: "AIにおまかせで編集", values: ["—", "月3回", "無制限"] },
+  { label: "AIクレジット（毎月）", values: ["—", "30", "100"] },
   { label: "サイト内の公開前チェック", values: [true, true, true] },
   { label: "導線チェック（サイトまでの道のり）", values: ["—", "3本", "無制限"] },
   { label: "追跡リンク（人数を数える短いURL）", values: [false, true, true] },

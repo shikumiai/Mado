@@ -15,14 +15,14 @@ const PLANS = [
   {
     planId: "omakase",
     name: "Mado おまかせ",
-    description: "ホームページの制作と運用の月額プラン。独自ドメイン対応、AI編集は月3回まで。",
+    description: "ホームページの制作と運用の月額プラン。独自ドメイン対応、AI月30クレジット（文章修正1・会社情報の反映5）。",
     amount: 1480,               // JPY は小数を持たない通貨なので、この数字がそのまま円
     lookupKey: "omakase_monthly_jpy",
   },
   {
     planId: "omakase-pro",
     name: "Mado おまかせプロ",
-    description: "ホームページの制作と運用の月額プラン。AI編集は無制限。予約・AIチャット・SEO設計つき。",
+    description: "ホームページの制作と運用の月額プラン。AI月100クレジット（文章修正1・会社情報の反映5）。予約・AIチャット・SEO設計つき。",
     amount: 4980,
     lookupKey: "omakase_pro_monthly_jpy",
   },

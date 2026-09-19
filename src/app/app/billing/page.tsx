@@ -9,6 +9,9 @@
  * 未ログイン → /auth/login、会社がまだ無い → /start。権限は DB(RLS) が守る。
  */
 
+import { getWriteClient } from "@/lib/supabase/server";
+import { decodeBalance } from "@/lib/ai/balance";
+import { AI_RESET_NOTE, aiPeriod } from "@/lib/ai/policy";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getMyAccount } from "@/lib/auth";
@@ -17,7 +20,7 @@ import { getStripe, isStripeTestMode } from "@/lib/stripe-server";
 import {
   PLAN_LABELS,
   PLAN_PRICES,
-  PLAN_EDIT_LIMITS,
+  PLAN_AI_CREDITS,
   normalizePlanId,
 } from "@/lib/stripe";
 import { Card, Badge } from "@/components/ui";
@@ -32,8 +35,7 @@ const backLink =
 
 /** 今の期間キー（ai_edit_usage.period と同じ 'YYYY-MM'） */
 function currentPeriod(now = new Date()): { key: string; label: string } {
-  const y = now.getFullYear();
-  const m = now.getMonth() + 1;
+  const [y, m] = aiPeriod(now).split("-").map(Number);
   return { key: `${y}-${String(m).padStart(2, "0")}`, label: `${y}年${m}月` };
 }
 
@@ -46,9 +48,9 @@ export default async function BillingPage() {
   if (!account) redirect("/auth/login?next=/app/billing");
   if (!account.org) redirect("/start");
 
-  const { org, sites } = account;
+  const { org } = account;
   const plan = normalizePlanId(org.plan);
-  const limit = PLAN_EDIT_LIMITS[plan];
+  const advertisedLimit = PLAN_AI_CREDITS[plan];
   const period = currentPeriod();
   const testMode = isStripeTestMode();
 
@@ -71,18 +73,12 @@ export default async function BillingPage() {
   }
   const isPaid = Boolean(stripeCustomerId);
 
-  // 今月の AI 編集の使用回数（このプランのサイト分を合算）
-  let usedThisMonth = 0;
-  const siteIds = sites.map((s) => s.id);
-  if (supabase && siteIds.length > 0) {
-    const { data: usageRows } = await supabase
-      .from("ai_edit_usage")
-      .select("used")
-      .in("site_id", siteIds)
-      .eq("period", period.key);
-    const rows = (usageRows ?? []) as { used: number | null }[];
-    usedThisMonth = rows.reduce((n, r) => n + (r.used ?? 0), 0);
-  }
+  // The server ledger is authoritative; an unavailable ledger is not zero usage.
+  const admin = getWriteClient();
+  const ledger = admin ? await admin.rpc("ai_credit_balance", { p_org_id: org.id }) : null;
+  const aiBalance = ledger && !ledger.error ? decodeBalance(ledger.data) : null;
+  const usedThisMonth = aiBalance?.used ?? 0;
+  const limit = aiBalance?.limit ?? advertisedLimit;
 
   // 次回の請求日（取れる範囲で）。取れなくても画面は成り立たせる
   let nextBillingDate: string | null = null;
@@ -99,10 +95,9 @@ export default async function BillingPage() {
     }
   }
 
-  const unlimited = limit >= 999;
   const noAiEdit = limit === 0;
-  const usagePct = unlimited || limit === 0 ? 0 : Math.min(100, Math.round((usedThisMonth / limit) * 100));
-  const overLimit = !unlimited && limit > 0 && usedThisMonth >= limit;
+  const usagePct = limit === 0 ? 0 : Math.min(100, Math.round((usedThisMonth / limit) * 100));
+  const overLimit = limit > 0 && usedThisMonth >= limit;
 
   return (
     <div className="flex flex-col gap-7">
@@ -142,27 +137,21 @@ export default async function BillingPage() {
       {/* 今月の AI 編集の使用状況（透明性を第1級に） */}
       <section className="flex flex-col gap-3">
         <h2 className="flex items-center gap-1.5 text-sm font-semibold text-ink2">
-          <Gauge className="size-4" aria-hidden /> 今月のAI編集（{period.label}）
+          <Gauge className="size-4" aria-hidden /> 今月のAIクレジット（{period.label}）
         </h2>
         <Card className="flex flex-col gap-3">
           {noAiEdit ? (
             <p className="text-sm text-ink2">
               このプランにはAIでの編集はありません。手動での編集はいつでもできます。
             </p>
-          ) : unlimited ? (
-            <div className="flex items-baseline justify-between gap-3">
-              <p className="text-sm text-ink2">今月の利用回数</p>
-              <p className="text-base font-semibold text-ink">
-                <span className="tnum">{usedThisMonth}</span> 回
-                <span className="ml-2 text-sm font-normal text-ink2">（無制限）</span>
-              </p>
-            </div>
+          ) : !aiBalance ? (
+            <p className="text-sm text-ink2">利用枠を確認できません。時間をおいて開き直してください。</p>
           ) : (
             <>
               <div className="flex items-baseline justify-between gap-3">
-                <p className="text-sm text-ink2">今月の利用回数</p>
+                <p className="text-sm text-ink2">今月の使用量</p>
                 <p className="tnum text-base font-semibold text-ink">
-                  {usedThisMonth} / {limit} 回
+                  {usedThisMonth} / {limit} クレジット
                 </p>
               </div>
               <div
@@ -182,13 +171,15 @@ export default async function BillingPage() {
               </div>
               <p className="text-xs text-ink3">
                 {overLimit
-                  ? "今月の回数を使い切りました。来月にリセットされます。"
-                  : `今月はあと ${Math.max(limit - usedThisMonth, 0)} 回つかえます。`}
+                  ? "今月のクレジットを使い切りました。来月に更新されます。"
+                  : `今月はあと ${Math.max(limit - usedThisMonth, 0)} クレジットつかえます。`}
               </p>
             </>
           )}
         </Card>
       </section>
+
+      <p className="text-xs leading-relaxed text-ink2">文章の修正は1、会社情報の反映は5クレジット。生成失敗時は返却します。{AI_RESET_NOTE}</p>
 
       {/* プラン一覧（現行を強調・変更ボタン） */}
       <section className="flex flex-col gap-3">

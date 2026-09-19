@@ -8,11 +8,10 @@
  *   途中でブラウザを閉じても、次に開いたときサーバーの下書きから続きに戻れる。
  *
  * 流れ:
- *   0 アドレス → 1 ログイン →（名前を確保）→ 2 色 → 3 業種 → 4 見せ方
+ *   0 アドレス → 1 ログイン →（名前を確保）→ 2 業種 → 3 色 → 4 見せ方
  *   → 5 プラン → 6 会社情報 → 7 確認して公開
  *
- * 色を早い段階で決めるのは、テンプレートを選ぶ時点で「自分の色になったサイト」を
- * 見比べてほしいから。選んだ色は見出し・地・帯・線・ボタン・イラストまで行き渡る。
+ * 業種を選んでから、その商売に合うテンプレートを見ながら色を調整する。選んだ色は見出し・地・帯・線・ボタン・イラストまで行き渡る。
  *
  * 業種は10系統。細かい商売の名前（35業種）は src/lib/industry-registry.ts の
  * 対応表から近い系統へ寄せる。構成の正は src/lib/templates/catalog.ts。
@@ -63,6 +62,7 @@ import {
   resolveBrand,
   templatePreviewUrl,
 } from "@/lib/palette";
+import { SIGNUP_FLOW_VERSION, SIGNUP_STEPS, restoreSignupStep } from "@/lib/signup-flow";
 import { useSettled } from "@/lib/use-settled";
 import { TEMPLATES, TEMPLATE_IDS, getTemplateOrDefault } from "@/lib/templates/catalog";
 import { industriesByTemplate, industryNamesFor, findIndustry } from "@/lib/industry-registry";
@@ -113,7 +113,7 @@ const PLANS: PlanCard[] = [
       "おためしの内容ぜんぶ",
       "実績ページ・お客様の声・ブログ",
       "Google マップの掲載",
-      "編集おまかせ 月3回まで",
+      "AI 月30クレジット",
     ],
   },
   {
@@ -123,25 +123,16 @@ const PLANS: PlanCard[] = [
       "おまかせの内容ぜんぶ",
       "予約フォーム・採用ページ",
       "AIチャットの設置",
-      "編集おまかせ 回数のしばりなし",
+      "AI 月100クレジット",
     ],
   },
 ];
 
-const STEP_LABELS = [
-  "アドレス",
-  "ログイン",
-  "色",
-  "業種",
-  "見せ方",
-  "プラン",
-  "会社情報",
-  "確認",
-];
+const STEP_LABELS = SIGNUP_STEPS;
 const STEP_ADDRESS = 0;
 const STEP_LOGIN = 1;
-const STEP_COLOR = 2;
-const STEP_INDUSTRY = 3;
+const STEP_INDUSTRY = 2;
+const STEP_COLOR = 3;
 const STEP_LOOK = 4;
 const STEP_PLAN = 5;
 const STEP_COMPANY = 6;
@@ -454,6 +445,7 @@ export default function StartPage() {
       email: (email || user?.email || "").trim(),
       phone: phone.trim(),
       step,
+      flowVersion: SIGNUP_FLOW_VERSION,
     }),
     [brand, colorSetId, family, industryId, plan, companyName, email, phone, step, user],
   );
@@ -501,6 +493,7 @@ export default function StartPage() {
           phone?: string;
           slug?: string;
           step?: number;
+          flowVersion?: number;
         };
         setBrandChoice({
           primary: normalizeHex(d.primary),
@@ -520,7 +513,7 @@ export default function StartPage() {
         // トップページで別の名前を入れ直して来たときは、古い途中経過の位置は使わない
         const sameSlug = !askedSlug || cleanSlug(askedSlug) === cleanSlug(d.slug ?? "");
         if (sameSlug && typeof d.step === "number") {
-          setStep(Math.min(Math.max(d.step, 0), LAST_STEP));
+          setStep(restoreSignupStep(d.step, d.flowVersion, d.family));
         }
       } else {
         // トップページで入れたアドレスがあれば引き継ぐ
@@ -606,7 +599,7 @@ export default function StartPage() {
       if (d.email) setEmail(d.email);
       if (d.phone) setPhone(d.phone);
 
-      const resumeStep = Math.min(Math.max(d.step, STEP_COLOR), LAST_STEP);
+      const resumeStep = Math.max(STEP_INDUSTRY, restoreSignupStep(d.step, d.flowVersion, d.family));
       setStep(resumeStep);
       setResumed(true);
 
@@ -621,6 +614,7 @@ export default function StartPage() {
         email: d.email,
         phone: d.phone,
         step: resumeStep,
+        flowVersion: SIGNUP_FLOW_VERSION,
       });
     })();
 
@@ -664,6 +658,7 @@ export default function StartPage() {
           phone,
           slug,
           step,
+          flowVersion: SIGNUP_FLOW_VERSION,
         }),
       );
     } catch {
@@ -760,7 +755,7 @@ export default function StartPage() {
     (async () => {
       const id = await reserve();
       autoReserveRef.current = false;
-      if (id) setStep(STEP_COLOR);
+      if (id) setStep(STEP_INDUSTRY);
     })();
   }, [authReady, user, step, reserve]);
 
@@ -818,7 +813,7 @@ export default function StartPage() {
       : step === STEP_LOGIN
         ? false
         : step === STEP_COLOR
-          ? !!primary
+          ? !!family
           : step === STEP_INDUSTRY
             ? !!family
             : step === STEP_LOOK || step === STEP_PLAN
@@ -827,14 +822,14 @@ export default function StartPage() {
                 ? companyName.trim().length >= 1
                 : false;
 
-  /** アドレスの次へ。ログイン済みならその場で名前を確保して色へ進む */
+  /** アドレスの次へ。ログイン済みならその場で名前を確保して業種へ進む */
   const nextFromAddress = useCallback(async () => {
     if (!user) {
       setStep(STEP_LOGIN);
       return;
     }
     const id = await reserve();
-    if (id) setStep(STEP_COLOR);
+    if (id) setStep(STEP_INDUSTRY);
   }, [user, reserve]);
 
   const next = () => {
@@ -848,11 +843,11 @@ export default function StartPage() {
   const back = () =>
     setStep((s) => {
       // ログイン済みなら、戻るときにログインの画面は飛ばす
-      if (s === STEP_COLOR && user) return STEP_ADDRESS;
+      if (s === STEP_INDUSTRY && user) return STEP_ADDRESS;
       return Math.max(0, s - 1);
     });
 
-  const colorName = colorSetName(colorSetId);
+  const colorName = colorSetName(colorSetId) ?? (primary ? "自分で選んだ色" : "業種のおすすめ");
   const industryName = template ? template.industry : "";
   const ctaLabel =
     plan === "otameshi" ? "無料でサイトをつくる" : `お支払いに進む（${PLAN_PRICES[plan]}/月）`;
@@ -861,9 +856,9 @@ export default function StartPage() {
     step === STEP_ADDRESS
       ? "この名前で進む"
       : step === STEP_COLOR
-        ? "次へ・業種を選ぶ"
+        ? "次へ・サイトを見る"
         : step === STEP_INDUSTRY
-          ? "次へ・サイトを見る"
+          ? "次へ・色を選ぶ"
           : step === STEP_LOOK
             ? "次へ・プランを選ぶ"
             : step === STEP_COMPANY
@@ -1003,7 +998,7 @@ export default function StartPage() {
 
                   <p className="mt-6 text-xs text-ink3">
                     次の画面でログインすると、この名前をあなたのものとして押さえます。
-                    そのあとの色や業種の選択は、一つずつ自動で保存されます。
+                    そのあとの業種や色の選択は、一つずつ自動で保存されます。
                   </p>
                 </motion.div>
               </AnimatePresence>
@@ -1040,7 +1035,7 @@ export default function StartPage() {
                 </motion.div>
               </AnimatePresence>
             ) : step === STEP_COLOR ? (
-              /* ── STEP 2: 色を決める ── */
+              /* ── STEP 3: 選んだ業種の色を調整 ── */
               <AnimatePresence mode="wait">
                 <motion.div
                   key="step-color"
@@ -1052,22 +1047,25 @@ export default function StartPage() {
                 >
                   <div>
                     <h1 className="font-serif text-2xl font-bold text-ink sm:text-3xl">
-                      サイトの色を決めましょう
+                      {template?.industry}のサイトの色を決めましょう
                     </h1>
                     <p className="mt-1.5 text-sm text-ink2">
                       会社の顔になる色をひとつ選ぶだけ。見出しも、地の色も、ボタンも、
-                      この色から作られてサイト全体でそろいます。あとから変えられます。
+                      この色から作られてサイト全体でそろいます。おすすめの色のままでも進めます。
                     </p>
 
                     <div className="mt-7">
-                      <BrandPicker value={brandChoice} onChange={setBrandChoice} />
+                      <BrandPicker value={primary ? brandChoice : {
+                        primary: boardPalette.primary, sub1: boardPalette.sub1, sub2: boardPalette.sub2, setId: null,
+                      }} onChange={setBrandChoice} />
+                      <Button className="mt-3" variant="ghost" size="sm" onClick={() => setBrandChoice({ primary: null, sub1: null, sub2: null, setId: null })}>業種のおすすめの色に戻す</Button>
                     </div>
 
                     {/* 何が変わるかを見せる帯 */}
                     <div className="mt-6">
                       <PaletteBoard
                         palette={boardPalette}
-                        chosen={!!primary}
+                        chosen={!!family}
                         hasSubs={!!sub1 || !!sub2}
                       />
                     </div>
@@ -1076,7 +1074,7 @@ export default function StartPage() {
                   {/* 右：その色のサイトを実際に出す */}
                   <aside className="lg:sticky lg:top-6 h-fit">
                     <PreviewPanel
-                      src={templatePreviewUrl(sampleFamily, settledBrand)}
+                      src={previewSrc}
                       displayName={displayName}
                       urlLabel={previewUrlLabel}
                       palette={boardPalette}
@@ -1089,7 +1087,7 @@ export default function StartPage() {
                 </motion.div>
               </AnimatePresence>
             ) : step === STEP_INDUSTRY ? (
-              /* ── STEP 3: 業種（10） ── */
+              /* ── STEP 2: 業種（10） ── */
               <AnimatePresence mode="wait">
                 <motion.div
                   key="step-industry"
@@ -1098,13 +1096,11 @@ export default function StartPage() {
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.2 }}
                 >
-                  {colorBar}
-
                   <h1 className="font-serif text-2xl font-bold text-ink sm:text-3xl">
                     どんな商売のサイトですか？
                   </h1>
                   <p className="mt-1.5 text-sm text-ink2">
-                    業種を選ぶと、その商売に欠かせない内容が最初から並んだサイトになります。
+                    業種を選ぶと、必要な内容をそろえたテンプレートを用意します。次の画面で、そのサイトを見ながら色を選べます。
                   </p>
 
                   <Choice
