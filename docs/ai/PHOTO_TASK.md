@@ -1,7 +1,7 @@
 # MADO-PHOTOS-20260920
 
 - 目的: 公開後、写真枠を押して選ぶだけで本人の写真へ差し替えられる画面を作る（ONBOARDING_V1 §3-4）。
-- 担当: Codex。状態: 独立レビューの指摘修正済み・再レビュー中。本番未反映。
+- 担当: Codex。状態: 実装・Preview確認・独立レビュー完了。本番DB適用と実Storage統合確認は未実施。
 - 場所: `.verification/photo-workspace`、ブランチ `codex/mado-photo-library`。比較元: `340419c`。
 - 依頼: Lyo「そのまま進めて」。写真画面の実装・検証を継続。
 - 別作業: `TASK.md` の導線チェック再レビュー（PR #10）は変更しない。
@@ -38,13 +38,18 @@
 - 確認用Preview: `https://mado-1vhugjtg5-shikumiais-projects.vercel.app/photo-verification`。CLI認証で200。端末内だけで成功/送信失敗/保存失敗/競合を切り替える一時fixture。DB・Storage書込なし。fixtureは本番差分へ含めない。
 - 30分限定のデプロイ共有リンクでブラウザ確認。写真選択→端末圧縮→保存、送信失敗→再試行、保存失敗→再試行時の画像再送なし、競合→保存停止→最新読込を通過（fixture内で、実DB/Storage書込なし）。通常幅・390px、明/暗テーマを確認。横はみ出しなし。
 - 操作中の写真が下にあるとエラーが画面外へ隠れる問題を目視で発見。理由・再試行・競合時の読込ボタンを進捗と同じ追従枠へ移設。修正後の型・変更ファイルlint・buildは通過。
-- 再PreviewはGit作者とVercelチームの不一致でBLOCKED。GitHub CLIはshikumiai、旧ローカル作者はAndoLyoに紐づいていた。以降の自作コミットは認証済みshikumiaiの本人情報を明示する（過去の作者・全体設定は書き換えない）。
+- 再PreviewはGit作者とVercelチームの不一致で一度BLOCKED。GitHub CLIはshikumiai、旧ローカル作者はAndoLyoに紐づいていた。修正commit `fcbe2e1` は認証済みshikumiaiの本人情報を明示（過去の作者・全体設定は無変更）。その後のPreviewビルドは成功。
+- 最終Preview: `https://mado-hvg5od7mc-shikumiais-projects.vercel.app/photo-verification`（`dpl_5mzk4bNyPzqNXrnFCpgnb4hUEe5b`）。MCPの一時リンクで閲覧。390pxで下の写真を操作して保存失敗を再現し、再試行ボタンが画面内にあることを目視・座標で確認、再試行から保存完了まで通過。このfixture付きデプロイは本番へ昇格しない。
 - Vercel MCPはLyoの再接続後、対象チームとデプロイの取得に成功。一時共有リンクは検証後に失効し、端末内の秘密ファイルも削除済み。
 - 本番未反映。実Storage→config保存→再読込、新RLSの実Supabase適用・確認は残る。
 
+## 独立レビュー
+
+- 担当: 別エージェントのCodex（Pascal）。初回 `340419c` → `2dc36d1` の認可レビューでDB側との不整合2件・空FormDataによるテスト漏れ1件を検出。
+- 再レビュー: `2dc36d1` → `fcbe2e1` の認可SQL・テスト3ファイルをコードおよびSHA-256一致で確認。**APPROVED、前回3指摘は解消、未解決指摘なし。**
+- 新migration適用後を想定した技術判定。実SupabaseのAuth/Storage統合は未検証で、本番適用の完了を意味しない。
+
 ## 次の作業
 
-1. 更新版Previewで、下の写真を操作したときにも追従エラー案内が見えることを再確認する。
-2. 権限修正と追加RLSの独立再レビューを完了する。
-3. 新RLSを対象Supabaseへ適用し、認証済みのテスト用サイトで実Storage→config保存→再読込を確認する。ユーザーの実サイトを検証用に書き換えない。
-4. 条件がそろってから本番へ反映。PR #10とは別の作業票・差分として扱う。
+1. 新RLSを対象Supabaseへ適用し、認証済みのテスト用サイトで実Storage→config保存→再読込を確認する。ユーザーの実サイトを検証用に書き換えない。
+2. 条件がそろってから本番へ反映。PR #10とは別の作業票・差分として扱う。
