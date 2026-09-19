@@ -187,14 +187,14 @@ export function PhotoLibraryView({ initial, operations }: { initial: LoadedSite;
           <span className="text-xs text-ink3">{slots.length - remaining} / {slots.length}枚</span>
         </div>
         <div className="mt-3 h-1 overflow-hidden rounded-full bg-surface2"><div className="h-full bg-accent" style={{ width: `${slots.length ? ((slots.length - remaining) / slots.length) * 100 : 0}%` }} /></div>
-        <p role="status" aria-live="polite" className="mt-3 flex items-center gap-2 text-xs leading-5 text-ink2">{phase !== "idle" && <Loader2 size={14} className="shrink-0 animate-spin" aria-hidden />}{phase === "idle" ? announcement || PHASE_TEXT.idle : PHASE_TEXT[phase]}</p>
-      </div>
+        {!(phase === "idle" && error) && <p role="status" aria-live="polite" className="mt-3 flex items-center gap-2 text-xs leading-5 text-ink2">{phase !== "idle" && <Loader2 size={14} className="shrink-0 animate-spin" aria-hidden />}{phase === "idle" ? announcement || PHASE_TEXT.idle : PHASE_TEXT[phase]}</p>}
 
-      {error && <div role="alert" className="space-y-3 rounded-md border border-danger/30 bg-surface p-4">
+      {error && <div role="alert" className="mt-3 space-y-3 border-t border-danger/30 pt-3">
         <p className="text-sm leading-6 text-danger">{error}</p>
         {pending && !conflict && <div className="flex flex-wrap gap-2"><Button onClick={() => void save(pending)} disabled={phase !== "idle"} className="min-h-11">もう一度保存</Button><Button variant="ghost" onClick={() => { clearPending(); setError(""); }} disabled={phase !== "idle"} className="min-h-11">選び直す</Button></div>}
         {conflict && <Button variant="secondary" onClick={() => void reload()} loading={phase === "reloading"} className="min-h-11 h-auto whitespace-normal py-2">選んだ写真を取り消して、最新を読み込む</Button>}
       </div>}
+      </div>
 
       {slots.length > 0 && <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm"><input type="checkbox" checked={onlySamples} onChange={(event) => setOnlySamples(event.target.checked)} className="size-5 accent-accent" />見本・未設定の写真だけ見る</label>}
       {groups.map((group) => <section key={group} className="space-y-4">
