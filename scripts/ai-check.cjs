@@ -26,6 +26,15 @@ assert.ok(messageTarget,'generated company section overrides its representative 
 const groundedMessage=parseAiSuggestions(JSON.stringify({suggestions:[{path:messageTarget.path,after:source,evidence:source}]}),generatedTargets,source);
 const reflected=applyAiSuggestions(generated,groundedMessage);
 assert.equal(companyOf(reflected,reflected.sections[companyIndex].data).message,source);
+// The company prompt has more base fields; its 20-target cap must not reject valid text-mode paths.
+const manySections={...generated,sections:Array.from({length:12},()=>({type:'company',visible:true,data:{message:'Old message',messageTitle:'Old heading'}}))};
+const textTargets=aiTargets(manySections,'text');
+assert.equal(textTargets.length,20);
+const lastTextTarget=textTargets.at(-1);assert.ok(!aiTargets(manySections,'company').some(t=>t.path===lastTextTarget.path));
+for(const target of textTargets){
+ const changes=parseAiSuggestions(JSON.stringify({suggestions:[{path:target.path,after:source,evidence:source}]}),textTargets,source);
+ assert.doesNotThrow(()=>applyAiSuggestions(manySections,changes),target.path);
+}
 const targets=aiTargets(config,'company');
 const suggestion={path:'company.tagline',after:'京都でつくる、木の椅子。',evidence:'京都で木の椅子を作る'};
 const parse=s=>parseAiSuggestions(JSON.stringify({suggestions:s}),targets,source);

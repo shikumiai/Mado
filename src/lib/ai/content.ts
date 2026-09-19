@@ -18,7 +18,7 @@ export const COMPANY_BRIEF = `会社・お店の名前：
 文章の雰囲気・避けたい表現：
 未確認の項目は空欄で構いません。`;
 
-export function aiTargets(config: SiteConfig, kind: AiKind): AiTarget[] {
+function allowedAiTargets(config: SiteConfig, kind: AiKind): AiTarget[] {
   const fields = kind === "text" ? ["tagline", "description", "bio"] : Object.keys(COMPANY_FIELDS);
   const company = config.company as unknown as Record<string, unknown>;
   const targets = fields.map(field => ({ path: `company.${field}`, label: COMPANY_FIELDS[field], before: typeof company[field] === "string" ? company[field] as string : "" }));
@@ -38,7 +38,12 @@ export function aiTargets(config: SiteConfig, kind: AiKind): AiTarget[] {
       if (typeof value === "string" && value.trim()) targets.push({ path: ownItems ? `sections.${index}.data.items.0.${field}` : `staff.0.${field}`, label: "代表紹介の挨拶", before: value });
     }
   });
-  return Array.from(new Map(targets.map(target => [target.path, target])).values()).slice(0, 20);
+  return Array.from(new Map(targets.map(target => [target.path, target])).values());
+}
+
+/** Keep prompts bounded without shrinking the set of fields a reviewed result may update. */
+export function aiTargets(config: SiteConfig, kind: AiKind): AiTarget[] {
+  return allowedAiTargets(config, kind).slice(0, 20);
 }
 
 /** Model output cannot choose arbitrary config keys or its own before value. */
@@ -63,7 +68,7 @@ export function parseAiSuggestions(raw: string, targets: AiTarget[], source: str
 
 export function applyAiSuggestions(config: SiteConfig, suggestions: AiSuggestion[]): SiteConfig {
   const updated = structuredClone(config);
-  const allowed = aiTargets(config, "company");
+  const allowed = allowedAiTargets(config, "company");
   for (const suggestion of suggestions) {
     const target = allowed.find(t => t.path === suggestion.path);
     if (!target || target.before !== suggestion.before) throw new Error("changed_since_generation");
