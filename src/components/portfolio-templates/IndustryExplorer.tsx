@@ -173,7 +173,6 @@ function LivePreview({
           className="h-full w-full"
           iframeWidth={BASE_WIDTH}
           iframeHeight={Math.round(box.h / scale)}
-          scale={scale}
         />
       )}
     </div>

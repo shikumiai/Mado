@@ -181,10 +181,8 @@ function Hero() {
               title="完成サイトの例（美容・サロン）"
               fallbackBg="#f8f2f0"
               fallbackColors={["#7A2E45", "#C08A6A"]}
-              className="h-80 sm:h-[26rem]"
               iframeWidth={1280}
               iframeHeight={1120}
-              scale={0.56}
             />
           </WindowFrame>
           <RoofLine className="pointer-events-none absolute -bottom-9 right-2 h-14 w-48 opacity-90" />
@@ -453,10 +451,8 @@ const TEMPLATES = [
 
 function TemplateWindow({
   t,
-  big = false,
 }: {
   t: (typeof TEMPLATES)[number];
-  big?: boolean;
 }) {
   return (
     <Link
@@ -469,10 +465,8 @@ function TemplateWindow({
           title={`${t.name}のデモ`}
           fallbackBg={t.fallbackBg}
           fallbackColors={t.fallbackColors}
-          className={big ? "h-72 sm:h-[24rem]" : "h-44"}
           iframeWidth={1280}
-          iframeHeight={860}
-          scale={big ? 0.5 : 0.34}
+          iframeHeight={1120}
         />
       </WindowFrame>
       <div className="mt-4 flex items-start justify-between gap-3 px-1">
@@ -505,7 +499,7 @@ function Templates() {
 
       <div className="mt-14 grid gap-6 lg:grid-cols-12 lg:items-start">
         <div className="lg:col-span-7">
-          <TemplateWindow t={velvet} big />
+          <TemplateWindow t={velvet} />
         </div>
         <div className="flex flex-col gap-8 lg:col-span-5">
           <TemplateWindow t={saveur} />
