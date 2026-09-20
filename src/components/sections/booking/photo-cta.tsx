@@ -61,9 +61,7 @@ export default function BookingPhotoCta(p: SectionProps) {
             <p className="bpc-lead">{d.lead}</p>
           </F>
           <ul className="bpc-points">
-            <li><Check size={15} strokeWidth={2.4} /><span>その場で契約をお願いすることはありません。</span></li>
-            <li><Check size={15} strokeWidth={2.4} /><span>お子さま連れでお越しいただけます。</span></li>
-            <li><Check size={15} strokeWidth={2.4} /><span>ご都合が合わなければ、別日でも調整します。</span></li>
+            {d.guidance.map((text, i) => <li key={i}><Check size={15} strokeWidth={2.4} /><span>{text}</span></li>)}
           </ul>
           <div className="bpc-acts">
             <a className="ms-btn ms-btn-fill" href={d.primary.href}>

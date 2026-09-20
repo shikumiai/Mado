@@ -125,12 +125,12 @@ export default function DetailView({
 }) {
   const palette = useConfigPalette(config);
   const c = config.company;
-  const listHref = `/${slug}#${item.section}`;
+  const listHref = `/${slug}#${item.backAnchor ?? item.section}`;
   const tel = c.phone ? `tel:${c.phone.replace(/[^\d+]/g, "")}` : undefined;
   const paragraphs = item.body.split(/\n{2,}/).filter((t) => t.trim() !== "");
 
   return (
-    <TplRoot palette={palette} className="dtl">
+    <TplRoot fontChoice={config.style?.fontChoice} palette={palette} className="dtl">
       <Base />
       <Styles id="detail-view" css={CSS} />
 

@@ -423,7 +423,7 @@ export default function StartPage() {
   /** 色を決める画面の見本（まだ業種を選んでいなければ最初の業種で見せる） */
   const sampleFamily = family ?? TEMPLATES[0].id;
   // プレビューは系統そのもの + ?plan= で出す（-mid / -pro のページは建築3系統にしかない）
-  const previewSrc = templatePreviewUrl(sampleFamily, settledBrand, plan);
+  const previewSrc = templatePreviewUrl(sampleFamily, settledBrand, plan, industryId);
 
   const boardPalette = useMemo(
     () => buildPalette(resolveBrand(brand, sampleFamily)),

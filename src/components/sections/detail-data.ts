@@ -1,3 +1,4 @@
+import { resolveSections } from "@/lib/templates/sections";
 /**
  * 一覧の1件を「詳細ページに出す形」へ組み直すところ。
  *
@@ -37,6 +38,7 @@ export interface DetailItem {
   section: DetailSectionName;
   index: number;
   key: string;
+  backAnchor?: string;
   /** 見出し */
   title: string;
   /** 見出しの上に出す小さな文字（分類・日付） */
@@ -121,8 +123,24 @@ function neighbor(
    引き当て
    ═══════════════════════════════════════ */
 
+/** Section-owned lists must open their own detail, not a same-ID item in another list. */
+export function findDetailItem(config: SiteConfig, section: DetailSectionName, id: string): DetailItem | null {
+  const scoped = /^@([^~]+)~(.+)$/.exec(id);
+  if (!scoped) return findUnscopedDetailItem(config, section, id);
+  const source = resolveSections(config, false).find(s => s.anchor === scoped[1] && s.type === section);
+  if (!source || !Array.isArray(source.data?.items)) return null;
+  const field = { works: "projects", staff: "staff", menu: "menu", news: "news" }[section];
+  const found = findUnscopedDetailItem({ ...config, [field]: source.data.items }, section, scoped[2]);
+  if (!found) return null;
+  const prefix = `@${scoped[1]}~`;
+  return { ...found, key: prefix + found.key, backAnchor: scoped[1],
+    ...(found.prev ? { prev: { ...found.prev, key: prefix + found.prev.key } } : {}),
+    ...(found.next ? { next: { ...found.next, key: prefix + found.next.key } } : {}),
+  };
+}
+
 /** 見つからなければ null（呼び出し側は notFound()） */
-export function findDetailItem(
+function findUnscopedDetailItem(
   config: SiteConfig,
   section: DetailSectionName,
   id: string,
@@ -137,13 +155,13 @@ export function findDetailItem(
       title: w.title,
       eyebrow: s(w.category),
       subtitle: s(w.titleEn) ?? s(w.year),
-      image: s(w.image) ?? templateListPhoto(config.templateId, "work", i),
+      image: w.image ?? templateListPhoto(config.templateId, "work", i),
       body: w.description ?? "",
       rows: rowsOf([
         ["分類", w.category],
-        ["竣工", w.year],
+        ["年", w.year],
         ["仕様", w.specs],
-        ["お施主様", w.client],
+        ["お客様", w.client],
         ["場所", w.location],
         ["使用機材", w.equipment],
       ]),
@@ -169,7 +187,7 @@ export function findDetailItem(
       title: m.name,
       eyebrow: s(m.role),
       subtitle: s(m.experience),
-      image: s(m.image) ?? templateListPhoto(config.templateId, "staff", i),
+      image: m.image ?? templateListPhoto(config.templateId, "staff", i),
       body: m.bio ?? "",
       rows: rowsOf([
         ["担当", m.role],
@@ -194,7 +212,7 @@ export function findDetailItem(
       title: m.name,
       eyebrow: s(m.category),
       subtitle: s(m.price),
-      image: s(m.image) ?? templateListPhoto(config.templateId, "item", i),
+      image: m.image ?? templateListPhoto(config.templateId, "item", i),
       body: m.description ?? "",
       rows: rowsOf([
         ["分類", m.category],
@@ -217,7 +235,7 @@ export function findDetailItem(
     title: n.title,
     eyebrow: s(n.category),
     subtitle: s(n.date),
-    image: s(n.image) ?? templateListPhoto(config.templateId, "news", i),
+    image: n.image ?? templateListPhoto(config.templateId, "news", i),
     body: s(n.body) ?? s(n.excerpt) ?? "",
     rows: rowsOf([
       ["掲載日", n.date],

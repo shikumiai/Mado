@@ -18,74 +18,19 @@
  * 枕と足（ヘッダー・フッター）は SiteChrome が受け持つ。
  */
 
-import { useMemo } from "react";
+import { Fragment, useMemo } from "react";
 import { buildPalette, normalizeHex, type BrandColors } from "@/lib/palette";
+import { resolveSections, type Resolved } from "@/lib/templates/sections";
 import { getSection } from "@/components/sections";
-import { Styles } from "@/components/sections/shared";
-import type { Section, SectionType, SiteConfig } from "@/lib/site-config-schema";
-import {
-  defaultSectionsFor,
-  findSectionDef,
-  getTemplateOrDefault,
-  planAllows,
-  LEGACY_SECTIONS as LEGACY,
-} from "@/lib/templates/catalog";
+import { Styles, DetailScopeProvider } from "@/components/sections/shared";
+import type { SiteConfig } from "@/lib/site-config-schema";
+import { getTemplateOrDefault } from "@/lib/templates/catalog";
 import SiteChrome, { type ChromeNavItem } from "./SiteChrome";
 import { TplRoot } from "./TplPalette";
 
 /* ═══════════════════════════════════════
    描くものを決める
    ═══════════════════════════════════════ */
-
-/** 実際に描く1つ。orderIndex は config.sections の何番目か（編集の宛先に使う） */
-interface Resolved {
-  key: string;
-  type: SectionType;
-  variant?: string;
-  anchor: string;
-  label: string;
-  data?: Record<string, unknown>;
-  orderIndex: number;
-}
-
-function resolveSections(config: SiteConfig): Resolved[] {
-  const templateId = config.templateId;
-  const plan = config.plan;
-  const written = config.sections && config.sections.length > 0 ? config.sections : null;
-  const list: Section[] = written ?? defaultSectionsFor(templateId, plan);
-
-  const out: Resolved[] = [];
-  const used = new Set<string>();
-
-  list.forEach((s, orderIndex) => {
-    if (s.visible === false) return;
-
-    const def = findSectionDef(templateId, s);
-    // 上位プランでしか出さない機能は、そのプランに満たなければ描かない
-    if (!planAllows(plan, def?.plan)) return;
-
-    const legacy = LEGACY[s.type];
-    const type = (legacy?.type ?? s.type) as SectionType;
-    const variant = s.variant ?? legacy?.variant ?? def?.variant;
-
-    // アンカーは重複させない（同じ機能を2つ置く業種があるため）
-    let anchor = s.id || def?.id || type;
-    if (used.has(anchor)) anchor = `${anchor}-${orderIndex + 1}`;
-    used.add(anchor);
-
-    out.push({
-      key: `${type}-${anchor}`,
-      type,
-      variant,
-      anchor,
-      label: s.label || def?.label || type,
-      data: s.data,
-      orderIndex,
-    });
-  });
-
-  return out;
-}
 
 /**
  * ヘッダーの案内に出す項目（メインビジュアルは飛び先にしない）。
@@ -146,6 +91,7 @@ export interface SectionsRendererProps {
   editMode?: boolean;
   onFieldClick?: (fieldId: string, currentValue: string, fieldType: "text" | "image") => void;
   changedFields?: Set<string>;
+  onSectionEdit?: (index: number | "company") => void;
 }
 
 export default function SectionsRenderer({
@@ -153,8 +99,9 @@ export default function SectionsRenderer({
   editMode = false,
   onFieldClick,
   changedFields,
+  onSectionEdit,
 }: SectionsRendererProps) {
-  const sections = useMemo(() => resolveSections(config), [config]);
+  const sections = useMemo(() => resolveSections(config, editMode), [config, editMode]);
   const nav = useMemo(() => navOf(sections), [sections]);
 
   // 色は「選ばれた色」か「テンプレートの初期色」。
@@ -171,6 +118,7 @@ export default function SectionsRenderer({
   return (
     <TplRoot
       palette={palette}
+      fontChoice={config.style?.fontChoice}
       className="mado-site"
       // 編集中はリンクで画面が飛ばないようにする
       onClick={(e) => {
@@ -178,13 +126,15 @@ export default function SectionsRenderer({
       }}
     >
       <Styles id="site" css={SITE_CSS} />
-      <SiteChrome config={config} nav={nav} editMode={editMode}>
+      <SiteChrome config={config} nav={nav} editMode={editMode} onEditCompany={() => onSectionEdit?.("company")}>
         {sections.map((s) => {
           const Component = getSection(s.type, s.variant);
           if (!Component) return null;
           return (
+            <Fragment key={s.key}>
+            {editMode && onSectionEdit && <div className="border-y border-line bg-surface px-4 py-2 text-right"><button type="button" className="rounded-md px-3 py-2 text-sm font-bold text-ink hover:bg-surface2" onClick={() => onSectionEdit(s.orderIndex)}>{s.label}の内容を編集</button></div>}
+            <DetailScopeProvider scope={Array.isArray(s.data?.items) ? s.anchor : null}>
             <Component
-              key={s.key}
               id={s.anchor}
               config={config}
               data={s.data}
@@ -193,6 +143,8 @@ export default function SectionsRenderer({
               onFieldClick={onFieldClick}
               changedFields={changedFields}
             />
+            </DetailScopeProvider>
+            </Fragment>
           );
         })}
       </SiteChrome>

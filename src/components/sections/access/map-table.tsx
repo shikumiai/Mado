@@ -93,7 +93,7 @@ export default function AccessMapTable(p: SectionProps) {
           </div>
           {d.hoursTable && (
             <div className="amt-hours">
-              <h3 className="amt-hours-h">営業・受付の時間</h3>
+              <h3 className="amt-hours-h">{d.hoursHeading}</h3>
               <HoursGrid table={d.hoursTable} />
             </div>
           )}

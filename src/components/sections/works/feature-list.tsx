@@ -76,7 +76,7 @@ export default function WorksFeatureList(p: SectionProps) {
             <div className="wfl-facts">
               {cur.specs && <span><b>仕様</b> {cur.specs}</span>}
               {cur.client && <span><b>お客様</b> {cur.client}</span>}
-              <span className="ms-num"><b>竣工</b> {cur.year}</span>
+              <span className="ms-num"><b>年</b> {cur.year}</span>
             </div>
           </div>
         </div>

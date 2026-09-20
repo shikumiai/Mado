@@ -145,10 +145,11 @@ export interface SiteChromeProps {
   nav: ChromeNavItem[];
   /** 編集中はヘッダーを固定しない（編集パネルと重ならないように） */
   editMode?: boolean;
+  onEditCompany?: () => void;
   children: React.ReactNode;
 }
 
-export default function SiteChrome({ config, nav, editMode = false, children }: SiteChromeProps) {
+export default function SiteChrome({ config, nav, editMode = false, onEditCompany, children }: SiteChromeProps) {
   const c = config.company;
   const [open, setOpen] = useState(false);
 
@@ -177,6 +178,7 @@ export default function SiteChrome({ config, nav, editMode = false, children }: 
 
       <header className={`sc-head${editMode ? " sc-head-static" : ""}`}>
         <div className="sc-head-in">
+          {editMode && onEditCompany && <button type="button" className="rounded border border-line px-2 py-1 text-xs text-ink" onClick={onEditCompany}>会社情報を編集</button>}
           <a className="sc-brand" href="#home">
             <span className="sc-brand-name">{c.name}</span>
             {c.nameEn && <span className="sc-brand-sub">{c.nameEn}</span>}
@@ -255,6 +257,7 @@ export default function SiteChrome({ config, nav, editMode = false, children }: 
 
       {children}
 
+      {editMode && onEditCompany && <button type="button" className="w-full border-y border-line bg-surface p-3 text-sm font-bold text-ink" onClick={onEditCompany}>フッター・連絡先・SNSを編集</button>}
       <footer className="sc-foot">
         <div className="sc-foot-in">
           <div className="sc-foot-grid">

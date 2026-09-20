@@ -28,14 +28,14 @@ function allowedAiTargets(config: SiteConfig, kind: AiKind): AiTarget[] {
       : section.type === "company" || section.type === "about" ? [["message", "会社概要の代表挨拶"], ["messageTitle", "代表挨拶の見出し"]] : [];
     for (const [key, label] of overrides) {
       const value = section.data?.[key];
-      if (typeof value === "string" && value.trim()) targets.push({ path: `sections.${index}.data.${key}`, label, before: value });
+      if (typeof value === "string") targets.push({ path: `sections.${index}.data.${key}`, label, before: value });
     }
     if (section.type === "staff" && section.variant === "lead-message") {
-      const ownItems = Array.isArray(section.data?.items) && section.data.items.length > 0;
+      const ownItems = Array.isArray(section.data?.items);
       const lead = (ownItems ? section.data!.items as Record<string, unknown>[] : config.staff)?.[0];
       const field = lead?.philosophy ? "philosophy" : "bio";
       const value = lead?.[field];
-      if (typeof value === "string" && value.trim()) targets.push({ path: ownItems ? `sections.${index}.data.items.0.${field}` : `staff.0.${field}`, label: "代表紹介の挨拶", before: value });
+      if (typeof value === "string") targets.push({ path: ownItems ? `sections.${index}.data.items.0.${field}` : `staff.0.${field}`, label: "代表紹介の挨拶", before: value });
     }
   });
   return Array.from(new Map(targets.map(target => [target.path, target])).values());

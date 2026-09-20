@@ -18,7 +18,7 @@ import { Sheet } from "@/components/ui";
 import { SECTION_CATALOG, type SectionTypeEntry } from "@/components/sections";
 import SectionMiniPreview from "./SectionMiniPreview";
 import { useConfigPalette } from "@/components/template-renderers/TplPalette";
-import { sampleSectionData } from "@/lib/templates/sample-content";
+import { sectionPreviewData } from "@/lib/templates/starter-content";
 import { findSectionDef, planAllows } from "@/lib/templates/catalog";
 import { PLAN_LABELS, type Plan } from "@/lib/stripe";
 import type { SiteConfig } from "@/lib/site-config-schema";
@@ -226,10 +226,10 @@ function VariantCard({
   palette: ReturnType<typeof useConfigPalette>;
   onChoose: (entry: SectionTypeEntry, variant: string) => void;
 }) {
-  // 手本の中身はその業種のデモから。足した直後に空にならない
+  // 見せ方を比べるための見本。追加時は架空の人物や口コミを保存しない。
   const data = useMemo(
-    () => sampleSectionData(config.templateId, entry.type, variantId),
-    [config.templateId, entry.type, variantId],
+    () => sectionPreviewData(config.templateId, entry.type, config.industry),
+    [config.templateId, config.industry, entry.type],
   );
 
   return (
@@ -245,6 +245,7 @@ function VariantCard({
         <div className="min-w-0">
           <p className="truncate text-sm font-medium text-ink">{label}</p>
           <p className="truncate text-xs text-ink2">{note}</p>
+          {["staff", "voices", "news", "booking"].includes(entry.type) && <p className="text-xs text-ink3">人物・口コミ・日付は配置の見本です。追加後に入力できます。</p>}
         </div>
         <span className="shrink-0 rounded-pill bg-accent-soft px-2.5 py-1 text-xs font-medium text-ink">
           追加

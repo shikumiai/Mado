@@ -44,9 +44,9 @@ export default function StaffLeadMessage(p: SectionProps) {
   const d = staffOf(p.config, p.data);
   const c = p.config.company;
   const lead = d.items[0];
-  const name = lead?.name || c.ceo;
-  const role = lead?.role || c.ceoTitle || "代表";
-  const message = lead?.philosophy || lead?.bio || c.bio || "";
+  const name = lead?.name ?? c.ceo;
+  const role = lead?.role ?? c.ceoTitle ?? "代表";
+  const message = lead ? (lead.philosophy || lead.bio || "") : (c.bio || "");
   const paragraphs = message.split(/\n{2,}|\n/).filter((t) => t.trim() !== "");
   const facts: [string, string | undefined][] = [
     ["創業", c.since ? `${c.since}年` : undefined],
@@ -64,7 +64,7 @@ export default function StaffLeadMessage(p: SectionProps) {
           <div>
             <Media
               edit={{ p, at: ["items", 0, "image"] }}
-              src={lead?.image || c.ceoPhoto}
+              src={lead?.image ?? c.ceoPhoto}
               alt={name}
               art={<PortraitArt seed={0} />}
               className="tlm-photo"

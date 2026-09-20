@@ -42,7 +42,7 @@ export default function AccessTableOnly(p: SectionProps) {
         {d.hoursTable && (
           <div className="ato-hours">
             <div className="ato-hours-h">
-              <h3 className="ms-serif">受付・営業の時間</h3>
+              <h3 className="ms-serif">{d.hoursHeading}</h3>
               <span>{p.config.company.hours}</span>
             </div>
             <div className="ato-hours-body">

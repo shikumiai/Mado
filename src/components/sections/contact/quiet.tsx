@@ -65,7 +65,7 @@ export default function ContactQuiet(p: SectionProps) {
             <div className="cqt-item">
               <small>ADDRESS</small>
               <span className="ms-serif">{c.address}</span>
-              <p>ご来所は事前にご連絡ください。</p>
+              <p>{d.visitNote}</p>
             </div>
           )}
         </div>

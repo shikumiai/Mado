@@ -14,6 +14,8 @@ import type { SiteConfig } from "@/lib/site-config-schema";
 import TemplateRenderer from "@/components/template-renderers/TemplateRenderer";
 import DemoBanner from "@/components/portfolio-templates/DemoBanner";
 import { brandFromQuery } from "@/lib/palette";
+import { generateSiteConfig } from "@/lib/template-config-generator";
+import { toTemplateFamily } from "@/lib/templates/catalog";
 import { normalizePlanId } from "@/lib/stripe";
 
 export type DemoSearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -40,12 +42,15 @@ export default async function TemplateDemo({
   // 申し込み画面がプランを切り替えたときに、構成の違いをその場で見せるために使う。
   const askedPlan = Array.isArray(query.plan) ? query.plan[0] : query.plan;
 
-  const shown: SiteConfig = {
-    ...base,
-    templateId: templateId ?? base.templateId,
-    plan: normalizePlanId(askedPlan ?? plan ?? base.plan ?? "otameshi"),
-    style: brand ? { ...base.style, brand } : base.style,
-  };
+  const selectedPlan = normalizePlanId(askedPlan ?? plan ?? base.plan ?? "otameshi");
+  const family = toTemplateFamily(templateId ?? base.templateId);
+  const suffix = selectedPlan === "omakase-pro" ? "-pro" : selectedPlan === "omakase" ? "-mid" : "";
+  const industry = typeof query.industry === "string" ? query.industry : undefined;
+  const shown = generateSiteConfig({
+    orderId: "", companyName: "あなたの会社・お店", email: "", templateId: family + suffix,
+    industry, brand: brand ?? undefined,
+  });
+
 
   return (
     <>

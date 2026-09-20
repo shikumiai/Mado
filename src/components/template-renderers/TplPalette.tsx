@@ -1,5 +1,7 @@
 "use client";
 
+import { templateFontVars } from "@/lib/templates/fonts";
+
 /**
  * テンプレートの色を配るところ。
  *
@@ -48,11 +50,13 @@ export function useConfigPalette(config: SiteConfig): Palette {
 export function TplRoot({
   palette,
   className,
+  fontChoice,
   onClick,
   children,
 }: {
   palette: Palette;
   className: string;
+  fontChoice?: string;
   onClick?: React.MouseEventHandler<HTMLDivElement>;
   children: React.ReactNode;
 }) {
@@ -60,7 +64,7 @@ export function TplRoot({
     <PaletteContext.Provider value={palette}>
       <div
         className={className}
-        style={paletteToCssVars(palette) as React.CSSProperties}
+        style={{ ...paletteToCssVars(palette), ...templateFontVars(fontChoice) } as React.CSSProperties}
         onClick={onClick}
       >
         {children}
