@@ -10,7 +10,6 @@ interface LazyIframeProps {
   className?: string;
   iframeWidth?: number;
   iframeHeight?: number;
-  scale?: number;
 }
 
 export default function LazyIframe({
@@ -18,14 +17,26 @@ export default function LazyIframe({
   title,
   fallbackBg,
   fallbackColors,
-  className = "h-36 sm:h-44",
+  className = "",
   iframeWidth = 1280,
   iframeHeight = 800,
-  scale = 0.2,
 }: LazyIframeProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
-  const [loaded, setLoaded] = useState(false);
+  const [width, setWidth] = useState(0);
+  const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
+  const loaded = loadedSrc === src;
+  const scale = width / iframeWidth;
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new ResizeObserver(([entry]) => {
+      setWidth(entry.contentRect.width);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const el = ref.current;
@@ -48,8 +59,8 @@ export default function LazyIframe({
   return (
     <div
       ref={ref}
-      className={`relative overflow-hidden ${className}`}
-      style={{ background: fallbackBg }}
+      className={`relative w-full overflow-hidden ${className}`}
+      style={{ background: fallbackBg, aspectRatio: `${iframeWidth} / ${iframeHeight}` }}
     >
       {/* 読み込み中の下敷き（サイトの輪郭に見せる。空白の箱にしない） */}
       {!loaded && (
@@ -83,10 +94,11 @@ export default function LazyIframe({
       )}
 
       {/* iframe (only loads when scrolled into view) */}
-      {visible && (
+      {visible && width > 0 && (
         <iframe
+          key={src}
           src={src}
-          className={`absolute top-0 left-0 border-none pointer-events-none transition-opacity duration-500 ${loaded ? "opacity-100" : "opacity-0"}`}
+          className={`absolute top-0 left-0 border-none pointer-events-none transition-opacity duration-500 motion-reduce:transition-none ${loaded ? "opacity-100" : "opacity-0"}`}
           style={{
             width: `${iframeWidth}px`,
             height: `${iframeHeight}px`,
@@ -95,7 +107,7 @@ export default function LazyIframe({
           }}
           tabIndex={-1}
           title={title}
-          onLoad={() => setLoaded(true)}
+          onLoad={() => setLoadedSrc(src)}
         />
       )}
     </div>
