@@ -1,7 +1,7 @@
 # Mado 業種テンプレート・内容編集
 
 - 作業ID: mado-template-editing-20260920
-- 状態: レビュー待ち（技術レビュー APPROVED、本番反映待ち）
+- 状態: 完了
 - 担当: Codex
 - 作業場所: .verification/template-editing
 - ブランチ: codex/mado-template-editing
@@ -45,7 +45,7 @@
 
 ### 次の作業
 
-対象コミットのレビュー確認、PR、mainへマージ、本番の公開画面確認。PR10/11と別作業票は変更しない。
+依頼された修正と本番反映は完了。PR10/11と別作業票は未変更。
 ## 独立レビュー確定
 
 - レビュー担当: Codex / Turing（別セッション）
@@ -55,3 +55,12 @@
 - 未解決指摘: なし
 - 本番反映PR: https://github.com/shikumiai/Mado/pull/13
 - 追加実機確認: 390pxで会社名を変更→保存→再読込し、会社名と明朝体が保持されることを確認。
+
+## 本番反映の結果
+
+- PR13: マージ済み（2026-09-20）。merge commit bf3a96fbda7517f9845b796e0418472958a33d45。
+- Vercel: dpl_EbwtDFBpyt6Q6rNXQBBxxoM1nhR1、READY、hnd1、mado.shikumiai.com のaliasで上記SHAを確認。
+- 本番 /、/start?slug=test、/auth/login、ホテルと動物病院のデモはHTTP200。業種別見出しを確認。
+- 本番 /template-verification は404。一時検証デプロイ4件は削除済み。
+- 実装・独立レビュー済み差分以外のコードは本番へ含めていない。DB migrationは不要。
+- この完了票はマージ後の記録専用ブランチ codex/mado-template-editing-record に保存。共通 docs/ai/TASK.md は他タスクのため未変更。
