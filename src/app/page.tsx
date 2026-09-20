@@ -113,9 +113,9 @@ function Hero() {
       />
       <div aria-hidden className="paper-grain pointer-events-none absolute inset-0 -z-10 opacity-60" />
 
-      <div className="mx-auto grid max-w-6xl items-center gap-14 px-5 pb-20 pt-16 sm:pt-24 lg:grid-cols-[1fr_1.05fr] lg:gap-12 lg:pb-28">
+      <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-14 px-5 pb-20 pt-16 sm:pt-24 lg:grid-cols-[1fr_1.05fr] lg:gap-12 lg:pb-28">
         {/* 主張 */}
-        <div>
+        <div className="min-w-0">
           <span className="mado-load inline-flex items-center gap-2 rounded-md border border-line bg-surface px-3.5 py-1.5 text-xs text-ink2 shadow-sh1" style={{ animationDelay: "60ms" }}>
             <Sparkles className="size-3.5 text-accent" aria-hidden />
             制作費0円・パソコン操作いらず
@@ -172,7 +172,7 @@ function Hero() {
 
         {/* 窓から見える実物（ライブプレビュー1枚。浮遊カードの寄せ集めにしない） */}
         <div
-          className="mado-load relative mx-auto w-full max-w-xl"
+          className="mado-load relative mx-auto w-full min-w-0 max-w-xl"
           style={{ animationDelay: "180ms" }}
         >
           <WindowFrame caption="予約と担当者が先に見えるサロンのサイト（実物プレビュー）">
